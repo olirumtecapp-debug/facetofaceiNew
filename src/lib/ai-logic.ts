@@ -43,7 +43,7 @@ export const getBestAIQuestion = (
   });
 
   scoredQuestions.sort((a, b) => b.score - a.score);
-  return scoredQuestions[0].question;
+  return scoredQuestions[0]?.question || QUESTIONS[0];
 };
 
 export const getAIPalpite = (
@@ -51,10 +51,11 @@ export const getAIPalpite = (
   remainingCharacters: Character[]
 ): Character | null => {
   if (remainingCharacters.length === 0) return null;
-  if (remainingCharacters.length === 1) return remainingCharacters[0];
+  if (remainingCharacters.length === 1) return remainingCharacters[0] || null;
   
   if (difficulty === "Difícil" && remainingCharacters.length === 2) {
-    return Math.random() > 0.5 ? remainingCharacters[Math.floor(Math.random() * 2)] : null;
+    const picked = remainingCharacters[Math.floor(Math.random() * 2)];
+    return Math.random() > 0.5 ? (picked || null) : null;
   }
   return null;
 };

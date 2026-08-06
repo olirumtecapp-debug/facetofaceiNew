@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
-import { Question, QUESTIONS } from "@/data/questions";
+import { Question } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
 
 export type GameState = {
@@ -21,8 +21,8 @@ export type GameState = {
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const playerSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
-    const aiSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+    const playerSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
+    const aiSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
     
     return {
       playerColor,
@@ -61,7 +61,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       ],
     }));
 
-    // Small delay before AI turn
     setTimeout(nextTurn, 1000);
   };
 
@@ -100,7 +99,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   useEffect(() => {
     if (gameState.currentTurn === "AI" && !gameState.isGameOver) {
       const timer = setTimeout(() => {
-        // Check if AI should guess
         const palpite = getAIPalpite(gameState.difficulty, gameState.aiRemainingChars);
         if (palpite) {
           const isCorrect = palpite.id === gameState.playerSecret.id;
@@ -131,7 +129,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentTurn, gameState.isGameOver]);
+  }, [gameState.currentTurn, gameState.isGameOver, gameState.aiRemainingChars, gameState.difficulty, gameState.playerSecret, gameState.turnCount]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite };
 };
