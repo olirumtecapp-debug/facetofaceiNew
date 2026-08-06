@@ -14,11 +14,12 @@ export const getBestAIQuestion = (
 ): Question => {
   const availableQuestions = QUESTIONS.filter((q) => !q.minTurn || turn >= q.minTurn);
   
-  if (availableQuestions.length === 0) return QUESTIONS[0];
+  const defaultQuestion = QUESTIONS[0]!;
+  if (availableQuestions.length === 0) return defaultQuestion;
 
   if (difficulty === "Fácil") {
     const randomIndex = Math.floor(Math.random() * availableQuestions.length);
-    return availableQuestions[randomIndex];
+    return availableQuestions[randomIndex] || defaultQuestion;
   }
 
   const scoredQuestions = availableQuestions.map((q) => {
@@ -43,7 +44,7 @@ export const getBestAIQuestion = (
   });
 
   scoredQuestions.sort((a, b) => b.score - a.score);
-  return scoredQuestions[0]?.question || QUESTIONS[0];
+  return scoredQuestions[0]?.question || defaultQuestion;
 };
 
 export const getAIPalpite = (
@@ -54,8 +55,8 @@ export const getAIPalpite = (
   if (remainingCharacters.length === 1) return remainingCharacters[0] || null;
   
   if (difficulty === "Difícil" && remainingCharacters.length === 2) {
-    const picked = remainingCharacters[Math.floor(Math.random() * 2)];
-    return Math.random() > 0.5 ? (picked || null) : null;
+    const picked = remainingCharacters[Math.floor(Math.random() * 2)] || null;
+    return Math.random() > 0.5 ? picked : null;
   }
   return null;
 };

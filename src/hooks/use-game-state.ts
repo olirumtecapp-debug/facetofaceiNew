@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
 import { Question } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
@@ -40,13 +40,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     };
   });
 
-  const nextTurn = () => {
+  const nextTurn = useCallback(() => {
     setGameState((prev) => ({
       ...prev,
       currentTurn: prev.currentTurn === "PLAYER" ? "AI" : "PLAYER",
       turnCount: prev.currentTurn === "AI" ? prev.turnCount + 1 : prev.turnCount,
     }));
-  };
+  }, []);
 
   const handlePlayerQuestion = (question: Question) => {
     if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
@@ -129,7 +129,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [gameState.currentTurn, gameState.isGameOver, gameState.aiRemainingChars, gameState.difficulty, gameState.playerSecret, gameState.turnCount]);
+  }, [gameState.currentTurn, gameState.isGameOver, gameState.aiRemainingChars, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite };
 };
