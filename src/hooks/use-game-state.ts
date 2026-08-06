@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
-import { Question } from "@/data/questions";
+import { Question, QUESTIONS } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
 
 export type GameState = {
@@ -114,14 +114,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
           const answer = getAIResponse(gameState.playerSecret, question) ? "SIM" : "NÃO";
 
-          setGameState((prev) => ({
-            ...prev,
-            aiRemainingChars: prev.aiRemainingChars.filter((c) => {
+          setGameState((prev) => {
+            const newRemaining = prev.aiRemainingChars.filter((c) => {
               const matches = question.check(c);
               return answer === "SIM" ? matches : !matches;
-            }),
-            history: [...prev.history, { type: "AI", text: question.text, answer }],
-          }));
+            });
+            return {
+              ...prev,
+              aiRemainingChars: newRemaining,
+              history: [...prev.history, { type: "AI", text: question.text, answer }],
+            };
+          });
 
           setTimeout(nextTurn, 1000);
         }
@@ -129,7 +132,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [gameState.currentTurn, gameState.isGameOver, gameState.aiRemainingChars, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn]);
+  }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn, gameState.aiRemainingChars]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite };
 };
