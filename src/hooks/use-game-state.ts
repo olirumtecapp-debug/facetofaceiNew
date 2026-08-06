@@ -110,25 +110,25 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             playerScore: isCorrect ? prev.playerScore : prev.playerScore + 1,
             history: [...prev.history, { type: "AI", text: `Palpite final: ${palpite.nome}!` }]
           }));
-          return;
+        } else {
+          const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
+          const answer = getAIResponse(gameState.playerSecret, question) ? "SIM" : "NÃO";
+
+          setGameState((prev) => ({
+            ...prev,
+            aiRemainingChars: prev.aiRemainingChars.filter((c) => {
+              const matches = question.check(c);
+              return answer === "SIM" ? matches : !matches;
+            }),
+            history: [...prev.history, { type: "AI", text: question.text, answer }],
+          }));
+
+          setTimeout(nextTurn, 1000);
         }
-
-        const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
-        const answer = getAIResponse(gameState.playerSecret, question) ? "SIM" : "NÃO";
-
-        setGameState((prev) => ({
-          ...prev,
-          aiRemainingChars: prev.aiRemainingChars.filter((c) => {
-            const matches = question.check(c);
-            return answer === "SIM" ? matches : !matches;
-          }),
-          history: [...prev.history, { type: "AI", text: question.text, answer }],
-        }));
-
-        setTimeout(nextTurn, 1000);
       }, 1500);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [gameState.currentTurn, gameState.isGameOver, gameState.aiRemainingChars, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite };
