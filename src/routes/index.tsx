@@ -1,24 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
+import logoAsset from "@/assets/logo.png.asset.json";
+import playIaAsset from "@/assets/play-ia.png.asset.json";
+import playOnlineAsset from "@/assets/play-online.png.asset.json";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex min-h-screen items-center justify-center bg-[#0b0e14] p-4 text-white">
+      <div className="flex w-full max-w-4xl flex-col items-center gap-12">
+        <img src={logoAsset.url} alt="FTF - FACE TO FACE" className="h-32 object-contain" />
+        
+        <div className="flex w-full flex-col gap-6 md:flex-row">
+          <button className="flex-1 rounded-2xl bg-[#1e62ec] p-6 transition-transform hover:scale-105 hover:bg-[#1e62ec]/90">
+            <img src={playIaAsset.url} alt="Jogar vs IA" className="mx-auto mb-4 h-24" />
+            <h2 className="text-center text-2xl font-bold">JOGAR VS IA</h2>
+          </button>
+          
+          <button className="flex-1 rounded-2xl bg-[#e52e2e] p-6 transition-transform hover:scale-105 hover:bg-[#e52e2e]/90">
+            <img src={playOnlineAsset.url} alt="Jogar On-line" className="mx-auto mb-4 h-24" />
+            <h2 className="text-center text-2xl font-bold">JOGAR ON-LINE</h2>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
