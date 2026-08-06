@@ -2,7 +2,7 @@ export type Character = {
   id: number;
   nome: string;
   genero: "Masculino" | "Feminino";
-  corCabelo: "Castanho" | "Loiro" | "Preto" | "Grisalho/Branco" | "Ruivo" | "Careca";
+  corCabelo: "Castanho" | "Loiro" | "Preto" | "Grisalho/Branco" | "Ruivo" | "Careca" | "Grisalho";
   estiloCabelo: string;
   tomPele: "Claro" | "Moreno" | "Escuro (Negra)" | "Moreno Claro";
   corOlhos: "Verdes" | "Castanhos" | "Azuis" | "Escuros" | "Ocultos";
