@@ -4,7 +4,7 @@ export type Character = {
   genero: "Masculino" | "Feminino";
   corCabelo: "Castanho" | "Loiro" | "Preto" | "Grisalho/Branco" | "Ruivo" | "Careca" | "Grisalho";
   estiloCabelo: string;
-  tomPele: "Claro" | "Moreno" | "Escuro (Negra)" | "Moreno Claro";
+  tomPele: "Claro" | "Moreno" | "Escuro (Negra)" | "Moreno Claro" | "Escuro (Negro)";
   corOlhos: "Verdes" | "Castanhos" | "Azuis" | "Escuros" | "Ocultos";
   barbaBigode: "Nenhum" | "Barba Cheia Ruiva" | "Bigode Grosso" | "Barba Curta Grisalha" | "Barba Cheia Loira";
   oculos: boolean;
