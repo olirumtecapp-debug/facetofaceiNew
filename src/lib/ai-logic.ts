@@ -13,8 +13,10 @@ export const getBestAIQuestion = (
   turn: number
 ): Question => {
   const availableQuestions = QUESTIONS.filter((q) => !q.minTurn || turn >= q.minTurn);
+  if (availableQuestions.length === 0) return QUESTIONS[0];
 
   if (difficulty === "Fácil") {
+
     return availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
   }
 
