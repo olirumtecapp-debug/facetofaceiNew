@@ -58,6 +58,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
+  const revealAIAnswer = () => {
+    if (!gameState.pendingQuestion || gameState.pendingQuestion.type !== "PLAYER") return;
+    const answer = getAIResponse(gameState.aiSecret, gameState.pendingQuestion.question) ? "SIM" : "NÃO";
+    setGameState(prev => ({
+      ...prev,
+      pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
+    }));
+  };
+
   const answerQuestion = (answer: "SIM" | "NÃO") => {
     if (!gameState.pendingQuestion) return;
 
