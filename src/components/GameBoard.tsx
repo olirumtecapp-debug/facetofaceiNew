@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";
 import { useGameState } from "@/hooks/use-game-state";
@@ -14,30 +14,14 @@ interface GameBoardProps {
 const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
 
 export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) => {
-  const { 
-    gameState, 
-    handlePlayerQuestion, 
-    handlePlayerResponse,
-    toggleCard, 
-    playerPalpite, 
-    passTurn, 
-    rematch 
-  } = useGameState(
+  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch } = useGameState(
     playerColor,
     difficulty,
   );
   const [isPalpitando, setIsPalpitando] = useState(false);
   const [cat, setCat] = useState(CATEGORIES[1]!);
-  const historyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (historyRef.current) {
-      historyRef.current.scrollTop = historyRef.current.scrollHeight;
-    }
-  }, [gameState.history]);
 
   const myTurn = gameState.currentTurn === "PLAYER" && !gameState.isGameOver;
-  const responding = gameState.currentTurn === "PLAYER_RESPONDING";
   const oppColor = playerColor === "AZUL" ? "VERMELHO" : "AZUL";
 
   return (
@@ -64,7 +48,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </button>
         <div className="min-w-0 text-center">
           <div className="text-[11px] font-black uppercase tracking-widest text-yellow-400 sm:text-sm">
-            {gameState.isGameOver ? "FIM DE PARTIDA" : responding ? "VOCÊ ESTÁ RESPONDENDO..." : myTurn ? "Seu turno de perguntar" : "Aguarde o adversário..."}
+            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno de perguntar" : "Aguarde o adversário..."}
           </div>
           <div className="text-[10px] font-bold text-gray-500">
             Rodada {gameState.turnCount} · IA {difficulty}
@@ -79,27 +63,25 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden p-1 lg:flex-row lg:gap-2 lg:p-2">
         {/* Board */}
-        <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-center justify-center">
-          <div className="w-full h-full flex items-center justify-center overflow-auto custom-scrollbar">
+        <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-start justify-center">
+          <div className="w-full h-full flex items-start justify-center overflow-auto custom-scrollbar">
             <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full max-w-4xl">
-              <tbody>
+              <tbody className="h-full">
                 {Array.from({ length: 4 }).map((_, rowIndex) => (
-                  <tr key={rowIndex}>
+                  <tr key={rowIndex} className="h-1/4">
                     {Array.from({ length: 6 }).map((_, colIndex) => {
                       const charIndex = rowIndex * 6 + colIndex;
                       const item = gameState.playerBoard[charIndex];
                       return (
-                        <td key={colIndex} className="p-0 align-middle text-center w-1/6">
-                          <div className="w-full max-w-[80px] sm:max-w-[100px] mx-auto py-0.5">
-                            {item && (
-                              <GameCard
-                                character={item.character}
-                                isDown={item.isDown}
-                                color={playerColor}
-                                onClick={() => toggleCard(item.character.id)}
-                              />
-                            )}
-                          </div>
+                        <td key={colIndex} className="p-0 align-middle text-center w-1/6 h-full">
+                          {item && (
+                            <GameCard
+                              character={item.character}
+                              isDown={item.isDown}
+                              color={playerColor}
+                              onClick={() => toggleCard(item.character.id)}
+                            />
+                          )}
                         </td>
                       );
                     })}
@@ -151,7 +133,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <div className="border-b border-white/10 p-1.5 text-[10px] font-black uppercase tracking-tight text-gray-500">
               Histórico
             </div>
-            <div ref={historyRef} className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar">
+            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar">
               {gameState.history.length === 0 && (
                 <p className="text-center text-[10px] text-gray-600">Faça sua primeira pergunta.</p>
               )}
@@ -262,45 +244,6 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                 MENU
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      {/* Responding Modal */}
-      {responding && gameState.pendingQuestion && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-6 text-center shadow-[0_0_50px_rgba(250,204,21,0.2)]">
-            <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-yellow-400/70">
-              O ADVERSÁRIO PERGUNTOU:
-            </div>
-            <h3 className="mb-8 text-xl font-black text-white sm:text-2xl">
-              "{gameState.pendingQuestion.text}"
-            </h3>
-            
-            <div className="mb-6 flex justify-center gap-4">
-              <div className="w-24 shrink-0">
-                <div className="mb-1 text-[8px] font-bold text-gray-500">SEU PERSONAGEM</div>
-                <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => handlePlayerResponse("SIM")}
-                className="flex-1 rounded-xl border-2 border-green-500/50 bg-green-600 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(34,197,94,0.3)]"
-              >
-                SIM
-              </button>
-              <button
-                onClick={() => handlePlayerResponse("NÃO")}
-                className="flex-1 rounded-xl border-2 border-red-500/50 bg-red-600 py-4 text-xl font-black text-white transition-all hover:bg-red-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(239,68,68,0.3)]"
-              >
-                NÃO
-              </button>
-            </div>
-            
-            <p className="mt-4 text-[9px] font-medium text-gray-500 italic">
-              Atenção: responder incorretamente pode confundir sua estratégia!
-            </p>
           </div>
         </div>
       )}

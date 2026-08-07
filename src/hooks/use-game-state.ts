@@ -12,10 +12,9 @@ export type GameState = {
   aiSecret: Character;
   playerBoard: { character: Character; isDown: boolean }[];
   aiRemainingChars: Character[];
-  currentTurn: "PLAYER" | "AI" | "PLAYER_RESPONDING";
+  currentTurn: "PLAYER" | "AI";
   turnCount: number;
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
-  pendingQuestion?: Question | undefined;
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
 };
@@ -63,27 +62,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
 
     setTimeout(nextTurn, 1000);
-  };
-
-  const handlePlayerResponse = (answer: "SIM" | "NÃO") => {
-    if (gameState.currentTurn !== "PLAYER_RESPONDING" || !gameState.pendingQuestion) return;
-
-    const question = gameState.pendingQuestion;
-
-    setGameState((prev) => {
-      const newRemaining = prev.aiRemainingChars.filter((c) => {
-        const matches = question.check(c);
-        return answer === "SIM" ? matches : !matches;
-      });
-      return {
-        ...prev,
-        aiRemainingChars: newRemaining,
-        history: [...prev.history, { type: "AI", text: question.text, answer }],
-        pendingQuestion: undefined,
-      };
-    });
-
-    setTimeout(nextTurn, 600);
   };
 
   const toggleCard = (id: number) => {
@@ -159,12 +137,21 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }));
         } else {
           const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
-          
-          setGameState((prev) => ({
-            ...prev,
-            currentTurn: "PLAYER_RESPONDING",
-            pendingQuestion: question,
-          }));
+          const answer = getAIResponse(gameState.playerSecret, question) ? "SIM" : "NÃO";
+
+          setGameState((prev) => {
+            const newRemaining = prev.aiRemainingChars.filter((c) => {
+              const matches = question.check(c);
+              return answer === "SIM" ? matches : !matches;
+            });
+            return {
+              ...prev,
+              aiRemainingChars: newRemaining,
+              history: [...prev.history, { type: "AI", text: question.text, answer }],
+            };
+          });
+
+          setTimeout(nextTurn, 1000);
         }
       }, 1500);
       return () => clearTimeout(timer);
@@ -172,14 +159,5 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     return undefined;
   }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn, gameState.aiRemainingChars]);
 
-  return { 
-    gameState, 
-    handlePlayerQuestion, 
-    handlePlayerResponse,
-    toggleCard, 
-    autoDownCards, 
-    playerPalpite, 
-    passTurn, 
-    rematch 
-  };
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch };
 };
