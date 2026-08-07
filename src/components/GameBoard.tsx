@@ -200,11 +200,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       {/* Palpite modal */}
       {isPalpitando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-4xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-6 lg:max-w-3xl">
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
-            <div className="mb-4 grid max-h-[60vh] grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-8 gap-x-4 items-start justify-items-center overflow-y-auto custom-scrollbar p-2">
+            <div className="mb-4 grid max-h-[50vh] grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-6 gap-x-4 items-start justify-items-center overflow-y-auto custom-scrollbar p-2">
               {gameState.playerBoard
                 .filter(item => !item.isDown)
                 .map((item) => (
