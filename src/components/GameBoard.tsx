@@ -79,9 +79,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden p-1 lg:flex-row lg:gap-2 lg:p-2">
         {/* Board */}
-        <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-start justify-center">
-          <div className="w-full h-full flex items-start justify-center overflow-hidden">
-            <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full h-full max-w-4xl">
+        <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center overflow-hidden">
+            <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full h-full max-w-4xl table-fixed">
               <tbody className="h-full">
                 {Array.from({ length: 4 }).map((_, rowIndex) => (
                   <tr key={rowIndex} className="h-1/4">
