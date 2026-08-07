@@ -63,52 +63,54 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 lg:flex-row lg:gap-3 lg:p-3">
         {/* Board */}
-        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-2 sm:p-4 custom-scrollbar">
-          <table className="w-full border-separate border-spacing-1 sm:border-spacing-2">
-            <tbody>
-              {Array.from({ length: 6 }).map((_, rowIndex) => (
-                <tr key={rowIndex}>
-                  {Array.from({ length: 4 }).map((_, colIndex) => {
-                    const charIndex = rowIndex * 4 + colIndex;
-                    const item = gameState.playerBoard[charIndex];
-                    return (
-                      <td key={colIndex} className="p-1 align-middle text-center">
-                        {item && (
-                          <GameCard
-                            character={item.character}
-                            isDown={item.isDown}
-                            color={playerColor}
-                            onClick={() => toggleCard(item.character.id)}
-                          />
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-1 sm:p-4 custom-scrollbar">
+          <div className="mx-auto w-fit max-w-full">
+            <table className="border-separate border-spacing-0.5 sm:border-spacing-2">
+              <tbody>
+                {Array.from({ length: 6 }).map((_, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {Array.from({ length: 4 }).map((_, colIndex) => {
+                      const charIndex = rowIndex * 4 + colIndex;
+                      const item = gameState.playerBoard[charIndex];
+                      return (
+                        <td key={colIndex} className="p-0.5 align-middle text-center">
+                          {item && (
+                            <GameCard
+                              character={item.character}
+                              isDown={item.isDown}
+                              color={playerColor}
+                              onClick={() => toggleCard(item.character.id)}
+                            />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         {/* Side panel */}
         <aside className="flex min-h-0 shrink-0 flex-col gap-2 lg:w-[340px]">
           {/* Secret cards + actions */}
-          <div className="flex shrink-0 gap-3 rounded-xl border border-white/10 bg-[#0b0e14] p-2">
-            <div className="w-16 shrink-0 sm:w-20">
-              <div className="mb-1 text-center text-[8px] font-black uppercase tracking-tight text-gray-500">
+          <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
+            <div className="w-12 shrink-0 sm:w-20">
+              <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
                 Sua carta
               </div>
               <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
             </div>
-            <div className="w-16 shrink-0 sm:w-20">
-              <div className="mb-1 text-center text-[8px] font-black uppercase tracking-tight text-gray-500">
+            <div className="w-12 shrink-0 sm:w-20">
+              <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
                 Adversário
               </div>
-              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-2xl">
+              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
                 ❓
               </div>
             </div>
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 sm:gap-1.5">
               <button
                 onClick={() => setIsPalpitando(true)}
                 disabled={!myTurn}
@@ -161,7 +163,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                 <button
                   key={c}
                   onClick={() => setCat(c)}
-                  className={`rounded-full px-2 py-1 text-[9px] font-black uppercase transition-colors ${
+                  className={`rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase transition-colors sm:px-2 sm:py-1 sm:text-[9px] ${
                     cat === c ? "bg-yellow-400 text-black" : "bg-white/5 text-gray-400 hover:bg-white/10"
                   }`}
                 >
@@ -169,13 +171,13 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                 </button>
               ))}
             </div>
-            <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto custom-scrollbar">
+            <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-28">
               {QUESTIONS.filter((q) => q.category === cat).map((q) => (
                 <button
                   key={q.id}
                   disabled={!myTurn || (q.minTurn ? gameState.turnCount < q.minTurn : false)}
                   onClick={() => handlePlayerQuestion(q)}
-                  className="rounded border border-white/5 bg-gray-800/60 px-2 py-1 text-[10px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30"
+                  className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
                 >
                   {q.text}
                 </button>

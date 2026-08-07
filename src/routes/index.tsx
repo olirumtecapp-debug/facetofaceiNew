@@ -259,13 +259,13 @@ function Index() {
                         const charIndex = rowIndex * 5 + colIndex;
                         const c = CHARACTERS[charIndex];
                         return (
-                          <td key={colIndex} className="p-1 align-middle text-center">
+                          <td key={colIndex} className="p-0.5 align-middle text-center">
                             {c && (
                               <button
                                 onClick={() => setSelectedCharId(c.id)}
-                                className="group relative aspect-[3/4] h-[150px] w-full overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#c0c0c0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95 sm:h-[180px]"
+                                className="group relative aspect-[3/4] h-[90px] w-full overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#c0c0c0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95 sm:h-[180px]"
                               >
-                                <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-2 sm:p-3">
+                                <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-1 sm:p-3">
                                   <img
                                     src={CARD_IMAGES.AZUL[c.id - 1]!}
                                     alt={c.nome}
