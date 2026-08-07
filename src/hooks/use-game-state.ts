@@ -3,6 +3,16 @@ import { Character, CHARACTERS } from "@/data/characters";
 import { Question, QUESTIONS } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
 
+export type GamePhase = 
+  | "PLAYER_TURN"        // Jogador pode perguntar
+  | "WAITING_ANSWER"     // Aguarda apenas a resposta SIM ou NÃO
+  | "PLAYER_DISCARDING"  // Jogador está descartando personagens
+  | "WAITING_PASS_TURN"  // Aguarda o clique em "Passar a vez"
+  | "AI_TURN"            // A IA faz apenas UMA pergunta
+  | "PLAYER_RESPONDING"  // Jogador responde
+  | "AI_DISCARDING"      // IA descarta seus personagens
+  | "AI_PASS_TURN";      // IA encerra seu turno
+
 export type GameState = {
   playerColor: "AZUL" | "VERMELHO";
   difficulty: Difficulty;
@@ -13,6 +23,7 @@ export type GameState = {
   playerBoard: { character: Character; isDown: boolean }[];
   aiRemainingChars: Character[];
   currentTurn: "PLAYER" | "AI";
+  phase: GamePhase;
   turnCount: number;
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
@@ -36,6 +47,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
       aiRemainingChars: [...CHARACTERS],
       currentTurn: "PLAYER",
+      phase: "PLAYER_TURN",
       turnCount: 1,
       history: [],
       isGameOver: false,
@@ -44,18 +56,23 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   });
 
   const nextTurn = useCallback(() => {
-    setGameState((prev) => ({
-      ...prev,
-      currentTurn: prev.currentTurn === "PLAYER" ? "AI" : "PLAYER",
-      turnCount: prev.currentTurn === "AI" ? prev.turnCount + 1 : prev.turnCount,
-    }));
+    setGameState((prev) => {
+      const isAITurnEnding = prev.currentTurn === "AI";
+      return {
+        ...prev,
+        currentTurn: isAITurnEnding ? "PLAYER" : "AI",
+        phase: isAITurnEnding ? "PLAYER_TURN" : "AI_TURN",
+        turnCount: isAITurnEnding ? prev.turnCount + 1 : prev.turnCount,
+      };
+    });
   }, []);
 
   const handlePlayerQuestion = (question: Question) => {
-    if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver || gameState.askedQuestions.has(question.id)) return;
+    if (gameState.phase !== "PLAYER_TURN" || gameState.isGameOver || gameState.askedQuestions.has(question.id)) return;
 
     setGameState((prev) => ({
       ...prev,
+      phase: "WAITING_ANSWER",
       pendingQuestion: { question, type: "PLAYER" },
     }));
   };
@@ -80,17 +97,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
         pendingQuestion: undefined,
         askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        phase: "PLAYER_DISCARDING"
       }));
-      // Removido o nextTurn automático. O jogador deve clicar em "Passar a vez" após descartar.
     } else if (type === "AI_PALPITE") {
-      // O palpite da IA é considerado correto APENAS se o personagem que ela escolheu 
-      // for REALMENTE o playerSecret do jogador.
       const guessedCharId = question.id.replace('palpite-', '');
       const isCorrect = Number(guessedCharId) === gameState.playerSecret.id;
-      
-      // O jogador responde SIM ou NÃO, mas validamos a verdade
-      // Se o jogador disse SIM mas era mentira, ou NÃO mas era verdade, 
-      // a lógica de vitória deve ser baseada na verdade da carta.
       
       setGameState((prev) => ({
         ...prev,
@@ -102,6 +113,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         pendingQuestion: undefined,
       }));
     } else {
+      // AI Question being answered by player
       setGameState((prev) => {
         const newRemaining = prev.aiRemainingChars.filter((c) => {
           const matches = question.check(c);
@@ -113,9 +125,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           history: [...prev.history, { type: "AI", text: question.text, answer }],
           pendingQuestion: undefined,
           askedQuestions: new Set(prev.askedQuestions).add(question.id),
+          phase: "AI_DISCARDING"
         };
       });
-      // Removido o nextTurn automático. O jogador deve clicar em "Passar a vez" após descartar.
     }
   };
 
@@ -152,7 +164,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   const passTurn = () => {
+    // Only allow manual pass during player's discarding phase or if they are just in their turn
     if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
+    if (gameState.phase !== "PLAYER_DISCARDING" && gameState.phase !== "PLAYER_TURN") return;
+
     setGameState((prev) => ({
       ...prev,
       history: [...prev.history, { type: "PLAYER", text: "Passou a vez." }],
@@ -168,23 +183,28 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
       aiRemainingChars: [...CHARACTERS],
       currentTurn: "PLAYER",
+      phase: "PLAYER_TURN",
       turnCount: 1,
       history: [],
       isGameOver: false,
       winner: undefined,
       askedQuestions: new Set<string>(),
+      pendingQuestion: undefined
     }));
   };
 
-
+  // AI Logic Effect
   useEffect(() => {
-    // Only trigger AI logic if it's AI's turn AND no question is pending
-    if (gameState.currentTurn === "AI" && !gameState.isGameOver && !gameState.pendingQuestion) {
+    if (gameState.isGameOver) return undefined;
+
+    // Phase: AI_TURN -> IA makes a question
+    if (gameState.phase === "AI_TURN" && !gameState.pendingQuestion) {
       const timer = setTimeout(() => {
         const palpite = getAIPalpite(gameState.difficulty, gameState.aiRemainingChars);
         if (palpite) {
           setGameState((prev) => ({
             ...prev,
+            phase: "PLAYER_RESPONDING",
             pendingQuestion: { 
               question: { 
                 id: `palpite-${palpite.id}`, 
@@ -197,17 +217,34 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }));
         } else {
           const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
-          
           setGameState((prev) => ({
             ...prev,
+            phase: "PLAYER_RESPONDING",
             pendingQuestion: { question, type: "AI" }
           }));
         }
       }, 1500);
       return () => clearTimeout(timer);
     }
+
+    // Phase: AI_DISCARDING -> IA "thinks" then passes turn
+    if (gameState.phase === "AI_DISCARDING") {
+      const timer = setTimeout(() => {
+        setGameState(prev => ({ ...prev, phase: "AI_PASS_TURN" }));
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+
+    // Phase: AI_PASS_TURN -> AI passes the turn back to player
+    if (gameState.phase === "AI_PASS_TURN") {
+      const timer = setTimeout(() => {
+        nextTurn();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
     return undefined;
-  }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, gameState.aiRemainingChars, gameState.pendingQuestion]);
+  }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
 };

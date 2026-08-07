@@ -22,6 +22,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
   const [cat, setCat] = useState(CATEGORIES[1]!);
 
   const myTurn = gameState.currentTurn === "PLAYER" && !gameState.isGameOver;
+  const canAsk = myTurn && gameState.phase === "PLAYER_TURN";
+  const canPass = myTurn && (gameState.phase === "PLAYER_DISCARDING" || gameState.phase === "PLAYER_TURN");
+  const canPalpite = myTurn && gameState.phase === "PLAYER_TURN";
   const oppColor = playerColor === "AZUL" ? "VERMELHO" : "AZUL";
 
   return (
@@ -48,7 +51,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </button>
         <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
           <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 sm:text-xs">
-            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno" : "Aguarde o adversário"}
+            {gameState.isGameOver ? "FIM DE PARTIDA" : 
+             gameState.phase === "PLAYER_TURN" ? "Seu turno: Faça uma pergunta" :
+             gameState.phase === "WAITING_ANSWER" ? "Aguardando resposta da IA..." :
+             gameState.phase === "PLAYER_DISCARDING" ? "Seu turno: Descarte e passe a vez" :
+             gameState.phase === "AI_TURN" ? "Turno da IA: Pensando..." :
+             gameState.phase === "PLAYER_RESPONDING" ? "Responda a IA" :
+             gameState.phase === "AI_DISCARDING" ? "IA está analisando a resposta..." :
+             "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
             Rodada {gameState.turnCount} · IA {difficulty}
@@ -113,14 +123,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 sm:gap-1.5">
               <button
                 onClick={() => setIsPalpitando(true)}
-                disabled={!myTurn}
+                disabled={!canPalpite}
                 className="flex items-center justify-center rounded-lg bg-[#e52e2e] px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
               >
                 Palpite final
               </button>
               <button
                 onClick={passTurn}
-                disabled={!myTurn}
+                disabled={!canPass}
                 className="flex items-center justify-center rounded-lg bg-gray-700 px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
               >
                 Passar a vez
@@ -175,7 +185,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               {QUESTIONS.filter((q) => q.category === cat).map((q) => (
                 <button
                   key={q.id}
-                  disabled={!myTurn || (q.minTurn ? gameState.turnCount < q.minTurn : false) || gameState.askedQuestions.has(q.id)}
+                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || gameState.askedQuestions.has(q.id)}
                   onClick={() => handlePlayerQuestion(q)}
                   className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
                 >
