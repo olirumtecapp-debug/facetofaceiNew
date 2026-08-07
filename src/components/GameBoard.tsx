@@ -190,7 +190,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       {/* Palpite modal */}
       {isPalpitando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-6">
+          <div className="w-full max-w-4xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-8">
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
