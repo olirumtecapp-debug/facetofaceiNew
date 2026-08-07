@@ -13,7 +13,7 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
   const src = CARD_IMAGES[color][character.id - 1];
 
   return (
-    <div className="flex h-full w-full items-center justify-center p-0.5 sm:p-1">
+    <div className="flex h-full w-full items-center justify-center p-1 sm:p-1.5">
       <button
         type="button"
         onClick={onClick}

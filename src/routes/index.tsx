@@ -286,7 +286,7 @@ function Index() {
                     <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
                   </div>
                   <h3 className="text-3xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-4">{c.nome}</h3>
-                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-sm bg-white/40 p-4 rounded-xl border border-black/5">
+                  <div className="grid grid-cols-1 gap-y-3 w-full text-left font-bold text-sm bg-white/40 p-4 rounded-xl border border-black/5">
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Gênero:</span> {c.genero}</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Cabelo:</span> {c.corCabelo} ({c.estiloCabelo})</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Pele:</span> {c.tomPele}</p>
