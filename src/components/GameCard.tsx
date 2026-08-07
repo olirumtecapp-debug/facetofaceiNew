@@ -29,19 +29,26 @@ export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardPr
       {/* Front */}
       <div className="absolute inset-0 [backface-visibility:hidden]">
         <div 
-          className="h-full w-full rounded-lg border-2 shadow-lg"
+          className="h-full w-full rounded-md border-[3px] shadow-lg flex flex-col overflow-hidden"
           style={{
             borderColor: color === "AZUL" ? "#1e62ec" : "#e52e2e",
-            backgroundImage: `url(${spriteSheet})`,
-            backgroundSize: "600% 400%",
-            backgroundPosition: `${x}% ${y}%`,
+            backgroundColor: "#0d1117",
           }}
-        />
-        {!isSecret && (
-          <div className="absolute bottom-0 w-full bg-black/60 py-0.5 text-center text-[10px] font-bold text-white">
-            {character.nome}
-          </div>
-        )}
+        >
+          <div 
+            className="flex-1 w-full"
+            style={{
+              backgroundImage: `url(${spriteSheet})`,
+              backgroundSize: "600% 400%",
+              backgroundPosition: `${x}% ${y}%`,
+            }}
+          />
+          {!isSecret && (
+            <div className="bg-black/80 py-0.5 text-center text-[9px] font-black text-white uppercase tracking-tighter leading-none">
+              {character.nome}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Back (The "Down" state) */}
