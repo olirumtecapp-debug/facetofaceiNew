@@ -17,7 +17,7 @@ export type GameState = {
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
-  pendingQuestion?: { question: Question; type: "PLAYER" | "AI" } | undefined;
+  pendingQuestion?: { question: Question; type: "PLAYER" | "AI"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
@@ -55,6 +55,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     setGameState((prev) => ({
       ...prev,
       pendingQuestion: { question, type: "PLAYER" },
+    }));
+  };
+
+  const revealAIAnswer = () => {
+    if (!gameState.pendingQuestion || gameState.pendingQuestion.type !== "PLAYER") return;
+    const answer = getAIResponse(gameState.aiSecret, gameState.pendingQuestion.question) ? "SIM" : "NÃO";
+    setGameState(prev => ({
+      ...prev,
+      pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
     }));
   };
 
@@ -172,5 +181,5 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     return undefined;
   }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn, gameState.aiRemainingChars]);
 
-  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion };
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
 };

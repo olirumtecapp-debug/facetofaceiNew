@@ -14,7 +14,7 @@ interface GameBoardProps {
 const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
 
 export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) => {
-  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion } = useGameState(
+  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer } = useGameState(
     playerColor,
     difficulty,
   );
@@ -262,29 +262,47 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
               {gameState.pendingQuestion.type === "PLAYER" ? (
                 <div className="flex flex-col gap-6">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Personagem da IA</div>
-                    <div className="w-24">
-                      <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-black/40 text-4xl">
-                        ❓
+                  {gameState.pendingQuestion.revealedAnswer ? (
+                    <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
+                      <div className={`text-6xl font-black italic tracking-tighter ${gameState.pendingQuestion.revealedAnswer === "SIM" ? "text-green-500" : "text-red-500"}`}>
+                        {gameState.pendingQuestion.revealedAnswer}
                       </div>
+                      <div className="text-center text-sm font-bold text-gray-400">
+                        {gameState.pendingQuestion.revealedAnswer === "SIM" 
+                          ? "Descarte quem NÃO tem essa característica!" 
+                          : "Descarte quem TEM essa característica!"}
+                      </div>
+                      <button
+                        onClick={() => answerQuestion(gameState.pendingQuestion!.revealedAnswer!)}
+                        className="w-full rounded-xl bg-[#1e62ec] py-4 text-lg font-black text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(30,98,236,0.3)]"
+                      >
+                        ENTENDI, CONTINUAR
+                      </button>
                     </div>
-                  </div>
-                  
-                  <div className="flex flex-col gap-4">
-                    <div className="text-sm font-bold uppercase tracking-widest text-blue-400 animate-pulse">
-                      IA está respondendo...
-                    </div>
-                    <button
-                      onClick={() => {
-                        const ans = getAIResponse(gameState.aiSecret, gameState.pendingQuestion!.question) ? "SIM" : "NÃO";
-                        answerQuestion(ans);
-                      }}
-                      className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
-                    >
-                      VER RESPOSTA
-                    </button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Personagem da IA</div>
+                        <div className="w-24">
+                          <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-black/40 text-4xl">
+                            ❓
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-4">
+                        <div className="text-sm font-bold uppercase tracking-widest text-blue-400 animate-pulse">
+                          IA está respondendo...
+                        </div>
+                        <button
+                          onClick={revealAIAnswer}
+                          className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
+                        >
+                          VER RESPOSTA
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-6">
@@ -297,13 +315,19 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
                   <div className="grid grid-cols-2 gap-4">
                     <button
-                      onClick={() => answerQuestion("SIM")}
+                      onClick={() => {
+                        answerQuestion("SIM");
+                        alert("A IA recebeu sua resposta! Agora ela vai descartar os personagens que NÃO possuem essa característica.");
+                      }}
                       className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(22,163,74,0.3)]"
                     >
                       SIM
                     </button>
                     <button
-                      onClick={() => answerQuestion("NÃO")}
+                      onClick={() => {
+                        answerQuestion("NÃO");
+                        alert("A IA recebeu sua resposta! Agora ela vai descartar os personagens que POSSUEM essa característica.");
+                      }}
                       className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-red-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(220,38,38,0.3)]"
                     >
                       NÃO
