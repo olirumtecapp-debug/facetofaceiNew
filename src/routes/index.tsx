@@ -189,27 +189,32 @@ function Index() {
           alt="FTF - Face to Face"
           className="h-24 w-auto object-contain sm:h-40 md:h-48"
         />
-        <div className="flex w-full flex-col items-center justify-center gap-6 sm:flex-row sm:gap-8">
+        <div className="relative flex w-full max-w-4xl flex-col items-center justify-center gap-4 rounded-3xl border border-white/20 bg-white/5 p-6 backdrop-blur-md sm:flex-row sm:gap-6 sm:p-10">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+          
           <button
             onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-            className="group relative h-auto w-56 transition-transform hover:scale-105 active:scale-95 sm:w-64 md:w-72"
+            className="group relative h-auto w-48 transition-all hover:scale-105 active:scale-95 sm:w-56 md:w-64"
           >
-            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/30 blur-2xl transition-opacity group-hover:opacity-100 opacity-60" />
+            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-40" />
             <img 
               src={playIaAsset.url} 
               alt="Jogar vs IA" 
-              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_15px_rgba(30,98,236,0.6)]" 
+              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_10px_rgba(30,98,236,0.4)]" 
             />
           </button>
+
+          <div className="hidden h-20 w-px bg-white/10 sm:block" />
+
           <button
             onClick={() => setScreen("ONLINE")}
-            className="group relative h-auto w-56 transition-transform hover:scale-105 active:scale-95 sm:w-64 md:w-72"
+            className="group relative h-auto w-48 transition-all hover:scale-105 active:scale-95 sm:w-56 md:w-64"
           >
-            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/30 blur-2xl transition-opacity group-hover:opacity-100 opacity-60" />
+            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-40" />
             <img 
               src={playOnlineAsset.url} 
               alt="Jogar on-line" 
-              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_15px_rgba(229,46,46,0.6)]" 
+              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_10px_rgba(229,46,46,0.4)]" 
             />
           </button>
         </div>
