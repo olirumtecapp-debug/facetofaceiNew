@@ -252,9 +252,9 @@ function Index() {
 
       {showChars && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
-          <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+          <div className="flex max-h-[95dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
             <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
+            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-y-6 gap-x-4 overflow-y-auto custom-scrollbar p-2">
               {CHARACTERS.map((c) => (
                 <button 
                   key={c.id} 
@@ -277,23 +277,23 @@ function Index() {
 
       {selectedCharId !== null && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+          <div className="w-full max-w-[280px] sm:max-w-sm rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
             {(() => {
               const c = CHARACTERS.find(char => char.id === selectedCharId)!;
               return (
                 <div className="flex flex-col items-center p-4 text-gray-900">
-                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-2">
+                  <div className="w-24 sm:w-32 aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
                     <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
                   </div>
-                  <h3 className="text-3xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-4">{c.nome}</h3>
-                  <div className="grid grid-cols-1 gap-y-3 w-full text-left font-bold text-sm bg-white/40 p-4 rounded-xl border border-black/5">
+                  <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
+                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Gênero:</span> {c.genero}</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Cabelo:</span> {c.corCabelo} ({c.estiloCabelo})</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Pele:</span> {c.tomPele}</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Olhos:</span> {c.corOlhos}</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Barba:</span> {c.barbaBigode}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Acessórios:</span> {c.oculos ? "Óculos" : ""} {c.brincos ? "Brincos" : ""} {c.chapeuBoneFaixa !== "Nenhum" ? c.chapeuBoneFaixa : ""}</p>
-                    <p className="flex justify-between"><span className="text-gray-500 uppercase text-[10px]">Extra:</span> {c.acessoriosExtra}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Acessórios:</span> {c.oculos ? "Óculos" : ""} {c.brincos ? "Brincos" : ""} {c.chapeuBoneFaixa !== "Nenhum" ? c.chapeuBoneFaixa : ""}</p>
+                    <p className="flex flex-col gap-0.5"><span className="text-gray-500 uppercase text-[8px]">Perfil:</span> <span className="text-[11px] leading-tight text-gray-800">{c.acessoriosExtra}</span></p>
                   </div>
                   <button
                     onClick={() => setSelectedCharId(null)}
