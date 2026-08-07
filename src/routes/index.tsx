@@ -254,7 +254,7 @@ function Index() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
           <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
             <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar p-1">
+            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
               {CHARACTERS.map((c) => (
                 <button 
                   key={c.id} 
@@ -286,7 +286,7 @@ function Index() {
                     <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
                   </div>
                   <h3 className="text-3xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-4">{c.nome}</h3>
-                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-sm bg-white/40 p-4 rounded-xl border border-black/5">
+                  <div className="grid grid-cols-1 gap-y-3 w-full text-left font-bold text-sm bg-white/40 p-4 rounded-xl border border-black/5">
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Gênero:</span> {c.genero}</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Cabelo:</span> {c.corCabelo} ({c.estiloCabelo})</p>
                     <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Pele:</span> {c.tomPele}</p>
