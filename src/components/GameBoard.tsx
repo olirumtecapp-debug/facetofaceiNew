@@ -63,17 +63,17 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 lg:flex-row lg:gap-3 lg:p-3">
         {/* Board */}
-        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-1 sm:p-4 custom-scrollbar">
+        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-1 sm:p-2 custom-scrollbar">
           <div className="mx-auto w-fit max-w-full">
-            <table className="border-separate border-spacing-0.5 sm:border-spacing-2">
+            <table className="border-separate border-spacing-[1px] sm:border-spacing-1">
               <tbody>
-                {Array.from({ length: 6 }).map((_, rowIndex) => (
+                {Array.from({ length: 4 }).map((_, rowIndex) => (
                   <tr key={rowIndex}>
-                    {Array.from({ length: 4 }).map((_, colIndex) => {
-                      const charIndex = rowIndex * 4 + colIndex;
+                    {Array.from({ length: 6 }).map((_, colIndex) => {
+                      const charIndex = rowIndex * 6 + colIndex;
                       const item = gameState.playerBoard[charIndex];
                       return (
-                        <td key={colIndex} className="p-0.5 align-middle text-center">
+                        <td key={colIndex} className="p-0 align-middle text-center">
                           {item && (
                             <GameCard
                               character={item.character}
