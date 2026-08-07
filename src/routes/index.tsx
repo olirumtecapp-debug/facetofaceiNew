@@ -155,7 +155,7 @@ function Index() {
                 setIsConnecting(true);
                 try {
                   await joinRoomFn({ data: { code: joinCode } });
-                  setScreen("GAME"); // For now just transition, real sync comes later
+                  setScreen("GAME"); 
                   toast.success("Entrou na sala!");
                 } catch (e) {
                   toast.error("Sala não encontrada ou erro ao entrar.");
@@ -163,12 +163,12 @@ function Index() {
                   setIsConnecting(false);
                 }
               }}
-
               disabled={isConnecting || !joinCode}
-              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border border-white/20 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
+              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border-2 border-[#ff4444]/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
             >
               {isConnecting ? "Entrando..." : "Entrar"}
             </button>
+            <BackButton onClick={() => setScreen("MENU")} className="mt-4 w-full justify-center" />
 
           </div>
           <p className="text-center text-xs text-gray-500">
