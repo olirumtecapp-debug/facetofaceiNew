@@ -42,6 +42,7 @@ function Index() {
   const [playerColor, setPlayerColor] = useState<"AZUL" | "VERMELHO">("AZUL");
   const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
   const [showChars, setShowChars] = useState(false);
+  const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
@@ -251,33 +252,58 @@ function Index() {
 
       {showChars && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
-          <div className="flex max-h-[90dvh] w-full max-w-4xl flex-col rounded-2xl border border-white/10 bg-[#0b0e14] p-4">
-            <h2 className="mb-3 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="grid flex-1 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 overflow-y-auto custom-scrollbar">
+          <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+            <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
+            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar p-1">
               {CHARACTERS.map((c) => (
-                <div key={c.id} className="rounded-xl border-2 border-[#d4af37] bg-[#e0e0e0] p-0.5 overflow-hidden flex flex-col">
-                  <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="w-full h-32 object-contain contrast-110" />
-                  <ul className="mt-2 space-y-0.5 text-[10px] leading-tight text-gray-400">
-                    <li>{c.genero}</li>
-                    <li>Cabelo: {c.corCabelo} · {c.estiloCabelo}</li>
-                    <li>Pele: {c.tomPele} · Olhos: {c.corOlhos}</li>
-                    <li>Barba: {c.barbaBigode}</li>
-                    <li>
-                      Óculos: {c.oculos ? "Sim" : "Não"} · Brincos: {c.brincos ? "Sim" : "Não"}
-                    </li>
-                    <li>Cabeça: {c.chapeuBoneFaixa}</li>
-                    <li>Extra: {c.acessoriosExtra}</li>
-                    <li>Roupa: {c.corRoupa}</li>
-                  </ul>
-                </div>
+                <button 
+                  key={c.id} 
+                  onClick={() => setSelectedCharId(c.id)}
+                  className="group relative aspect-square overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#e0e0e0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95"
+                >
+                  <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-110" />
+                </button>
               ))}
             </div>
             <button
               onClick={() => setShowChars(false)}
-              className="mt-3 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-bold transition-all hover:bg-gray-700 hover:scale-[1.02] active:scale-95"
+              className="mt-4 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 hover:scale-[1.02] active:scale-95"
             >
               FECHAR
             </button>
+          </div>
+        </div>
+      )}
+
+      {selectedCharId !== null && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+            {(() => {
+              const c = CHARACTERS.find(char => char.id === selectedCharId)!;
+              return (
+                <div className="flex flex-col items-center p-4 text-gray-900">
+                  <div className="w-full aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-2">
+                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
+                  </div>
+                  <h3 className="text-3xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-4">{c.nome}</h3>
+                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-sm bg-white/40 p-4 rounded-xl border border-black/5">
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Gênero:</span> {c.genero}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Cabelo:</span> {c.corCabelo} ({c.estiloCabelo})</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Pele:</span> {c.tomPele}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Olhos:</span> {c.corOlhos}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Barba:</span> {c.barbaBigode}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Acessórios:</span> {c.oculos ? "Óculos" : ""} {c.brincos ? "Brincos" : ""} {c.chapeuBoneFaixa !== "Nenhum" ? c.chapeuBoneFaixa : ""}</p>
+                    <p className="flex justify-between"><span className="text-gray-500 uppercase text-[10px]">Extra:</span> {c.acessoriosExtra}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedCharId(null)}
+                    className="mt-6 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
+                  >
+                    VOLTAR
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
