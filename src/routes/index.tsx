@@ -7,6 +7,10 @@ import { CARD_IMAGES } from "@/assets/chars";
 import { CHARACTERS } from "@/data/characters";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
+import { createRoom, joinRoom } from "@/lib/online.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,6 +42,10 @@ function Index() {
   const [showChars, setShowChars] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const createRoomFn = useServerFn(createRoom);
+  const joinRoomFn = useServerFn(joinRoom);
+
 
   if (screen === "GAME") {
     return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} />;
@@ -104,10 +112,22 @@ function Index() {
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
             <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
             <button
-              onClick={() => setRoomCode(`FTF-${Math.floor(1000 + Math.random() * 9000)}`)}
-              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase hover:brightness-110"
+              onClick={async () => {
+                setIsConnecting(true);
+                try {
+                  const res = await createRoomFn();
+                  setRoomCode(res.code);
+                  toast.success("Sala criada!");
+                } catch (e) {
+                  toast.error("Erro ao criar sala. Verifique se está logado.");
+                } finally {
+                  setIsConnecting(false);
+                }
+              }}
+              disabled={isConnecting}
+              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase hover:brightness-110 disabled:opacity-50"
             >
-              Gerar código
+              {isConnecting ? "Criando..." : "Gerar código"}
             </button>
             {roomCode && (
               <p className="mt-3 text-center text-2xl font-black tracking-widest text-yellow-400">{roomCode}</p>
@@ -121,9 +141,27 @@ function Index() {
               placeholder="FTF-0000"
               className="mb-3 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-3 text-center text-xl font-black tracking-widest outline-none focus:border-yellow-400"
             />
-            <button className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase hover:brightness-110">
-              Entrar
+            <button 
+              onClick={async () => {
+                if (!joinCode) return;
+                setIsConnecting(true);
+                try {
+                  await joinRoomFn({ data: { code: joinCode } });
+                  setScreen("GAME"); // For now just transition, real sync comes later
+                  toast.success("Entrou na sala!");
+                } catch (e) {
+                  toast.error("Sala não encontrada ou erro ao entrar.");
+                } finally {
+                  setIsConnecting(false);
+                }
+              }}
+
+              disabled={isConnecting || !joinCode}
+              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase hover:brightness-110 disabled:opacity-50"
+            >
+              {isConnecting ? "Entrando..." : "Entrar"}
             </button>
+
           </div>
           <p className="text-center text-xs text-gray-500">
             As salas funcionam localmente nesta versão; a sincronização em tempo real entre dois dispositivos precisa do
