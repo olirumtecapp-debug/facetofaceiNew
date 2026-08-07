@@ -268,13 +268,13 @@ function Index() {
                             {c && (
                               <button
                                 onClick={() => setSelectedCharId(c.id)}
-                                className="group relative aspect-[3/4] h-[150px] w-full overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#e0e0e0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95 sm:h-[180px]"
+                                className="group relative aspect-[3/4] h-[150px] w-full overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#c0c0c0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95 sm:h-[180px]"
                               >
-                                <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#e0e0e0]">
+                                <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-2 sm:p-3">
                                   <img
                                     src={CARD_IMAGES.AZUL[c.id - 1]!}
                                     alt={c.nome}
-                                    className="h-full w-full object-cover object-center contrast-110"
+                                    className="h-full w-full object-contain object-center contrast-110"
                                   />
                                 </div>
                               </button>
