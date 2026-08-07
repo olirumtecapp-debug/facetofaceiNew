@@ -198,7 +198,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-[#f5f5f5] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playIaAsset.url} 
@@ -216,7 +216,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-[#f5f5f5] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playOnlineAsset.url} 
