@@ -46,10 +46,10 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden p-4 gap-6">
+      <div className="flex flex-1 overflow-hidden p-3 gap-4">
         {/* Main Board Area */}
-        <div className="flex-1 overflow-y-auto pr-2">
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+        <div className="flex-[3] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
             {gameState.playerBoard.map((item) => (
               <GameCard
                 key={item.character.id}
@@ -63,11 +63,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </div>
 
         {/* Side Panel */}
-        <div className="flex w-80 flex-col gap-4">
+        <div className="flex flex-[1] min-w-[320px] flex-col gap-3">
            {/* Your Card */}
-           <div className="rounded-xl border border-white/10 bg-[#0b0e14] p-4">
-             <div className="mb-2 text-xs font-bold text-gray-500">SUA CARTA</div>
-             <div className="mx-auto w-32">
+           <div className="rounded-xl border border-white/10 bg-[#0b0e14] p-3">
+             <div className="mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">SUA CARTA</div>
+             <div className="mx-auto w-20">
                <GameCard 
                  character={gameState.playerSecret} 
                  isDown={false} 
@@ -80,15 +80,15 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
            {/* History / Chat */}
            <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
-             <div className="border-b border-white/10 p-3 text-xs font-bold text-gray-500">HISTÓRICO</div>
-             <div className="flex-1 overflow-y-auto p-4 space-y-3">
+             <div className="border-b border-white/10 p-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">HISTÓRICO</div>
+             <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar text-[11px]">
                {gameState.history.map((h, i) => (
                  <div key={i} className={`flex flex-col ${h.type === "PLAYER" ? "items-end" : "items-start"}`}>
-                   <div className={`max-w-[80%] rounded-lg p-2 text-sm ${h.type === "PLAYER" ? "bg-blue-600" : "bg-gray-700"}`}>
+                   <div className={`max-w-[90%] rounded-lg px-2 py-1 ${h.type === "PLAYER" ? "bg-blue-600/80" : "bg-gray-700/80"}`}>
                      {h.text}
                    </div>
                    {h.answer && (
-                     <div className={`mt-1 text-[10px] font-bold ${h.answer === "SIM" ? "text-green-400" : "text-red-400"}`}>
+                     <div className={`mt-0.5 px-1 text-[9px] font-black ${h.answer === "SIM" ? "text-green-400" : "text-red-400"}`}>
                        {h.answer}
                      </div>
                    )}
@@ -98,19 +98,19 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
              {/* Question Selector */}
              {gameState.currentTurn === "PLAYER" && !gameState.isGameOver && !isPalpitando && (
-               <div className="border-t border-white/10 p-4">
-                 <div className="mb-2 text-xs font-bold text-gray-500">SUA VEZ DE PERGUNTAR</div>
-                 <div className="max-h-48 overflow-y-auto space-y-2">
+               <div className="border-t border-white/10 bg-black/20 p-3">
+                 <div className="mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">SUA VEZ DE PERGUNTAR</div>
+                 <div className="max-h-40 overflow-y-auto space-y-2 custom-scrollbar">
                     {["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"].map(cat => (
                       <div key={cat}>
-                        <div className="mb-1 text-[10px] font-bold text-gray-600 uppercase">{cat}</div>
+                        <div className="mb-1 text-[9px] font-bold text-gray-600 uppercase">{cat}</div>
                         <div className="flex flex-wrap gap-1">
                           {QUESTIONS.filter(q => q.category === cat).map(q => (
                              <button
                                key={q.id}
                                disabled={q.minTurn ? gameState.turnCount < q.minTurn : false}
                                onClick={() => handlePlayerQuestion(q)}
-                               className="rounded bg-gray-800 px-2 py-1 text-[10px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30"
+                               className="rounded bg-gray-800/50 px-2 py-1 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 border border-white/5"
                              >
                                {q.text}
                              </button>
