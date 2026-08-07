@@ -16,7 +16,7 @@ export type GameState = {
   turnCount: number;
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
-  winner?: "PLAYER" | "AI";
+  winner?: "PLAYER" | "AI" | undefined;
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
@@ -96,6 +96,31 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
+  const passTurn = () => {
+    if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
+    setGameState((prev) => ({
+      ...prev,
+      history: [...prev.history, { type: "PLAYER", text: "Passou a vez." }],
+    }));
+    setTimeout(nextTurn, 400);
+  };
+
+  const rematch = () => {
+    setGameState((prev) => ({
+      ...prev,
+      playerSecret: CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!,
+      aiSecret: CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!,
+      playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
+      aiRemainingChars: [...CHARACTERS],
+      currentTurn: "PLAYER",
+      turnCount: 1,
+      history: [],
+      isGameOver: false,
+      winner: undefined,
+    }));
+  };
+
+
   useEffect(() => {
     if (gameState.currentTurn === "AI" && !gameState.isGameOver) {
       const timer = setTimeout(() => {
@@ -134,5 +159,5 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     return undefined;
   }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn, gameState.aiRemainingChars]);
 
-  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite };
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch };
 };
