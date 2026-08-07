@@ -1,6 +1,5 @@
 import { Character } from "@/data/characters";
-import cardsAzulAsset from "@/assets/CardsAzul.png.asset.json";
-import cardsVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
+import { CARD_IMAGES } from "@/assets/chars";
 
 interface CardProps {
   character: Character;
@@ -10,56 +9,29 @@ interface CardProps {
   isSecret?: boolean;
 }
 
-export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardProps) => {
-  const cols = 6;
-  const rows = 4;
-  const index = character.id - 1;
-  
-  // Adjusted percentages for precise 6x4 sprite sheet centering
-  const x = (index % cols) * (100 / (cols - 1));
-  const y = Math.floor(index / cols) * (100 / (rows - 1));
-
-  const spriteSheet = color === "AZUL" ? cardsAzulAsset.url : cardsVermelhoAsset.url;
+export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
+  const src = CARD_IMAGES[color][character.id - 1];
 
   return (
-    <div 
-      className={`relative aspect-[3/4] cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-1 sm:p-2 ${isDown ? "opacity-30 grayscale contrast-75" : "opacity-100"}`}
+    <button
+      type="button"
       onClick={onClick}
+      className={`relative flex aspect-[3/4] w-full items-center justify-center p-[3px] transition-all duration-200 ${
+        isDown ? "opacity-25 grayscale" : "opacity-100 hover:scale-[1.04]"
+      }`}
     >
-      <div 
-        className="h-full w-full rounded-md border-[2px] sm:border-[3px] shadow-lg flex flex-col overflow-hidden bg-[#0d1117] relative"
-        style={{
-          borderColor: color === "AZUL" ? "#1e62ec" : "#e52e2e",
-        }}
-      >
-        <div 
-          className="flex-1 w-full relative overflow-hidden bg-[#0d1117] flex items-center justify-center"
-        >
-          {/* Using a centered container for the sprite to ensure perfect padding on all sides */}
-          <div 
-            className="w-full h-full"
-            style={{
-              backgroundImage: `url(${spriteSheet})`,
-              backgroundSize: "600% 400%",
-              backgroundPosition: `${x}% ${y}%`,
-              backgroundRepeat: "no-repeat",
-              transform: "scale(1.02)", 
-              transformOrigin: "center center"
-            }}
-          />
-        </div>
-      </div>
-
-      
-      {/* Visual indicator for eliminated cards */}
+      <img
+        src={src}
+        alt={character.nome}
+        loading="lazy"
+        className="h-full w-full object-contain object-center drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)]"
+      />
       {isDown && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-           <div className="w-8 h-8 sm:w-10 sm:h-10 border-4 border-red-500/50 rounded-full flex items-center justify-center bg-black/20">
-             <div className="w-5 sm:w-6 h-1 bg-red-500/50 rotate-45 absolute" />
-             <div className="w-5 sm:w-6 h-1 bg-red-500/50 -rotate-45 absolute" />
-           </div>
-        </div>
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="h-[70%] w-[3px] rotate-45 rounded bg-red-500/70" />
+          <span className="absolute h-[70%] w-[3px] -rotate-45 rounded bg-red-500/70" />
+        </span>
       )}
-    </div>
+    </button>
   );
 };
