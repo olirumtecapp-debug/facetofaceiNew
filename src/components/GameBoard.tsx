@@ -80,24 +80,26 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden p-1 lg:flex-row lg:gap-2 lg:p-2">
         {/* Board */}
         <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-center justify-center">
-          <div className="w-full h-full flex items-center justify-center overflow-hidden">
-            <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full h-full max-w-4xl table-fixed">
-              <tbody className="h-full">
+          <div className="w-full h-full flex items-center justify-center overflow-auto custom-scrollbar">
+            <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full max-w-4xl">
+              <tbody>
                 {Array.from({ length: 4 }).map((_, rowIndex) => (
-                  <tr key={rowIndex} className="h-1/4">
+                  <tr key={rowIndex}>
                     {Array.from({ length: 6 }).map((_, colIndex) => {
                       const charIndex = rowIndex * 6 + colIndex;
                       const item = gameState.playerBoard[charIndex];
                       return (
-                        <td key={colIndex} className="p-0 align-middle text-center w-1/6 h-full">
-                          {item && (
-                            <GameCard
-                              character={item.character}
-                              isDown={item.isDown}
-                              color={playerColor}
-                              onClick={() => toggleCard(item.character.id)}
-                            />
-                          )}
+                        <td key={colIndex} className="p-0 align-middle text-center w-1/6">
+                          <div className="w-full max-w-[80px] sm:max-w-[100px] mx-auto py-0.5">
+                            {item && (
+                              <GameCard
+                                character={item.character}
+                                isDown={item.isDown}
+                                color={playerColor}
+                                onClick={() => toggleCard(item.character.id)}
+                              />
+                            )}
+                          </div>
                         </td>
                       );
                     })}
