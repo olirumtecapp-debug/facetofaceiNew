@@ -189,34 +189,42 @@ function Index() {
           alt="FTF - Face to Face"
           className="h-24 w-auto object-contain sm:h-40 md:h-48"
         />
-        <div className="relative flex w-full max-w-4xl flex-col items-center justify-center gap-4 rounded-3xl border border-white/20 bg-white/5 p-6 backdrop-blur-md sm:flex-row sm:gap-6 sm:p-10">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
-          
-          <button
-            onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-            className="group relative h-auto w-48 transition-all hover:scale-105 active:scale-95 sm:w-56 md:w-64"
-          >
-            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-40" />
-            <img 
-              src={playIaAsset.url} 
-              alt="Jogar vs IA" 
-              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_10px_rgba(30,98,236,0.4)]" 
-            />
-          </button>
+        <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
+          {/* Botão Jogar vs IA */}
+          <div className="group relative">
+            {/* Brilho externo azul */}
+            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
+            
+            {/* Moldura branca para mascarar recorte */}
+            <button
+              onClick={() => setScreen("CHOOSE_DIFFICULTY")}
+              className="relative flex h-32 w-48 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/20 bg-white p-2 transition-all hover:scale-105 active:scale-95 sm:h-40 sm:w-56 md:h-48 md:w-64"
+            >
+              <img 
+                src={playIaAsset.url} 
+                alt="Jogar vs IA" 
+                className="h-full w-full object-contain contrast-125 brightness-110" 
+              />
+            </button>
+          </div>
 
-          <div className="hidden h-20 w-px bg-white/10 sm:block" />
-
-          <button
-            onClick={() => setScreen("ONLINE")}
-            className="group relative h-auto w-48 transition-all hover:scale-105 active:scale-95 sm:w-56 md:w-64"
-          >
-            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-40" />
-            <img 
-              src={playOnlineAsset.url} 
-              alt="Jogar on-line" 
-              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_10px_rgba(229,46,46,0.4)]" 
-            />
-          </button>
+          {/* Botão Jogar on-line */}
+          <div className="group relative">
+            {/* Brilho externo vermelho */}
+            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
+            
+            {/* Moldura branca para mascarar recorte */}
+            <button
+              onClick={() => setScreen("ONLINE")}
+              className="relative flex h-32 w-48 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/20 bg-white p-2 transition-all hover:scale-105 active:scale-95 sm:h-40 sm:w-56 md:h-48 md:w-64"
+            >
+              <img 
+                src={playOnlineAsset.url} 
+                alt="Jogar on-line" 
+                className="h-full w-full object-contain contrast-125 brightness-110" 
+              />
+            </button>
+          </div>
         </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
           <button 
