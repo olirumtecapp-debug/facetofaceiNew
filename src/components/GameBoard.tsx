@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Character, CHARACTERS } from "@/data/characters";
+import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";
 import { useGameState } from "@/hooks/use-game-state";
 import { GameCard } from "@/components/GameCard";
 import { Difficulty } from "@/lib/ai-logic";
-import logoAsset from "@/assets/logo.png.asset.json";
 
 interface GameBoardProps {
   playerColor: "AZUL" | "VERMELHO";
@@ -12,44 +11,45 @@ interface GameBoardProps {
   onBack: () => void;
 }
 
+const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
+
 export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) => {
-  const { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite } = useGameState(playerColor, difficulty);
+  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch } = useGameState(
+    playerColor,
+    difficulty,
+  );
   const [isPalpitando, setIsPalpitando] = useState(false);
+  const [cat, setCat] = useState(CATEGORIES[1]!);
+
+  const myTurn = gameState.currentTurn === "PLAYER" && !gameState.isGameOver;
+  const oppColor = playerColor === "AZUL" ? "VERMELHO" : "AZUL";
 
   return (
-    <div className="flex h-screen w-full flex-col bg-[#0d1117] text-white overflow-hidden">
-      {/* Top Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#0b0e14] px-4 py-2 sm:py-4">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="text-sm font-bold text-gray-400 hover:text-white">
-            MENU
-          </button>
-          <div className="flex gap-2 text-xl font-bold">
-            <span className="text-blue-500">{gameState.playerScore}</span>
-            <span>-</span>
-            <span className="text-red-500">{gameState.aiScore}</span>
-          </div>
-        </div>
-        
-        <div className="absolute left-1/2 -translate-x-1/2 text-center">
-          <div className={`text-sm font-bold uppercase tracking-widest ${gameState.currentTurn === "PLAYER" ? "text-yellow-400" : "text-gray-400"}`}>
-            {gameState.currentTurn === "PLAYER" ? "Seu turno de perguntar" : "Aguarde o adversário..."}
-          </div>
-        </div>
-
-        <button 
-          onClick={() => setIsPalpitando(true)}
-          disabled={gameState.currentTurn !== "PLAYER" || gameState.isGameOver}
-          className="rounded-full bg-red-600 px-6 py-2 text-sm font-bold transition-all hover:bg-red-700 disabled:opacity-50"
-        >
-          PALPITE FINAL
+    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0d1117] text-white">
+      {/* Header */}
+      <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#0b0e14] px-3 py-2">
+        <button onClick={onBack} className="text-xs font-bold text-gray-400 hover:text-white">
+          MENU
         </button>
-      </div>
+        <div className="min-w-0 text-center">
+          <div className="text-[11px] font-black uppercase tracking-widest text-yellow-400 sm:text-sm">
+            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno de perguntar" : "Aguarde o adversário..."}
+          </div>
+          <div className="text-[10px] font-bold text-gray-500">
+            Rodada {gameState.turnCount} · IA {difficulty}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
+          <span className="text-[#1e62ec]">{gameState.playerScore}</span>
+          <span className="text-gray-600">×</span>
+          <span className="text-[#e52e2e]">{gameState.aiScore}</span>
+        </div>
+      </header>
 
-      <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-hidden p-2 sm:p-3 gap-3">
-        {/* Main Board Area */}
-        <div className="flex-[3] min-h-0 overflow-y-auto pr-1 custom-scrollbar">
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-2 sm:gap-3 lg:gap-4 p-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 lg:flex-row lg:gap-3 lg:p-3">
+        {/* Board */}
+        <section className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2 custom-scrollbar">
+          <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 sm:gap-2 lg:gap-3">
             {gameState.playerBoard.map((item) => (
               <GameCard
                 key={item.character.id}
@@ -60,93 +60,125 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               />
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Side Panel */}
-        <div className="flex flex-col lg:w-80 shrink-0 gap-2 sm:gap-3 min-h-0">
-           {/* Your Card and Score (Condensed for mobile) */}
-           <div className="flex lg:flex-col gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:p-3 shrink-0">
-             <div className="flex-1 lg:flex-none">
-               <div className="mb-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">SUA CARTA</div>
-               <div className="mx-auto w-16 sm:w-20">
-                 <GameCard 
-                   character={gameState.playerSecret} 
-                   isDown={false} 
-                   color={playerColor} 
-                   onClick={() => {}} 
-                   isSecret 
-                 />
-               </div>
-             </div>
-           </div>
+        {/* Side panel */}
+        <aside className="flex min-h-0 shrink-0 flex-col gap-2 lg:w-[340px]">
+          {/* Secret cards + actions */}
+          <div className="flex shrink-0 gap-3 rounded-xl border border-white/10 bg-[#0b0e14] p-2">
+            <div className="w-16 shrink-0 sm:w-20">
+              <div className="mb-1 text-center text-[8px] font-black uppercase tracking-tight text-gray-500">
+                Sua carta
+              </div>
+              <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
+            </div>
+            <div className="w-16 shrink-0 sm:w-20">
+              <div className="mb-1 text-center text-[8px] font-black uppercase tracking-tight text-gray-500">
+                Adversário
+              </div>
+              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-2xl">
+                ❓
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+              <button
+                onClick={() => setIsPalpitando(true)}
+                disabled={!myTurn}
+                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide transition-colors hover:bg-red-700 disabled:opacity-40"
+              >
+                Palpite final
+              </button>
+              <button
+                onClick={passTurn}
+                disabled={!myTurn}
+                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide transition-colors hover:bg-gray-600 disabled:opacity-40"
+              >
+                Passar a vez
+              </button>
+            </div>
+          </div>
 
-           {/* History / Chat */}
-           <div className="flex flex-1 flex-col min-h-0 overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
-             <div className="border-b border-white/10 p-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">HISTÓRICO</div>
-             <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar text-[11px]">
-               {gameState.history.map((h, i) => (
-                 <div key={i} className={`flex flex-col ${h.type === "PLAYER" ? "items-end" : "items-start"}`}>
-                   <div className={`max-w-[90%] rounded-lg px-2 py-1 ${h.type === "PLAYER" ? "bg-blue-600/80" : "bg-gray-700/80"}`}>
-                     {h.text}
-                   </div>
-                   {h.answer && (
-                     <div className={`mt-0.5 px-1 text-[9px] font-black ${h.answer === "SIM" ? "text-green-400" : "text-red-400"}`}>
-                       {h.answer}
-                     </div>
-                   )}
-                 </div>
-               ))}
-             </div>
-
-             {/* Question Selector */}
-             {gameState.currentTurn === "PLAYER" && !gameState.isGameOver && !isPalpitando && (
-               <div className="border-t border-white/10 bg-black/20 p-3">
-                 <div className="mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">SUA VEZ DE PERGUNTAR</div>
-                 <div className="max-h-40 overflow-y-auto space-y-2 custom-scrollbar">
-                    {["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"].map(cat => (
-                      <div key={cat}>
-                        <div className="mb-1 text-[9px] font-bold text-gray-600 uppercase">{cat}</div>
-                        <div className="flex flex-wrap gap-1">
-                          {QUESTIONS.filter(q => q.category === cat).map(q => (
-                             <button
-                               key={q.id}
-                               disabled={q.minTurn ? gameState.turnCount < q.minTurn : false}
-                               onClick={() => handlePlayerQuestion(q)}
-                               className="rounded bg-gray-800/50 px-2 py-1 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 border border-white/5"
-                             >
-                               {q.text}
-                             </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                 </div>
-               </div>
-             )}
-           </div>
-        </div>
-      </div>
-
-      {/* Overlays */}
-      {isPalpitando && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-2xl bg-[#0b0e14] p-8 shadow-2xl">
-            <h2 className="mb-6 text-center text-3xl font-black italic text-red-600">QUEM É O PERSONAGEM?</h2>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[60vh] overflow-y-auto mb-6">
-              {CHARACTERS.map(c => (
-                <div 
-                  key={c.id} 
-                  className="cursor-pointer transition-transform hover:scale-105"
-                  onClick={() => {
-                    playerPalpite(c);
-                    setIsPalpitando(false);
-                  }}
-                >
-                   <GameCard character={c} isDown={false} color={playerColor} onClick={() => {}} />
+          {/* History */}
+          <div className="flex min-h-[110px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
+            <div className="border-b border-white/10 p-2 text-[10px] font-black uppercase tracking-tight text-gray-500">
+              Histórico
+            </div>
+            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar">
+              {gameState.history.length === 0 && (
+                <p className="text-center text-[10px] text-gray-600">Faça sua primeira pergunta.</p>
+              )}
+              {gameState.history.map((h, i) => (
+                <div key={i} className={`flex flex-col ${h.type === "PLAYER" ? "items-end" : "items-start"}`}>
+                  <div
+                    className={`max-w-[90%] rounded-lg px-2 py-1 ${h.type === "PLAYER" ? "bg-[#1e62ec]/80" : "bg-gray-700/80"}`}
+                  >
+                    {h.text}
+                  </div>
+                  {h.answer && (
+                    <div
+                      className={`mt-0.5 px-1 text-[10px] font-black ${h.answer === "SIM" ? "text-green-400" : "text-red-400"}`}
+                    >
+                      {h.answer}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            <button 
+          </div>
+
+          {/* Questions */}
+          <div className="shrink-0 rounded-xl border border-white/10 bg-[#0b0e14] p-2">
+            <div className="mb-1.5 flex flex-wrap gap-1">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCat(c)}
+                  className={`rounded-full px-2 py-1 text-[9px] font-black uppercase transition-colors ${
+                    cat === c ? "bg-yellow-400 text-black" : "bg-white/5 text-gray-400 hover:bg-white/10"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            <div className="flex max-h-28 flex-wrap gap-1 overflow-y-auto custom-scrollbar">
+              {QUESTIONS.filter((q) => q.category === cat).map((q) => (
+                <button
+                  key={q.id}
+                  disabled={!myTurn || (q.minTurn ? gameState.turnCount < q.minTurn : false)}
+                  onClick={() => handlePlayerQuestion(q)}
+                  className="rounded border border-white/5 bg-gray-800/60 px-2 py-1 text-[10px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30"
+                >
+                  {q.text}
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* Palpite modal */}
+      {isPalpitando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-6">
+            <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
+              QUEM É O PERSONAGEM?
+            </h2>
+            <div className="mb-4 grid max-h-[55vh] grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6 custom-scrollbar">
+              {CHARACTERS.map((c) => (
+                <GameCard
+                  key={c.id}
+                  character={c}
+                  isDown={false}
+                  color={oppColor}
+                  onClick={() => {
+                    setIsPalpitando(false);
+                    playerPalpite(c);
+                  }}
+                />
+              ))}
+            </div>
+            <button
               onClick={() => setIsPalpitando(false)}
               className="w-full rounded-xl bg-gray-800 py-3 font-bold hover:bg-gray-700"
             >
@@ -156,22 +188,33 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </div>
       )}
 
+      {/* Game over */}
       {gameState.isGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-md">
-           <div className="text-center">
-             <h2 className={`text-6xl font-black italic mb-4 ${gameState.winner === "PLAYER" ? "text-green-500" : "text-red-500"}`}>
-               {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
-             </h2>
-             <p className="mb-8 text-xl text-gray-300">
-               O personagem era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
-             </p>
-             <button 
-               onClick={onBack}
-               className="rounded-full bg-yellow-500 px-12 py-4 text-2xl font-black text-black transition-transform hover:scale-110"
-             >
-               JOGAR NOVAMENTE
-             </button>
-           </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md">
+          <div className="text-center">
+            <h2
+              className={`mb-4 text-4xl font-black italic sm:text-6xl ${gameState.winner === "PLAYER" ? "text-green-500" : "text-[#e52e2e]"}`}
+            >
+              {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
+            </h2>
+            <p className="mb-8 text-lg text-gray-300">
+              O personagem da IA era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
+            </p>
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
+              <button
+                onClick={rematch}
+                className="rounded-full bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-transform hover:scale-105"
+              >
+                REVANCHE
+              </button>
+              <button
+                onClick={onBack}
+                className="rounded-full bg-gray-800 px-10 py-4 text-xl font-black transition-transform hover:scale-105"
+              >
+                MENU
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
