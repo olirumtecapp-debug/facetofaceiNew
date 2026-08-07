@@ -15,7 +15,7 @@ export type GameState = {
   currentTurn: "PLAYER" | "AI" | "PLAYER_RESPONDING";
   turnCount: number;
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
-  pendingQuestion?: Question;
+  pendingQuestion?: Question | undefined;
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
 };
