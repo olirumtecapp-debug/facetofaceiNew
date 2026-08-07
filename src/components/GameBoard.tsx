@@ -263,23 +263,23 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               {gameState.pendingQuestion.type === "PLAYER" ? (
                 <div className="flex flex-col gap-6">
                   {gameState.pendingQuestion.revealedAnswer ? (
-                    <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
-                      <div className={`text-6xl font-black italic tracking-tighter ${gameState.pendingQuestion.revealedAnswer === "SIM" ? "text-green-500" : "text-red-500"}`}>
+                    <div className="flex w-full flex-col items-center gap-5 animate-in zoom-in-95 duration-300">
+                      <div className={`text-5xl font-black italic tracking-tighter sm:text-6xl ${gameState.pendingQuestion.revealedAnswer === "SIM" ? "text-green-500" : "text-red-500"}`}>
                         {gameState.pendingQuestion.revealedAnswer}
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="text-center text-sm font-bold text-gray-400">
+                      <div className="flex w-full flex-col gap-2">
+                        <div className="text-center text-xs font-bold text-gray-400 sm:text-sm">
                           {gameState.pendingQuestion.revealedAnswer === "SIM" 
                             ? "Descarte quem NÃO tem essa característica!" 
                             : "Descarte quem TEM essa característica!"}
                         </div>
-                        <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-3 text-[10px] font-bold text-yellow-500 animate-pulse uppercase tracking-wider">
+                        <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-2.5 text-[9px] font-bold text-yellow-500 animate-pulse uppercase tracking-wider leading-tight sm:p-3 sm:text-[10px]">
                           NÃO ESQUEÇA DE DESCARTAR OS PERSONAGENS ANTES DE FAZER UMA NOVA PERGUNTA!
                         </div>
                       </div>
                       <button
                         onClick={() => answerQuestion(gameState.pendingQuestion!.revealedAnswer!)}
-                        className="w-full rounded-xl bg-[#1e62ec] py-4 text-lg font-black text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(30,98,236,0.3)]"
+                        className="w-full rounded-xl bg-[#1e62ec] py-3 text-base font-black text-white transition-all hover:scale-[1.02] active:scale-95 shadow-[0_4px_12px_rgba(30,98,236,0.3)] sm:py-4 sm:text-lg"
                       >
                         ENTENDI, CONTINUAR
                       </button>
