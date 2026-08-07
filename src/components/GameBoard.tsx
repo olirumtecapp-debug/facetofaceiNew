@@ -17,9 +17,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
   const [isPalpitando, setIsPalpitando] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0d1117] text-white">
+    <div className="flex h-screen w-full flex-col bg-[#0d1117] text-white overflow-hidden">
       {/* Top Header */}
-      <div className="flex items-center justify-between border-b border-white/10 bg-[#0b0e14] p-4">
+      <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-[#0b0e14] px-4 py-2 sm:py-4">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="text-sm font-bold text-gray-400 hover:text-white">
             MENU
