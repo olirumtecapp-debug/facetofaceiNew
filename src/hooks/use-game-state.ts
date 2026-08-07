@@ -17,7 +17,7 @@ export type GameState = {
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
-  pendingQuestion?: { question: Question; type: "PLAYER" | "AI"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
+  pendingQuestion?: { question: Question; type: "PLAYER" | "AI" | "AI_PALPITE"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
   askedQuestions: Set<string>;
 };
 
@@ -82,6 +82,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         askedQuestions: new Set(prev.askedQuestions).add(question.id),
       }));
       setTimeout(nextTurn, 600);
+    } else if (type === "AI_PALPITE") {
+      const isCorrect = answer === "SIM";
+      setGameState((prev) => ({
+        ...prev,
+        isGameOver: true,
+        winner: isCorrect ? "AI" : "PLAYER",
+        aiScore: isCorrect ? prev.aiScore + 1 : prev.aiScore,
+        playerScore: isCorrect ? prev.playerScore : prev.playerScore + 1,
+        history: [...prev.history, { type: "AI", text: `Tentativa de palpite: ${question.text}`, answer }],
+        pendingQuestion: undefined,
+      }));
     } else {
       setGameState((prev) => {
         const newRemaining = prev.aiRemainingChars.filter((c) => {
@@ -163,14 +174,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const timer = setTimeout(() => {
         const palpite = getAIPalpite(gameState.difficulty, gameState.aiRemainingChars);
         if (palpite) {
-          const isCorrect = palpite.id === gameState.playerSecret.id;
+          // IA faz a pergunta de palpite em vez de ganhar automaticamente
           setGameState((prev) => ({
             ...prev,
-            isGameOver: true,
-            winner: isCorrect ? "AI" : "PLAYER",
-            aiScore: isCorrect ? prev.aiScore + 1 : prev.aiScore,
-            playerScore: isCorrect ? prev.playerScore : prev.playerScore + 1,
-            history: [...prev.history, { type: "AI", text: `Palpite final: ${palpite.nome}!` }]
+            pendingQuestion: { 
+              question: { 
+                id: `palpite-${palpite.id}`, 
+                text: `Seu personagem é ${palpite.nome}?`, 
+                category: "Palpite",
+                check: (c) => c.id === palpite.id 
+              }, 
+              type: "AI_PALPITE" 
+            }
           }));
         } else {
           const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
