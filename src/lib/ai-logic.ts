@@ -10,9 +10,39 @@ export const getAIResponse = (character: Character, question: Question): boolean
 export const getBestAIQuestion = (
   difficulty: Difficulty,
   remainingCharacters: Character[],
-  turn: number
+  turn: number,
+  aiAskedQuestions: Set<string> = new Set(),
+  aiKnowledge: { [id: string]: boolean } = {}
 ): Question => {
-  const availableQuestions = QUESTIONS.filter((q) => !q.minTurn || turn >= q.minTurn);
+  const availableQuestions = QUESTIONS.filter((q) => {
+    // 1. Nunca repetir uma pergunta já feita pela IA
+    if (aiAskedQuestions.has(q.id)) return false;
+
+    // 2. Não perguntar o que já é conhecido
+    if (aiKnowledge[q.id] !== undefined) return false;
+
+    // 3. Eliminar perguntas redundantes baseadas em conhecimento prévio
+    
+    // Se sabemos que NÃO usa óculos, não perguntar sobre tipos de óculos
+    if (aiKnowledge['a_oculos'] === false) {
+      if (q.id === 'a_oculos_sol') return false;
+    }
+
+    // Se sabemos que É homem (SIM), não perguntar se é mulher
+    if (aiKnowledge['g_homem'] === true && q.id === 'g_mulher') return false;
+    // Se sabemos que NÃO é homem (NÃO), não perguntar se é homem novamente (já filtrado acima) 
+    // e poderíamos inferir que é mulher, mas o filtro de "já conhecido" lida com g_homem.
+    // Adicionando: se sabemos que é mulher, não perguntar se é homem.
+    if (aiKnowledge['g_mulher'] === true && q.id === 'g_homem') return false;
+
+    // Se sabemos que NÃO tem barba/bigode, não perguntar sobre bigode especificamente
+    if (aiKnowledge['b_barba_bigode'] === false) {
+      if (q.id === 'b_bigode') return false;
+    }
+
+    // Filtro original de turno
+    return !q.minTurn || turn >= q.minTurn;
+  });
   
   const defaultQuestion = QUESTIONS[0]!;
   if (availableQuestions.length === 0) return defaultQuestion;

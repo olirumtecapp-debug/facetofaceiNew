@@ -30,6 +30,9 @@ export type GameState = {
   winner?: "PLAYER" | "AI" | undefined;
   pendingQuestion?: { question: Question; type: "PLAYER" | "AI" | "AI_PALPITE"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
   askedQuestions: Set<string>;
+  aiAskedQuestions: Set<string>;
+  playerKnowledge: { [questionId: string]: boolean };
+  aiKnowledge: { [questionId: string]: boolean };
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
@@ -52,6 +55,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       history: [],
       isGameOver: false,
       askedQuestions: new Set<string>(),
+      aiAskedQuestions: new Set<string>(),
+      playerKnowledge: {},
+      aiKnowledge: {},
     };
   });
 
@@ -97,6 +103,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
         pendingQuestion: undefined,
         askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
         phase: "PLAYER_DISCARDING"
       }));
     } else if (type === "AI_PALPITE") {
@@ -125,6 +132,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           history: [...prev.history, { type: "AI", text: question.text, answer }],
           pendingQuestion: undefined,
           askedQuestions: new Set(prev.askedQuestions).add(question.id),
+          aiAskedQuestions: new Set(prev.aiAskedQuestions).add(question.id),
+          aiKnowledge: { ...prev.aiKnowledge, [question.id]: answer === "SIM" },
           phase: "AI_DISCARDING"
         };
       });
@@ -189,6 +198,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       isGameOver: false,
       winner: undefined,
       askedQuestions: new Set<string>(),
+      aiAskedQuestions: new Set<string>(),
+      playerKnowledge: {},
+      aiKnowledge: {},
       pendingQuestion: undefined
     }));
   };
@@ -216,7 +228,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }
           }));
         } else {
-          const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
+          const question = getBestAIQuestion(
+            gameState.difficulty, 
+            gameState.aiRemainingChars, 
+            gameState.turnCount,
+            gameState.aiAskedQuestions,
+            gameState.aiKnowledge
+          );
           setGameState((prev) => ({
             ...prev,
             phase: "PLAYER_RESPONDING",
