@@ -83,23 +83,23 @@ function Index() {
         <div className="flex w-full flex-col justify-center items-center gap-6 sm:gap-10 md:flex-row px-4">
           <button 
             onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-            className="group relative transition-transform hover:scale-105 active:scale-95 w-full max-w-[240px] sm:max-w-none"
+            className="group relative transition-transform hover:scale-105 active:scale-95 w-full max-w-[320px] md:max-w-none flex justify-center"
           >
             <img 
               src={playIaAsset.url} 
               alt="JOGAR VS IA" 
-              className="w-full h-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] mix-blend-screen" 
+              className="w-full md:w-[380px] h-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] mix-blend-screen brightness-110 contrast-110" 
             />
           </button>
           
           <button 
             onClick={() => alert("Multiplayer em breve!")}
-            className="group relative transition-transform hover:scale-105 active:scale-95 w-full max-w-[240px] sm:max-w-none"
+            className="group relative transition-transform hover:scale-105 active:scale-95 w-full max-w-[320px] md:max-w-none flex justify-center"
           >
             <img 
               src={playOnlineAsset.url} 
               alt="JOGAR ON-LINE" 
-              className="w-full h-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] mix-blend-screen" 
+              className="w-full md:w-[380px] h-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] mix-blend-screen brightness-110 contrast-110" 
             />
           </button>
         </div>
