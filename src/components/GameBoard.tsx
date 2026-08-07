@@ -129,8 +129,8 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
           </div>
 
           {/* History */}
-          <div className="flex min-h-[110px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
-            <div className="border-b border-white/10 p-2 text-[10px] font-black uppercase tracking-tight text-gray-500">
+          <div className="flex min-h-[60px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
+            <div className="border-b border-white/10 p-1.5 text-[10px] font-black uppercase tracking-tight text-gray-500">
               Histórico
             </div>
             <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar">
@@ -157,8 +157,8 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
           </div>
 
           {/* Questions */}
-          <div className="shrink-0 rounded-xl border border-white/10 bg-[#0b0e14] p-2">
-            <div className="mb-1.5 flex flex-wrap gap-1">
+          <div className="shrink-0 rounded-xl border border-white/10 bg-[#0b0e14] p-1.5">
+            <div className="mb-1 flex flex-wrap gap-1">
               {CATEGORIES.map((c) => (
                 <button
                   key={c}
@@ -171,7 +171,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                 </button>
               ))}
             </div>
-            <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-28">
+            <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-24">
               {QUESTIONS.filter((q) => q.category === cat).map((q) => (
                 <button
                   key={q.id}
