@@ -186,22 +186,22 @@ function Index() {
             onClick={() => setScreen("CHOOSE_DIFFICULTY")}
             className="group relative h-auto w-56 transition-transform hover:scale-105 active:scale-95 sm:w-64 md:w-72"
           >
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-blue-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-0" />
+            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/30 blur-2xl transition-opacity group-hover:opacity-100 opacity-60" />
             <img 
               src={playIaAsset.url} 
               alt="Jogar vs IA" 
-              className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(30,98,236,0.3)]" 
+              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_15px_rgba(30,98,236,0.6)]" 
             />
           </button>
           <button
             onClick={() => setScreen("ONLINE")}
             className="group relative h-auto w-56 transition-transform hover:scale-105 active:scale-95 sm:w-64 md:w-72"
           >
-            <div className="absolute inset-0 -z-10 rounded-3xl bg-red-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-0" />
+            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/30 blur-2xl transition-opacity group-hover:opacity-100 opacity-60" />
             <img 
               src={playOnlineAsset.url} 
               alt="Jogar on-line" 
-              className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(229,46,46,0.3)]" 
+              className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_15px_rgba(229,46,46,0.6)]" 
             />
           </button>
         </div>
