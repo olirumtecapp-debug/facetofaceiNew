@@ -81,7 +81,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         pendingQuestion: undefined,
         askedQuestions: new Set(prev.askedQuestions).add(question.id),
       }));
-      setTimeout(nextTurn, 600);
+      // Removido o nextTurn automático. O jogador deve clicar em "Passar a vez" após descartar.
     } else if (type === "AI_PALPITE") {
       // O palpite da IA é considerado correto APENAS se o personagem que ela escolheu 
       // for REALMENTE o playerSecret do jogador.
@@ -115,7 +115,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           askedQuestions: new Set(prev.askedQuestions).add(question.id),
         };
       });
-      setTimeout(nextTurn, 600);
+      // Removido o nextTurn automático. O jogador deve clicar em "Passar a vez" após descartar.
     }
   };
 
