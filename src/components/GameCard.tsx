@@ -21,7 +21,7 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
           isDown ? "opacity-30 grayscale" : "opacity-100 hover:scale-[1.04]"
         }`}
       >
-        <div className="flex h-full w-full items-center justify-center">
+        <div className="flex h-full w-full items-center justify-center p-0.5">
           <img
             src={src}
             alt={character.nome}
