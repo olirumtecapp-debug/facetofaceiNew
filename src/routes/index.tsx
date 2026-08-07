@@ -65,7 +65,7 @@ function Index() {
                 setDifficulty(d);
                 setScreen("CHOOSE_COLOR");
               }}
-              className="group relative overflow-hidden rounded-xl border border-white/20 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
+              className="group relative overflow-hidden rounded-xl border-2 border-blue-400/50 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
             >
               <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/30 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="relative z-10">{d}</span>
@@ -176,7 +176,7 @@ function Index() {
             backend ativado.
           </p>
         </div>
-        <BackButton onClick={() => setScreen("MENU")} />
+        <BackButton onClick={() => setScreen("MENU")} className="mt-6" />
       </Shell>
     );
   }
@@ -228,20 +228,20 @@ function Index() {
         </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
           <button 
-            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90" 
+            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Configurações"
           >
             ⚙️
           </button>
           <button
             onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full border border-white/20 bg-gray-800/80 px-8 py-3 text-sm font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:border-yellow-400/50 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
+            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-8 py-3 text-sm font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
           >
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
             👤 PERSONAGENS
           </button>
           <button 
-            className="text-2xl transition-all hover:scale-125 active:scale-90" 
+            className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Favoritos"
           >
             💗
@@ -312,9 +312,9 @@ function BackButton({ onClick, className }: { onClick: () => void; className?: s
   return (
     <button
       onClick={onClick}
-      className={`font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-yellow-400 ${className}`}
+      className={`group flex items-center gap-2 px-6 py-2 rounded-xl border-2 border-gray-400/30 bg-gray-800/50 font-black uppercase tracking-widest text-gray-400 transition-all hover:text-yellow-400 hover:border-yellow-400/50 hover:scale-105 active:scale-95 ${className}`}
     >
-      {"<"} VOLTAR
+      <span className="text-xl">{"<"}</span> VOLTAR
     </button>
   );
 }
