@@ -166,3 +166,21 @@
 @utility mix-blend-color-dodge {
   mix-blend-mode: color-dodge;
 }
+
+@keyframes lightning-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@utility animate-lightning-spin {
+  animation: lightning-spin 20s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; filter: blur(20px); }
+  50% { opacity: 0.8; filter: blur(30px); }
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}

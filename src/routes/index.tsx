@@ -65,9 +65,10 @@ function Index() {
                 setDifficulty(d);
                 setScreen("CHOOSE_COLOR");
               }}
-              className="rounded-xl border border-white/10 bg-gray-800 p-5 text-xl font-bold transition-all hover:scale-105 hover:bg-gray-700"
+              className="group relative overflow-hidden rounded-xl border border-white/10 bg-gray-800 p-5 text-xl font-bold transition-all hover:scale-105 hover:bg-gray-700 active:scale-95"
             >
-              {d}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/20 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
+              <span className="relative z-10">{d}</span>
             </button>
           ))}
         </div>
@@ -88,18 +89,19 @@ function Index() {
                 setPlayerColor(c);
                 setScreen("GAME");
               }}
-              className="flex-1 rounded-2xl border-4 p-8 transition-all hover:scale-105"
+              className="group flex-1 rounded-2xl border-4 p-8 transition-all hover:scale-105 active:scale-95"
               style={{
                 borderColor: c === "AZUL" ? "#1e62ec" : "#e52e2e",
                 background: c === "AZUL" ? "rgba(30,98,236,0.12)" : "rgba(229,46,46,0.12)",
+                boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.2)" : "0 0 20px rgba(229,46,46,0.2)"
               }}
             >
               <img 
                 src={c === "AZUL" ? boardAzulAsset.url : boardVermelhoAsset.url} 
                 alt={`Tabuleiro ${c.toLowerCase()}`} 
-                className="mx-auto mb-4 h-32 w-auto object-contain drop-shadow-lg" 
+                className="mx-auto mb-4 h-32 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-110" 
               />
-              <h3 className="text-2xl font-black" style={{ color: c === "AZUL" ? "#1e62ec" : "#e52e2e" }}>
+              <h3 className="text-2xl font-black italic tracking-tighter" style={{ color: c === "AZUL" ? "#1e62ec" : "#e52e2e" }}>
                 {c}
               </h3>
             </button>
@@ -212,16 +214,23 @@ function Index() {
           </button>
         </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
-          <button className="text-2xl transition-transform hover:scale-110" aria-label="Configurações">
+          <button 
+            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90" 
+            aria-label="Configurações"
+          >
             ⚙️
           </button>
           <button
             onClick={() => setShowChars(true)}
-            className="rounded-full bg-gray-800 px-6 py-2 text-sm font-bold transition-colors hover:bg-gray-700"
+            className="group relative overflow-hidden rounded-full bg-gray-800 px-8 py-3 text-sm font-black tracking-widest transition-all hover:scale-105 hover:bg-gray-700 active:scale-95"
           >
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
             👤 PERSONAGENS
           </button>
-          <button className="text-2xl transition-transform hover:scale-110" aria-label="Favoritos">
+          <button 
+            className="text-2xl transition-all hover:scale-125 active:scale-90" 
+            aria-label="Favoritos"
+          >
             💗
           </button>
         </div>
@@ -265,8 +274,23 @@ function Index() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 bg-[#0b0e14] p-4 text-center text-white sm:gap-10">
-      {children}
+    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-[#0b0e14] p-4 text-center text-white sm:gap-10">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
+        {/* Rotating Lightning/Energy effect */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vmax] h-[150vmax] animate-lightning-spin opacity-20 bg-[radial-gradient(circle_at_center,transparent_30%,#1e62ec_40%,transparent_41%,#e52e2e_50%,transparent_51%)] blur-3xl" />
+        
+        {/* Glow Pulses */}
+        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse-glow" />
+        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-red-600/20 rounded-full blur-[120px] animate-pulse-glow" style={{ animationDelay: '-2s' }} />
+        
+        {/* Subtle Grid overlay */}
+        <div className="absolute inset-0 opacity-10 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
+      </div>
+      
+      <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-10 w-full">
+        {children}
+      </div>
     </main>
   );
 }

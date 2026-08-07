@@ -25,9 +25,15 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
   const oppColor = playerColor === "AZUL" ? "VERMELHO" : "AZUL";
 
   return (
-    <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0d1117] text-white">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0d1117] text-white">
+      {/* Game Background Effects */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/4 -left-1/4 w-[100vmax] h-[100vmax] animate-lightning-spin opacity-5 bg-[radial-gradient(circle_at_center,#1e62ec_0%,transparent_70%)] blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:30px_30px]" />
+      </div>
+
       {/* Header */}
-      <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#0b0e14] px-3 py-2">
+      <header className="relative z-20 grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#0b0e14]/80 backdrop-blur-md px-3 py-2">
         <button
           onClick={onBack}
           className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:bg-white/10 hover:text-yellow-400 active:scale-95"
