@@ -295,13 +295,13 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                         </div>
                       </div>
                       
-                      <div className="flex flex-col gap-4">
-                        <div className="text-sm font-bold uppercase tracking-widest text-blue-400 animate-pulse">
+                      <div className="flex w-full flex-col gap-4">
+                        <div className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 animate-pulse sm:text-sm">
                           IA está respondendo...
                         </div>
                         <button
                           onClick={revealAIAnswer}
-                          className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
+                          className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-base font-black text-black transition-all hover:scale-[1.02] active:scale-95 sm:py-4 sm:text-lg"
                         >
                           VER RESPOSTA
                         </button>
