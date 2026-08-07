@@ -104,7 +104,7 @@ function Index() {
             </button>
           ))}
         </div>
-        <BackButton onClick={() => setScreen("CHOOSE_DIFFICULTY")} />
+        <BackButton onClick={() => setScreen("MENU")} />
       </Shell>
     );
   }
