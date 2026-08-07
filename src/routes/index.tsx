@@ -119,7 +119,7 @@ function Index() {
                   setRoomCode(res.code);
                   toast.success("Sala criada!");
                 } catch (e) {
-                  toast.error("Erro ao criar sala. Verifique se está logado.");
+                  toast.error("Erro ao criar sala.");
                 } finally {
                   setIsConnecting(false);
                 }

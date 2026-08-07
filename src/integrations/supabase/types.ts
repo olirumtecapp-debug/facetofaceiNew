@@ -17,30 +17,33 @@ export type Database = {
       room_players: {
         Row: {
           color: string
+          guest_id: string
           is_ready: boolean | null
           last_active: string | null
           room_id: string
           score: number | null
           secret_character_id: number | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           color: string
+          guest_id?: string
           is_ready?: boolean | null
           last_active?: string | null
           room_id: string
           score?: number | null
           secret_character_id?: number | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           color?: string
+          guest_id?: string
           is_ready?: boolean | null
           last_active?: string | null
           room_id?: string
           score?: number | null
           secret_character_id?: number | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
