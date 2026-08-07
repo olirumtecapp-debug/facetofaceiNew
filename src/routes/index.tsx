@@ -146,7 +146,7 @@ function Index() {
                 if (!joinCode) return;
                 setIsConnecting(true);
                 try {
-                  await joinRoomFn({ code: joinCode });
+                  await joinRoomFn({ data: { code: joinCode } });
                   setScreen("GAME"); // For now just transition, real sync comes later
                   toast.success("Entrou na sala!");
                 } catch (e) {
@@ -155,6 +155,7 @@ function Index() {
                   setIsConnecting(false);
                 }
               }}
+
               disabled={isConnecting || !joinCode}
               className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase hover:brightness-110 disabled:opacity-50"
             >

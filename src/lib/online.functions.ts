@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export const createRoom = createServerFn({ method: "POST" })
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context as any;
+  .handler(async ({ context }: { context: any }) => {
+    const { supabase, userId } = context;
     if (!userId) throw new Error("Unauthorized");
 
     const code = `FTF-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -31,9 +31,9 @@ export const createRoom = createServerFn({ method: "POST" })
   });
 
 export const joinRoom = createServerFn({ method: "POST" })
-  .inputValidator((data) => z.object({ code: z.string() }).parse(data))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context as any;
+  .inputValidator((data: { code: string }) => z.object({ code: z.string() }).parse(data))
+  .handler(async ({ data, context }: { data: { code: string }; context: any }) => {
+    const { supabase, userId } = context;
     if (!userId) throw new Error("Unauthorized");
 
     const { data: room, error: roomError } = await supabase
@@ -68,3 +68,4 @@ export const joinRoom = createServerFn({ method: "POST" })
 
     return { room };
   });
+
