@@ -179,7 +179,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
-            <div className="mb-4 grid max-h-[55vh] grid-cols-4 gap-2 overflow-y-auto sm:grid-cols-6 custom-scrollbar">
+            <div className="mb-4 grid max-h-[55vh] grid-cols-4 sm:grid-cols-6 gap-1 sm:gap-2 overflow-y-auto custom-scrollbar">
               {CHARACTERS.map((c) => (
                 <GameCard
                   key={c.id}
