@@ -17,6 +17,7 @@ export type GameState = {
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
+  pendingQuestion?: { question: Question; type: "PLAYER" | "AI" } | undefined;
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
@@ -51,17 +52,39 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   const handlePlayerQuestion = (question: Question) => {
     if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
 
-    const answer = getAIResponse(gameState.aiSecret, question) ? "SIM" : "NÃO";
-    
     setGameState((prev) => ({
       ...prev,
-      history: [
-        ...prev.history,
-        { type: "PLAYER", text: question.text, answer }
-      ],
+      pendingQuestion: { question, type: "PLAYER" },
     }));
+  };
 
-    setTimeout(nextTurn, 1000);
+  const answerQuestion = (answer: "SIM" | "NÃO") => {
+    if (!gameState.pendingQuestion) return;
+
+    const { question, type } = gameState.pendingQuestion;
+
+    if (type === "PLAYER") {
+      setGameState((prev) => ({
+        ...prev,
+        history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
+        pendingQuestion: undefined,
+      }));
+      setTimeout(nextTurn, 600);
+    } else {
+      setGameState((prev) => {
+        const newRemaining = prev.aiRemainingChars.filter((c) => {
+          const matches = question.check(c);
+          return answer === "SIM" ? matches : !matches;
+        });
+        return {
+          ...prev,
+          aiRemainingChars: newRemaining,
+          history: [...prev.history, { type: "AI", text: question.text, answer }],
+          pendingQuestion: undefined,
+        };
+      });
+      setTimeout(nextTurn, 600);
+    }
   };
 
   const toggleCard = (id: number) => {
@@ -137,21 +160,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }));
         } else {
           const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount);
-          const answer = getAIResponse(gameState.playerSecret, question) ? "SIM" : "NÃO";
-
-          setGameState((prev) => {
-            const newRemaining = prev.aiRemainingChars.filter((c) => {
-              const matches = question.check(c);
-              return answer === "SIM" ? matches : !matches;
-            });
-            return {
-              ...prev,
-              aiRemainingChars: newRemaining,
-              history: [...prev.history, { type: "AI", text: question.text, answer }],
-            };
-          });
-
-          setTimeout(nextTurn, 1000);
+          
+          setGameState((prev) => ({
+            ...prev,
+            pendingQuestion: { question, type: "AI" }
+          }));
         }
       }, 1500);
       return () => clearTimeout(timer);
@@ -159,5 +172,5 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     return undefined;
   }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn, gameState.aiRemainingChars]);
 
-  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch };
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion };
 };

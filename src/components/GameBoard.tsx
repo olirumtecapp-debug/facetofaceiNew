@@ -3,7 +3,7 @@ import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";
 import { useGameState } from "@/hooks/use-game-state";
 import { GameCard } from "@/components/GameCard";
-import { Difficulty } from "@/lib/ai-logic";
+import { Difficulty, getAIResponse } from "@/lib/ai-logic";
 
 interface GameBoardProps {
   playerColor: "AZUL" | "VERMELHO";
@@ -14,7 +14,7 @@ interface GameBoardProps {
 const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
 
 export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) => {
-  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch } = useGameState(
+  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion } = useGameState(
     playerColor,
     difficulty,
   );
@@ -243,6 +243,60 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               >
                 MENU
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Interativo Modal de Pergunta */}
+      {gameState.pendingQuestion && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
+              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : "Pergunta da IA"}
+            </div>
+            
+            <div className="p-8 text-center">
+              <div className="mb-8 text-xl font-bold italic leading-relaxed text-white sm:text-2xl">
+                "{gameState.pendingQuestion.question.text}"
+              </div>
+
+              {gameState.pendingQuestion.type === "PLAYER" ? (
+                <div className="flex flex-col gap-4">
+                  <div className="text-sm font-bold uppercase tracking-widest text-gray-500">
+                    Aguardando resposta da IA...
+                  </div>
+                  <button
+                    onClick={() => {
+                      const ans = getAIResponse(gameState.aiSecret, gameState.pendingQuestion!.question) ? "SIM" : "NÃO";
+                      answerQuestion(ans);
+                    }}
+                    className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
+                  >
+                    CONTINUAR
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => answerQuestion("SIM")}
+                    className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black transition-all hover:bg-green-500 hover:scale-105 active:scale-95"
+                  >
+                    SIM
+                  </button>
+                  <button
+                    onClick={() => answerQuestion("NÃO")}
+                    className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black transition-all hover:bg-red-500 hover:scale-105 active:scale-95"
+                  >
+                    NÃO
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-white/5 p-4 text-center">
+              <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
+                {gameState.pendingQuestion.type === "PLAYER" ? "A IA vai responder com base no personagem dela" : "Responda honestamente sobre o seu personagem"}
+              </p>
             </div>
           </div>
         </div>
