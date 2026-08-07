@@ -255,8 +255,8 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : "Pergunta da IA"}
             </div>
             
-            <div className="p-8 text-center">
-              <div className="mb-8 text-xl font-bold italic leading-relaxed text-white sm:text-2xl">
+            <div className="flex flex-col items-center p-6 sm:p-8">
+              <div className="mb-6 w-full text-center text-lg font-bold italic leading-tight text-white sm:text-2xl">
                 "{gameState.pendingQuestion.question.text}"
               </div>
 
