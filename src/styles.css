@@ -141,4 +141,28 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  /* Custom scrollbar for better fit on small screens */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@utility mix-blend-screen {
+  mix-blend-mode: screen;
+}
+
+@utility mix-blend-color-dodge {
+  mix-blend-mode: color-dodge;
 }
