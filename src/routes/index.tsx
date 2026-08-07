@@ -3,6 +3,8 @@ import { useState } from "react";
 import logoAsset from "@/assets/logo.png.asset.json";
 import playIaAsset from "@/assets/play-ia.png.asset.json";
 import playOnlineAsset from "@/assets/play-online.png.asset.json";
+import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
+import boardVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
 import { CARD_IMAGES } from "@/assets/chars";
 import { CHARACTERS } from "@/data/characters";
 import { Difficulty } from "@/lib/ai-logic";
@@ -92,7 +94,11 @@ function Index() {
                 background: c === "AZUL" ? "rgba(30,98,236,0.12)" : "rgba(229,46,46,0.12)",
               }}
             >
-              <img src={CARD_IMAGES[c][0]!} alt={`Tabuleiro ${c.toLowerCase()}`} className="mx-auto mb-4 h-32 w-auto" />
+              <img 
+                src={c === "AZUL" ? boardAzulAsset.url : boardVermelhoAsset.url} 
+                alt={`Tabuleiro ${c.toLowerCase()}`} 
+                className="mx-auto mb-4 h-32 w-auto object-contain drop-shadow-lg" 
+              />
               <h3 className="text-2xl font-black" style={{ color: c === "AZUL" ? "#1e62ec" : "#e52e2e" }}>
                 {c}
               </h3>
