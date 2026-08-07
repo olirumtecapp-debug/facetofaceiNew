@@ -195,7 +195,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   // AI Logic Effect
   useEffect(() => {
-    if (gameState.isGameOver) return;
+    if (gameState.isGameOver) return undefined;
 
     // Phase: AI_TURN -> IA makes a question
     if (gameState.phase === "AI_TURN" && !gameState.pendingQuestion) {
@@ -243,6 +243,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       return () => clearTimeout(timer);
     }
 
+    return undefined;
   }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
