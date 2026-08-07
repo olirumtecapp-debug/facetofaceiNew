@@ -116,7 +116,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
                 Adversário
               </div>
-              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
+              <div className="flex aspect-[178/224] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
                 ❓
               </div>
             </div>
