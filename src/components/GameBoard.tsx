@@ -42,9 +42,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       <header className="relative z-20 grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#0b0e14]/80 backdrop-blur-md px-3 py-2">
         <button
           onClick={onBack}
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:bg-white/10 hover:text-yellow-400 active:scale-95"
+          className="group flex items-center gap-1.5 rounded-lg border-2 border-gray-400/30 bg-gray-800/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:border-yellow-400/50 hover:text-yellow-400 hover:scale-105 active:scale-95"
         >
-          {"<"} Voltar
+          <span className="text-sm">{"<"}</span> Voltar
         </button>
         <div className="min-w-0 text-center">
           <div className="text-[11px] font-black uppercase tracking-widest text-yellow-400 sm:text-sm">
@@ -99,14 +99,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <button
                 onClick={() => setIsPalpitando(true)}
                 disabled={!myTurn}
-                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide border border-white/20 transition-all hover:bg-red-700 hover:shadow-[0_0_10px_rgba(229,46,46,0.4)] active:scale-95 disabled:opacity-40"
+                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] hover:scale-105 active:scale-95 disabled:opacity-40 disabled:scale-100"
               >
                 Palpite final
               </button>
               <button
                 onClick={passTurn}
                 disabled={!myTurn}
-                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide border border-white/20 transition-all hover:bg-gray-600 active:scale-95 disabled:opacity-40"
+                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:scale-100"
               >
                 Passar a vez
               </button>
@@ -195,7 +195,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             </div>
             <button
               onClick={() => setIsPalpitando(false)}
-              className="w-full rounded-xl bg-gray-800 py-3 font-bold hover:bg-gray-700"
+              className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-bold transition-all hover:bg-gray-700 hover:scale-[1.02] active:scale-95"
             >
               CANCELAR
             </button>
@@ -218,13 +218,13 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button
                 onClick={rematch}
-                className="rounded-full bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-transform hover:scale-105"
+                className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
               >
                 REVANCHE
               </button>
               <button
                 onClick={onBack}
-                className="rounded-full bg-gray-800 px-10 py-4 text-xl font-black transition-transform hover:scale-105"
+                className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
               >
                 MENU
               </button>

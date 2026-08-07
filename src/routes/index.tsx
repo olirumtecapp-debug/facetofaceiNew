@@ -65,7 +65,7 @@ function Index() {
                 setDifficulty(d);
                 setScreen("CHOOSE_COLOR");
               }}
-              className="group relative overflow-hidden rounded-xl border border-white/20 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
+              className="group relative overflow-hidden rounded-xl border-2 border-blue-400/50 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
             >
               <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/30 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="relative z-10">{d}</span>
@@ -133,7 +133,7 @@ function Index() {
                 }
               }}
               disabled={isConnecting}
-              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border border-white/20 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
+              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
             >
               {isConnecting ? "Criando..." : "Gerar código"}
             </button>
@@ -155,7 +155,7 @@ function Index() {
                 setIsConnecting(true);
                 try {
                   await joinRoomFn({ data: { code: joinCode } });
-                  setScreen("GAME"); // For now just transition, real sync comes later
+                  setScreen("GAME"); 
                   toast.success("Entrou na sala!");
                 } catch (e) {
                   toast.error("Sala não encontrada ou erro ao entrar.");
@@ -163,12 +163,12 @@ function Index() {
                   setIsConnecting(false);
                 }
               }}
-
               disabled={isConnecting || !joinCode}
-              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border border-white/20 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
+              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border-2 border-[#ff4444]/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
             >
               {isConnecting ? "Entrando..." : "Entrar"}
             </button>
+            <BackButton onClick={() => setScreen("MENU")} className="mt-4 w-full justify-center" />
 
           </div>
           <p className="text-center text-xs text-gray-500">
@@ -176,7 +176,7 @@ function Index() {
             backend ativado.
           </p>
         </div>
-        <BackButton onClick={() => setScreen("MENU")} />
+        <BackButton onClick={() => setScreen("MENU")} className="mt-6" />
       </Shell>
     );
   }
@@ -228,20 +228,20 @@ function Index() {
         </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
           <button 
-            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90" 
+            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Configurações"
           >
             ⚙️
           </button>
           <button
             onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full border border-white/20 bg-gray-800/80 px-8 py-3 text-sm font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:border-yellow-400/50 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
+            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-8 py-3 text-sm font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
           >
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
             👤 PERSONAGENS
           </button>
           <button 
-            className="text-2xl transition-all hover:scale-125 active:scale-90" 
+            className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Favoritos"
           >
             💗
@@ -274,7 +274,7 @@ function Index() {
             </div>
             <button
               onClick={() => setShowChars(false)}
-              className="mt-3 w-full rounded-xl bg-gray-800 py-3 font-bold hover:bg-gray-700"
+              className="mt-3 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-bold transition-all hover:bg-gray-700 hover:scale-[1.02] active:scale-95"
             >
               FECHAR
             </button>
@@ -312,9 +312,9 @@ function BackButton({ onClick, className }: { onClick: () => void; className?: s
   return (
     <button
       onClick={onClick}
-      className={`font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-yellow-400 ${className}`}
+      className={`group flex items-center gap-2 px-6 py-2 rounded-xl border-2 border-gray-400/30 bg-gray-800/50 font-black uppercase tracking-widest text-gray-400 transition-all hover:text-yellow-400 hover:border-yellow-400/50 hover:scale-105 active:scale-95 ${className}`}
     >
-      {"<"} VOLTAR
+      <span className="text-xl">{"<"}</span> VOLTAR
     </button>
   );
 }
