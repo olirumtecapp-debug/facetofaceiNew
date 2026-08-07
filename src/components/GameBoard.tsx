@@ -99,14 +99,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <button
                 onClick={() => setIsPalpitando(true)}
                 disabled={!myTurn}
-                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide transition-colors hover:bg-red-700 disabled:opacity-40"
+                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide border border-white/20 transition-all hover:bg-red-700 hover:shadow-[0_0_10px_rgba(229,46,46,0.4)] active:scale-95 disabled:opacity-40"
               >
                 Palpite final
               </button>
               <button
                 onClick={passTurn}
                 disabled={!myTurn}
-                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide transition-colors hover:bg-gray-600 disabled:opacity-40"
+                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide border border-white/20 transition-all hover:bg-gray-600 active:scale-95 disabled:opacity-40"
               >
                 Passar a vez
               </button>
