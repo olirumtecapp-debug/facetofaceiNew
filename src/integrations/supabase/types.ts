@@ -14,7 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      room_players: {
+        Row: {
+          color: string
+          is_ready: boolean | null
+          last_active: string | null
+          room_id: string
+          score: number | null
+          secret_character_id: number | null
+          user_id: string
+        }
+        Insert: {
+          color: string
+          is_ready?: boolean | null
+          last_active?: string | null
+          room_id: string
+          score?: number | null
+          secret_character_id?: number | null
+          user_id: string
+        }
+        Update: {
+          color?: string
+          is_ready?: boolean | null
+          last_active?: string | null
+          room_id?: string
+          score?: number | null
+          secret_character_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          status: string
+          winner_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          status: string
+          winner_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          status?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
