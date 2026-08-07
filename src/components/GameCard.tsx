@@ -17,7 +17,7 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
       <button
         type="button"
         onClick={onClick}
-        className={`relative flex aspect-[3/4] w-full overflow-hidden rounded-md border-2 border-[#d4af37] bg-[#e0e0e0] p-0.5 transition-all duration-200 ${
+        className={`relative flex aspect-square w-full overflow-hidden rounded-md border-2 border-[#d4af37] bg-[#e0e0e0] p-0 transition-all duration-200 ${
           isDown ? "opacity-30 grayscale" : "opacity-100 hover:scale-[1.04]"
         }`}
       >

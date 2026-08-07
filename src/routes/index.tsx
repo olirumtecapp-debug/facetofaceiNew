@@ -255,8 +255,8 @@ function Index() {
             <h2 className="mb-3 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
             <div className="grid flex-1 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 overflow-y-auto custom-scrollbar">
               {CHARACTERS.map((c) => (
-                <div key={c.id} className="rounded-xl border border-white/5 bg-black/30 p-2">
-                  <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="mx-auto h-28 w-auto object-contain" />
+                <div key={c.id} className="rounded-xl border-2 border-[#d4af37] bg-[#e0e0e0] p-0 overflow-hidden flex flex-col">
+                  <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="w-full h-auto object-contain contrast-110" />
                   <ul className="mt-2 space-y-0.5 text-[10px] leading-tight text-gray-400">
                     <li>{c.genero}</li>
                     <li>Cabelo: {c.corCabelo} · {c.estiloCabelo}</li>
