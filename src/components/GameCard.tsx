@@ -17,16 +17,16 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
       <button
         type="button"
         onClick={onClick}
-        className={`relative flex aspect-[3/4] h-[62px] w-full items-center justify-center overflow-hidden rounded-md border-[1.5px] border-[#d4af37] bg-[#c0c0c0] p-0 transition-all duration-200 sm:h-[100px] md:h-[120px] lg:h-[150px] xl:h-[170px] ${
+        className={`relative flex aspect-[3/4] h-[62px] w-full items-center justify-center overflow-hidden rounded-md border-[1.5px] border-[#d4af37] bg-[#c0c0c0] p-0 transition-all duration-200 sm:h-[110px] md:h-[135px] lg:h-[165px] xl:h-[190px] ${
           isDown ? "opacity-30 grayscale" : "opacity-100 hover:scale-[1.04]"
         }`}
       >
-        <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-0.5 sm:p-2">
+        <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-0.5 sm:p-0.5">
           <img
             src={src}
             alt={character.nome}
             loading="lazy"
-            className="h-full w-full object-contain object-center contrast-110"
+            className="h-full w-full object-cover object-center contrast-110"
           />
         </div>
         {isDown && (
