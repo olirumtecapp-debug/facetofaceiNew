@@ -3,9 +3,8 @@ import { z } from "zod";
 
 export const createRoom = createServerFn({ method: "POST" })
   .handler(async ({ context }: { context: any }) => {
-    const { supabase, userId } = context;
-    if (!userId) throw new Error("Unauthorized");
-
+    const { supabase } = context;
+    
     const code = `FTF-${Math.floor(1000 + Math.random() * 9000)}`;
     
     const { data: room, error: roomError } = await supabase
@@ -16,11 +15,11 @@ export const createRoom = createServerFn({ method: "POST" })
 
     if (roomError) throw roomError;
 
+    // We don't necessarily need a userId here for code-based guest play
     const { error: playerError } = await supabase
       .from("room_players")
       .insert({
         room_id: room.id,
-        user_id: userId,
         color: "AZUL",
         is_ready: true
       });
@@ -33,8 +32,7 @@ export const createRoom = createServerFn({ method: "POST" })
 export const joinRoom = createServerFn({ method: "POST" })
   .inputValidator((data: { code: string }) => z.object({ code: z.string() }).parse(data))
   .handler(async ({ data, context }: { data: { code: string }; context: any }) => {
-    const { supabase, userId } = context;
-    if (!userId) throw new Error("Unauthorized");
+    const { supabase } = context;
 
     const { data: room, error: roomError } = await supabase
       .from("rooms")
@@ -45,21 +43,11 @@ export const joinRoom = createServerFn({ method: "POST" })
 
     if (roomError || !room) throw new Error("Sala não encontrada ou já iniciada");
 
-    // Check if player already in room
-    const { data: existingPlayer } = await supabase
-      .from("room_players")
-      .select()
-      .eq("room_id", room.id)
-      .eq("user_id", userId)
-      .single();
-
-    if (existingPlayer) return { room };
-
+    // In a 1x1 guest model, we just add the second player
     const { error: playerError } = await supabase
       .from("room_players")
       .insert({
         room_id: room.id,
-        user_id: userId,
         color: "VERMELHO",
         is_ready: true
       });
@@ -68,4 +56,3 @@ export const joinRoom = createServerFn({ method: "POST" })
 
     return { room };
   });
-
