@@ -3,7 +3,7 @@ import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";
 import { useGameState } from "@/hooks/use-game-state";
 import { GameCard } from "@/components/GameCard";
-import { Difficulty } from "@/lib/ai-logic";
+import { Difficulty, getAIResponse } from "@/lib/ai-logic";
 
 interface GameBoardProps {
   playerColor: "AZUL" | "VERMELHO";

@@ -17,7 +17,7 @@ export type GameState = {
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
-  pendingQuestion?: { question: Question; type: "PLAYER" | "AI" };
+  pendingQuestion?: { question: Question; type: "PLAYER" | "AI" } | undefined;
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
