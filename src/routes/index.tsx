@@ -181,44 +181,40 @@ function Index() {
   return (
     <>
       <Shell>
-        <img
-          src={logoAsset.url}
-          alt="FTF - Face to Face"
-          className="h-24 w-auto object-contain sm:h-40 md:h-48"
-        />
+        <div className="flex w-full items-center justify-center">
+          <img
+            src={logoAsset.url}
+            alt="FTF - Face to Face"
+            className="h-24 w-auto object-contain sm:h-40 md:h-48"
+          />
+        </div>
         <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
           {/* Botão Jogar vs IA */}
           <div className="group relative">
-            {/* Brilho externo azul */}
             <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-auto items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-[#e0e0e0] transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playIaAsset.url} 
                 alt="Jogar vs IA" 
-                className="h-full w-auto object-contain contrast-125 brightness-110" 
+                className="h-full w-auto object-contain" 
               />
             </button>
           </div>
 
           {/* Botão Jogar on-line */}
           <div className="group relative">
-            {/* Brilho externo vermelho */}
             <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-auto items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-[#e0e0e0] transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playOnlineAsset.url} 
                 alt="Jogar on-line" 
-                className="h-full w-auto object-contain contrast-125 brightness-110" 
+                className="h-full w-auto object-contain" 
               />
             </button>
           </div>
@@ -258,14 +254,12 @@ function Index() {
                     onClick={() => setSelectedCharId(c.id)}
                     className="group relative flex flex-col items-center transition-all hover:z-10"
                   >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
-                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0]">
-                        <img
-                          src={CARD_IMAGES.AZUL[c.id - 1]!}
-                          alt={c.nome}
-                          className="h-full w-full object-cover object-center contrast-110"
-                        />
-                      </div>
+                    <div className="relative aspect-[178/224] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
+                      <img
+                        src={CARD_IMAGES.AZUL[c.id - 1]!}
+                        alt={c.nome}
+                        className="h-full w-full object-contain"
+                      />
                     </div>
                     <span className="mt-2 text-[10px] font-black uppercase italic tracking-tighter text-gray-400 transition-colors group-hover:text-yellow-400 sm:text-xs">
                       {c.nome}
@@ -292,8 +286,8 @@ function Index() {
               const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
               return (
                 <div className="flex flex-col items-center p-4 text-gray-900">
-                  <div className="w-24 sm:w-32 aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
-                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
+                  <div className="w-24 sm:w-32 aspect-[178/224] mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0]">
+                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain" />
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
                   <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
