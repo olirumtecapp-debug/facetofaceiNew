@@ -23,7 +23,7 @@ export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardPr
 
   return (
     <div 
-      className={`relative aspect-[3/4] cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-0.5 ${isDown ? "opacity-30 grayscale contrast-75" : "opacity-100"}`}
+      className={`relative aspect-[3/4] cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-1 sm:p-2 ${isDown ? "opacity-30 grayscale contrast-75" : "opacity-100"}`}
       onClick={onClick}
     >
       <div 
@@ -33,16 +33,23 @@ export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardPr
         }}
       >
         <div 
-          className="flex-1 w-full relative overflow-hidden bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `url(${spriteSheet})`,
-            backgroundSize: "600% 400%",
-            backgroundPosition: `${x}% ${y}%`,
-          }}
-        />
-        
-        {/* We removed the character name text to prevent duplication and respect the original plaque in the image */}
+          className="flex-1 w-full relative overflow-hidden bg-[#0d1117] flex items-center justify-center"
+        >
+          {/* Using a centered container for the sprite to ensure perfect padding on all sides */}
+          <div 
+            className="w-full h-full"
+            style={{
+              backgroundImage: `url(${spriteSheet})`,
+              backgroundSize: "600% 400%",
+              backgroundPosition: `${x}% ${y}%`,
+              backgroundRepeat: "no-repeat",
+              transform: "scale(1.02)", 
+              transformOrigin: "center center"
+            }}
+          />
+        </div>
       </div>
+
       
       {/* Visual indicator for eliminated cards */}
       {isDown && (
