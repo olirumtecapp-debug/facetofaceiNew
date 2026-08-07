@@ -232,7 +232,7 @@ function Index() {
           </button>
           <button
             onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-8 py-3 text-sm font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
+            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-6 py-2.5 text-[10px] font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
           >
             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
             👤 PERSONAGENS
