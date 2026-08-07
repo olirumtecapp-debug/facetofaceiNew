@@ -84,6 +84,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       setTimeout(nextTurn, 600);
     } else if (type === "AI_PALPITE") {
       const isCorrect = answer === "SIM";
+      // O palpite da IA é sobre o personagem secreto do JOGADOR
       setGameState((prev) => ({
         ...prev,
         isGameOver: true,
@@ -174,7 +175,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const timer = setTimeout(() => {
         const palpite = getAIPalpite(gameState.difficulty, gameState.aiRemainingChars);
         if (palpite) {
-          // IA faz a pergunta de palpite em vez de ganhar automaticamente
+          // A IA palpita o personagem que ela ACHA que o jogador tem (baseado nos descartes dela)
           setGameState((prev) => ({
             ...prev,
             pendingQuestion: { 
