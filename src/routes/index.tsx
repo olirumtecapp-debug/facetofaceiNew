@@ -198,12 +198,12 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-40 items-center justify-center overflow-hidden rounded-xl border-2 border-white/20 bg-white p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-48 md:h-32 md:w-56"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-2 border-white/20 bg-white p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playIaAsset.url} 
                 alt="Jogar vs IA" 
-                className="h-full w-full object-contain contrast-125 brightness-110" 
+                className="h-full w-auto object-contain contrast-125 brightness-110" 
               />
             </button>
           </div>
@@ -216,12 +216,12 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-40 items-center justify-center overflow-hidden rounded-xl border-2 border-white/20 bg-white p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-48 md:h-32 md:w-56"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-2 border-white/20 bg-white p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playOnlineAsset.url} 
                 alt="Jogar on-line" 
-                className="h-full w-full object-contain contrast-125 brightness-110" 
+                className="h-full w-auto object-contain contrast-125 brightness-110" 
               />
             </button>
           </div>
