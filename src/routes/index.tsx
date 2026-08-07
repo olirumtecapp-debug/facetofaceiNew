@@ -98,13 +98,8 @@ function Index() {
                 boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.2)" : "0 0 20px rgba(229,46,46,0.2)"
               }}
             >
-              <img 
-                src={c === "AZUL" ? boardAzulAsset.url : boardVermelhoAsset.url} 
-                alt={`Tabuleiro ${c.toLowerCase()}`} 
-                className="mx-auto mb-4 h-32 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-transform group-hover:scale-110" 
-              />
               <h3 className="text-2xl font-black italic tracking-tighter" style={{ color: c === "AZUL" ? "#1e62ec" : "#e52e2e" }}>
-                {c}
+                Tabuleiro {c.toLowerCase()}
               </h3>
             </button>
           ))}
