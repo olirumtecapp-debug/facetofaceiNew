@@ -181,18 +181,28 @@ function Index() {
           alt="FTF - Face to Face"
           className="h-24 w-auto object-contain sm:h-40 md:h-48"
         />
-        <div className="flex w-full flex-col items-center justify-center gap-6 md:flex-row md:gap-10">
+        <div className="flex w-full flex-col items-center justify-center gap-6 sm:flex-row sm:gap-8">
           <button
             onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-            className="w-[65vw] max-w-[300px] transition-transform hover:scale-105 active:scale-95"
+            className="group relative h-auto w-56 transition-transform hover:scale-105 active:scale-95 sm:w-64 md:w-72"
           >
-            <img src={playIaAsset.url} alt="Jogar vs IA" className="h-auto w-full object-contain" />
+            <div className="absolute inset-0 -z-10 rounded-3xl bg-blue-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-0" />
+            <img 
+              src={playIaAsset.url} 
+              alt="Jogar vs IA" 
+              className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(30,98,236,0.3)]" 
+            />
           </button>
           <button
             onClick={() => setScreen("ONLINE")}
-            className="w-[60vw] max-w-[275px] transition-transform hover:scale-105 active:scale-95"
+            className="group relative h-auto w-56 transition-transform hover:scale-105 active:scale-95 sm:w-64 md:w-72"
           >
-            <img src={playOnlineAsset.url} alt="Jogar on-line" className="h-auto w-full object-contain" />
+            <div className="absolute inset-0 -z-10 rounded-3xl bg-red-500/20 blur-xl transition-opacity group-hover:opacity-100 opacity-0" />
+            <img 
+              src={playOnlineAsset.url} 
+              alt="Jogar on-line" 
+              className="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(229,46,46,0.3)]" 
+            />
           </button>
         </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
