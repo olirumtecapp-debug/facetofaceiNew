@@ -49,7 +49,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-hidden p-2 sm:p-3 gap-3">
         {/* Main Board Area */}
         <div className="flex-[3] min-h-0 overflow-y-auto pr-1 custom-scrollbar">
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-2 sm:gap-3 lg:gap-4 p-1">
             {gameState.playerBoard.map((item) => (
               <GameCard
                 key={item.character.id}
