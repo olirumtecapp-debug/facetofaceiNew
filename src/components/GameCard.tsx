@@ -11,6 +11,7 @@ interface CardProps {
 
 export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
   const src = CARD_IMAGES[color][character.id - 1];
+  const isThiago = character.id === 24;
 
   return (
     <div className="flex h-full w-full items-center justify-center p-0">
@@ -26,7 +27,7 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
             src={src}
             alt={character.nome}
             loading="lazy"
-            className="h-full w-full object-cover object-center contrast-110"
+            className={`h-full w-full contrast-110 ${isThiago ? "object-contain" : "object-cover object-center"}`}
           />
         </div>
         {isDown && (
