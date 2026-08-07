@@ -64,7 +64,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 lg:flex-row lg:gap-3 lg:p-3">
         {/* Board */}
         <section className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2 custom-scrollbar">
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-y-10 gap-x-2 sm:gap-x-4">
             {gameState.playerBoard.map((item) => (
               <GameCard
                 key={item.character.id}
@@ -179,7 +179,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
-            <div className="mb-4 grid max-h-[55vh] grid-cols-4 sm:grid-cols-6 gap-3 sm:gap-4 overflow-y-auto custom-scrollbar">
+            <div className="mb-4 grid max-h-[55vh] grid-cols-4 sm:grid-cols-6 gap-y-10 gap-x-2 sm:gap-x-4 overflow-y-auto custom-scrollbar">
               {CHARACTERS.map((c) => (
                 <GameCard
                   key={c.id}
