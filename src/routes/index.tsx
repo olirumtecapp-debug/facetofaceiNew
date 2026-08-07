@@ -185,7 +185,7 @@ function Index() {
           <img
             src={logoAsset.url}
             alt="FTF - Face to Face"
-            className="h-24 w-auto object-contain sm:h-40 md:h-48"
+            className="h-24 w-auto object-contain sm:h-32 md:h-36"
           />
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
@@ -254,11 +254,11 @@ function Index() {
                     onClick={() => setSelectedCharId(c.id)}
                     className="group relative flex flex-col items-center transition-all hover:z-10"
                   >
-                    <div className="relative aspect-[178/224] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
+                    <div className="relative flex aspect-[178/224] w-full items-center justify-center overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
                       <img
                         src={CARD_IMAGES.AZUL[c.id - 1]!}
                         alt={c.nome}
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-cover object-center"
                       />
                     </div>
                     <span className="mt-2 text-[10px] font-black uppercase italic tracking-tighter text-gray-400 transition-colors group-hover:text-yellow-400 sm:text-xs">
@@ -286,8 +286,8 @@ function Index() {
               const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
               return (
                 <div className="flex flex-col items-center p-4 text-gray-900">
-                  <div className="w-24 sm:w-32 aspect-[178/224] mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0]">
-                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain" />
+                  <div className="flex w-24 sm:w-32 aspect-[178/224] mb-4 items-center justify-center overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0]">
+                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-cover object-center" />
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
                   <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
