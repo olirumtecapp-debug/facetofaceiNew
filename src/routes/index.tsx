@@ -254,7 +254,7 @@ function Index() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
           <div className="flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
             <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-2 overflow-y-auto custom-scrollbar p-1">
+            <div className="grid flex-1 grid-cols-4 sm:grid-cols-5 gap-4 overflow-y-auto custom-scrollbar p-2">
               {CHARACTERS.map((c) => (
                 <button 
                   key={c.id} 
