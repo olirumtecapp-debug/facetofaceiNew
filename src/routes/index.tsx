@@ -240,7 +240,7 @@ function Index() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
           <div className="flex max-h-[90dvh] w-full max-w-4xl flex-col rounded-2xl border border-white/10 bg-[#0b0e14] p-4">
             <h2 className="mb-3 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto custom-scrollbar sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid flex-1 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 overflow-y-auto custom-scrollbar">
               {CHARACTERS.map((c) => (
                 <div key={c.id} className="rounded-xl border border-white/5 bg-black/30 p-2">
                   <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="mx-auto h-28 w-auto object-contain" />
