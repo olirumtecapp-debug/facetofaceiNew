@@ -37,8 +37,10 @@ export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardPr
           style={{
             backgroundImage: `url(${spriteSheet})`,
             backgroundSize: "600% 400%",
-            backgroundPosition: `${x}% ${y}%`,
-            backgroundRepeat: "no-repeat"
+            backgroundPosition: `calc(${x}% + 0px) calc(${y}% + 0px)`,
+            backgroundRepeat: "no-repeat",
+            transform: "scale(1.1)", // Slight zoom to fill cell and center better
+            transformOrigin: "center center"
           }}
         />
         {!isSecret && (

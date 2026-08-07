@@ -74,7 +74,7 @@ function Index() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0b0e14] p-4 text-white">
       <div className="flex w-full max-w-4xl flex-col items-center gap-16">
-        <img src={logoAsset.url} alt="FTF - FACE TO FACE" className="h-40 object-contain drop-shadow-[0_0_20px_rgba(30,98,236,0.3)]" />
+        <img src={logoAsset.url} alt="FTF - FACE TO FACE" className="h-40 object-contain drop-shadow-[0_0_20px_rgba(30,98,236,0.3)] mix-blend-screen" />
         
         <div className="flex w-full flex-col gap-8 md:flex-row">
           <button 
