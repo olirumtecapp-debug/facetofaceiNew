@@ -203,7 +203,8 @@ function Index() {
               alt="Jogar on-line" 
               className="h-full w-full object-contain [mix-blend-mode:lighten] contrast-125 brightness-110 drop-shadow-[0_0_15px_rgba(229,46,46,0.6)]" 
             />
-          </div>
+          </button>
+        </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
           <button className="text-2xl transition-transform hover:scale-110" aria-label="Configurações">
             ⚙️
