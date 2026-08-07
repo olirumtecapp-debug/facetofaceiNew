@@ -18,6 +18,7 @@ export type GameState = {
   isGameOver: boolean;
   winner?: "PLAYER" | "AI" | undefined;
   pendingQuestion?: { question: Question; type: "PLAYER" | "AI"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
+  askedQuestions: Set<string>;
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
@@ -38,6 +39,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       turnCount: 1,
       history: [],
       isGameOver: false,
+      askedQuestions: new Set<string>(),
     };
   });
 
@@ -50,7 +52,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   }, []);
 
   const handlePlayerQuestion = (question: Question) => {
-    if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
+    if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver || gameState.askedQuestions.has(question.id)) return;
 
     setGameState((prev) => ({
       ...prev,
@@ -77,6 +79,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         ...prev,
         history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
         pendingQuestion: undefined,
+        askedQuestions: new Set(prev.askedQuestions).add(question.id),
       }));
       setTimeout(nextTurn, 600);
     } else {
@@ -90,6 +93,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           aiRemainingChars: newRemaining,
           history: [...prev.history, { type: "AI", text: question.text, answer }],
           pendingQuestion: undefined,
+          askedQuestions: new Set(prev.askedQuestions).add(question.id),
         };
       });
       setTimeout(nextTurn, 600);
@@ -149,6 +153,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       history: [],
       isGameOver: false,
       winner: undefined,
+      askedQuestions: new Set<string>(),
     }));
   };
 
