@@ -248,39 +248,31 @@ function Index() {
 
       {showChars && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
-          <div className="flex max-h-[95dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-            <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="flex-1 overflow-auto custom-scrollbar p-1 sm:p-4">
-              <table className="w-full border-separate border-spacing-0.5 sm:border-spacing-2 table-fixed">
-                <tbody>
-                  {Array.from({ length: 4 }).map((_, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {Array.from({ length: 6 }).map((_, colIndex) => {
-                        const charIndex = rowIndex * 6 + colIndex;
-                        const c = CHARACTERS[charIndex];
-                        return (
-                          <td key={colIndex} className="p-0.5 align-middle text-center">
-                            {c && (
-                              <button
-                                onClick={() => setSelectedCharId(c.id)}
-                                className="group relative aspect-[3/4] h-[65px] w-full overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#c0c0c0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95 sm:h-[140px] md:h-[170px] lg:h-[200px]"
-                              >
-                                <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-0.5 sm:p-0.5">
-                                  <img
-                                    src={CARD_IMAGES.AZUL[c.id - 1]!}
-                                    alt={c.nome}
-                                    className="h-full w-full object-cover object-center contrast-110"
-                                  />
-                                </div>
-                              </button>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex max-h-[95dvh] w-full max-w-4xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)] sm:p-6">
+            <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400 sm:mb-6 sm:text-3xl">Personagens</h2>
+            <div className="flex-1 overflow-auto custom-scrollbar p-1">
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 sm:gap-4 lg:gap-6">
+                {CHARACTERS.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedCharId(c.id)}
+                    className="group relative flex flex-col items-center transition-all hover:z-10"
+                  >
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
+                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0]">
+                        <img
+                          src={CARD_IMAGES.AZUL[c.id - 1]!}
+                          alt={c.nome}
+                          className="h-full w-full object-cover object-center contrast-110"
+                        />
+                      </div>
+                    </div>
+                    <span className="mt-2 text-[10px] font-black uppercase italic tracking-tighter text-gray-400 transition-colors group-hover:text-yellow-400 sm:text-xs">
+                      {c.nome}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
             <button
               onClick={() => setShowChars(false)}
@@ -294,7 +286,7 @@ function Index() {
 
       {selectedCharId !== null && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-          <div className="w-full max-w-[280px] sm:max-w-sm rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+          <div className="w-full max-w-[320px] sm:max-w-md rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
             {(() => {
               const c = CHARACTERS.find(char => char.id === selectedCharId)!;
               const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
