@@ -41,7 +41,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 function Index() {
   const [screen, setScreen] = useState<Screen>("MENU");
   const [playerColor, setPlayerColor] = useState<"AZUL" | "VERMELHO">("AZUL");
-  const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
+  const [difficulty] = useState<Difficulty>("Médio");
   const [showChars, setShowChars] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
   const [roomCode, setRoomCode] = useState("");
@@ -55,29 +55,6 @@ function Index() {
     return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} />;
   }
 
-  if (screen === "CHOOSE_DIFFICULTY") {
-    return (
-      <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400">Dificuldade da IA</h2>
-        <div className="grid w-full max-w-md gap-4">
-          {(["Fácil", "Médio", "Difícil"] as Difficulty[]).map((d) => (
-            <button
-              key={d}
-              onClick={() => {
-                setDifficulty(d);
-                setScreen("CHOOSE_COLOR");
-              }}
-              className="group relative overflow-hidden rounded-xl border-2 border-blue-400/50 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
-            >
-              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/30 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
-              <span className="relative z-10">{d}</span>
-            </button>
-          ))}
-        </div>
-        <BackButton onClick={() => setScreen("MENU")} />
-      </Shell>
-    );
-  }
 
   if (screen === "CHOOSE_COLOR") {
     return (
@@ -104,7 +81,7 @@ function Index() {
             </button>
           ))}
         </div>
-        <BackButton onClick={() => setScreen("CHOOSE_DIFFICULTY")} />
+        <BackButton onClick={() => setScreen("MENU")} />
       </Shell>
     );
   }
@@ -194,7 +171,7 @@ function Index() {
             
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
-              onClick={() => setScreen("CHOOSE_DIFFICULTY")}
+              onClick={() => setScreen("CHOOSE_COLOR")}
               className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
