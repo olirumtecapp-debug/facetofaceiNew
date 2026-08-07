@@ -195,10 +195,10 @@ function Index() {
             {/* Brilho externo azul */}
             <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
             
-            {/* Moldura branca para mascarar recorte */}
+            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-32 w-48 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/20 bg-white p-2 transition-all hover:scale-105 active:scale-95 sm:h-40 sm:w-56 md:h-48 md:w-64"
+              className="relative flex h-24 w-40 items-center justify-center overflow-hidden rounded-xl border-2 border-white/20 bg-white p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-48 md:h-32 md:w-56"
             >
               <img 
                 src={playIaAsset.url} 
@@ -213,10 +213,10 @@ function Index() {
             {/* Brilho externo vermelho */}
             <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
             
-            {/* Moldura branca para mascarar recorte */}
+            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-32 w-48 items-center justify-center overflow-hidden rounded-2xl border-4 border-white/20 bg-white p-2 transition-all hover:scale-105 active:scale-95 sm:h-40 sm:w-56 md:h-48 md:w-64"
+              className="relative flex h-24 w-40 items-center justify-center overflow-hidden rounded-xl border-2 border-white/20 bg-white p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-48 md:h-32 md:w-56"
             >
               <img 
                 src={playOnlineAsset.url} 
