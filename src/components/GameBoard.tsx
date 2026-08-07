@@ -61,19 +61,19 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden p-1.5 lg:flex-row lg:gap-3 lg:p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden p-1 lg:flex-row lg:gap-2 lg:p-2">
         {/* Board */}
-        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-1 sm:p-2 custom-scrollbar">
-          <div className="mx-auto w-fit max-w-full">
-            <table className="border-separate border-spacing-[1px] sm:border-spacing-1">
-              <tbody>
+        <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center">
+            <table className="border-separate border-spacing-[1px] sm:border-spacing-1 h-full w-full max-w-4xl max-h-[85vh]">
+              <tbody className="h-full">
                 {Array.from({ length: 4 }).map((_, rowIndex) => (
-                  <tr key={rowIndex}>
+                  <tr key={rowIndex} className="h-1/4">
                     {Array.from({ length: 6 }).map((_, colIndex) => {
                       const charIndex = rowIndex * 6 + colIndex;
                       const item = gameState.playerBoard[charIndex];
                       return (
-                        <td key={colIndex} className="p-0 align-middle text-center">
+                        <td key={colIndex} className="p-0 align-middle text-center w-1/6 h-full">
                           {item && (
                             <GameCard
                               character={item.character}
@@ -93,7 +93,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </section>
 
         {/* Side panel */}
-        <aside className="flex min-h-0 shrink-0 flex-col gap-1.5 lg:w-[340px]">
+        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px]">
           {/* Secret cards + actions */}
           <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
             <div className="w-12 shrink-0 sm:w-20">
