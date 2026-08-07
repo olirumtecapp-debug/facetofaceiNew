@@ -178,11 +178,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
 
   useEffect(() => {
-    if (gameState.currentTurn === "AI" && !gameState.isGameOver) {
+    // Only trigger AI logic if it's AI's turn AND no question is pending
+    if (gameState.currentTurn === "AI" && !gameState.isGameOver && !gameState.pendingQuestion) {
       const timer = setTimeout(() => {
         const palpite = getAIPalpite(gameState.difficulty, gameState.aiRemainingChars);
         if (palpite) {
-          // A IA palpita o personagem que ela ACHA que o jogador tem (baseado nos descartes dela)
           setGameState((prev) => ({
             ...prev,
             pendingQuestion: { 
@@ -207,7 +207,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, nextTurn, gameState.aiRemainingChars]);
+  }, [gameState.currentTurn, gameState.isGameOver, gameState.difficulty, gameState.playerSecret, gameState.turnCount, gameState.aiRemainingChars, gameState.pendingQuestion]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
 };
