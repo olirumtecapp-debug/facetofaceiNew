@@ -114,14 +114,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <button
                 onClick={() => setIsPalpitando(true)}
                 disabled={!myTurn}
-                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] hover:scale-105 active:scale-95 disabled:opacity-40 disabled:scale-100"
+                className="flex items-center justify-center rounded-lg bg-[#e52e2e] px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
               >
                 Palpite final
               </button>
               <button
                 onClick={passTurn}
                 disabled={!myTurn}
-                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:scale-100"
+                className="flex items-center justify-center rounded-lg bg-gray-700 px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
               >
                 Passar a vez
               </button>
