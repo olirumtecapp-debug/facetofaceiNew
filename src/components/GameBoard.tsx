@@ -46,10 +46,10 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </button>
       </div>
 
-      <div className="flex flex-1 overflow-hidden p-3 gap-4">
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-hidden p-2 sm:p-3 gap-3">
         {/* Main Board Area */}
-        <div className="flex-[3] overflow-y-auto pr-2 custom-scrollbar">
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+        <div className="flex-[3] min-h-0 overflow-y-auto pr-1 custom-scrollbar">
+          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-6 gap-1.5 sm:gap-2">
             {gameState.playerBoard.map((item) => (
               <GameCard
                 key={item.character.id}
@@ -63,23 +63,25 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         </div>
 
         {/* Side Panel */}
-        <div className="flex flex-[1] min-w-[320px] flex-col gap-3">
-           {/* Your Card */}
-           <div className="rounded-xl border border-white/10 bg-[#0b0e14] p-3">
-             <div className="mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">SUA CARTA</div>
-             <div className="mx-auto w-20">
-               <GameCard 
-                 character={gameState.playerSecret} 
-                 isDown={false} 
-                 color={playerColor} 
-                 onClick={() => {}} 
-                 isSecret 
-               />
+        <div className="flex flex-col lg:w-80 shrink-0 gap-2 sm:gap-3 min-h-0">
+           {/* Your Card and Score (Condensed for mobile) */}
+           <div className="flex lg:flex-col gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:p-3 shrink-0">
+             <div className="flex-1 lg:flex-none">
+               <div className="mb-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">SUA CARTA</div>
+               <div className="mx-auto w-16 sm:w-20">
+                 <GameCard 
+                   character={gameState.playerSecret} 
+                   isDown={false} 
+                   color={playerColor} 
+                   onClick={() => {}} 
+                   isSecret 
+                 />
+               </div>
              </div>
            </div>
 
            {/* History / Chat */}
-           <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
+           <div className="flex flex-1 flex-col min-h-0 overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
              <div className="border-b border-white/10 p-2 text-[10px] font-bold text-gray-500 uppercase tracking-tighter">HISTÓRICO</div>
              <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar text-[11px]">
                {gameState.history.map((h, i) => (

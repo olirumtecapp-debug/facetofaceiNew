@@ -73,33 +73,33 @@ function Index() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0b0e14] p-4 text-white">
-      <div className="flex w-full max-w-4xl flex-col items-center gap-16">
+      <div className="flex w-full max-w-4xl flex-col items-center gap-8 sm:gap-16">
         <img 
           src={logoAsset.url} 
           alt="FTF - FACE TO FACE" 
-          className="h-56 object-contain drop-shadow-[0_0_30px_rgba(30,98,236,0.3)] mix-blend-screen" 
+          className="h-32 sm:h-56 w-auto object-contain drop-shadow-[0_0_30px_rgba(30,98,236,0.3)] mix-blend-screen" 
         />
         
-        <div className="flex w-full flex-col justify-center items-center gap-10 md:flex-row">
+        <div className="flex w-full flex-col justify-center items-center gap-6 sm:gap-10 md:flex-row px-4">
           <button 
             onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-            className="group relative transition-transform hover:scale-110 active:scale-95"
+            className="group relative transition-transform hover:scale-105 active:scale-95 w-full max-w-[240px] sm:max-w-none"
           >
             <img 
               src={playIaAsset.url} 
               alt="JOGAR VS IA" 
-              className="h-64 w-64 object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)]" 
+              className="w-full h-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] mix-blend-screen" 
             />
           </button>
           
           <button 
             onClick={() => alert("Multiplayer em breve!")}
-            className="group relative transition-transform hover:scale-110 active:scale-95"
+            className="group relative transition-transform hover:scale-105 active:scale-95 w-full max-w-[240px] sm:max-w-none"
           >
             <img 
               src={playOnlineAsset.url} 
               alt="JOGAR ON-LINE" 
-              className="h-64 w-64 object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)]" 
+              className="w-full h-auto object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] mix-blend-screen" 
             />
           </button>
         </div>

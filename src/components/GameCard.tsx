@@ -38,10 +38,12 @@ export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardPr
           <div 
             className="absolute inset-[-10%] w-[120%] h-[120%]"
             style={{
-              backgroundImage: `url(${spriteSheet})`,
-              backgroundSize: "600% 400%",
-              backgroundPosition: `${x}% ${y}%`,
-              backgroundRepeat: "no-repeat",
+            backgroundImage: `url(${spriteSheet})`,
+            backgroundSize: "600% 400%",
+            backgroundPosition: `${x}% ${y}%`,
+            backgroundRepeat: "no-repeat",
+            transform: "scale(1.3)",
+            transformOrigin: "center 40%"
             }}
           />
         </div>
