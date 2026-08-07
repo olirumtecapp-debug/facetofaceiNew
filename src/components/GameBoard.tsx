@@ -28,8 +28,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0d1117] text-white">
       {/* Game Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-1/4 -left-1/4 w-[100vmax] h-[100vmax] animate-lightning-spin opacity-5 bg-[radial-gradient(circle_at_center,#1e62ec_0%,transparent_70%)] blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:30px_30px]" />
+        {/* Rotating Lightning/Energy effect for game screen */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vmax] h-[150vmax] animate-lightning-spin opacity-10 bg-[radial-gradient(circle_at_center,transparent_30%,#1e62ec_40%,transparent_41%,#e52e2e_50%,transparent_51%)] blur-[100px]" />
+        
+        {/* Glow Pulses for game screen */}
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(30,98,236,0.15),transparent_50%),radial-gradient(circle_at_80%_80%,rgba(229,46,46,0.15),transparent_50%)] animate-pulse-glow" />
+        
+        {/* Subtle Grid overlay */}
+        <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
       {/* Header */}
@@ -93,14 +99,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <button
                 onClick={() => setIsPalpitando(true)}
                 disabled={!myTurn}
-                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide transition-colors hover:bg-red-700 disabled:opacity-40"
+                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide border border-white/20 transition-all hover:bg-red-700 hover:shadow-[0_0_10px_rgba(229,46,46,0.4)] active:scale-95 disabled:opacity-40"
               >
                 Palpite final
               </button>
               <button
                 onClick={passTurn}
                 disabled={!myTurn}
-                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide transition-colors hover:bg-gray-600 disabled:opacity-40"
+                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide border border-white/20 transition-all hover:bg-gray-600 active:scale-95 disabled:opacity-40"
               >
                 Passar a vez
               </button>

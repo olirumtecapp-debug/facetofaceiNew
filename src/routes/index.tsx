@@ -65,9 +65,9 @@ function Index() {
                 setDifficulty(d);
                 setScreen("CHOOSE_COLOR");
               }}
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-gray-800 p-5 text-xl font-bold transition-all hover:scale-105 hover:bg-gray-700 active:scale-95"
+              className="group relative overflow-hidden rounded-xl border border-white/20 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
             >
-              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/20 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/30 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="relative z-10">{d}</span>
             </button>
           ))}
@@ -133,7 +133,7 @@ function Index() {
                 }
               }}
               disabled={isConnecting}
-              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase hover:brightness-110 disabled:opacity-50"
+              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border border-white/20 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
             >
               {isConnecting ? "Criando..." : "Gerar código"}
             </button>
@@ -165,7 +165,7 @@ function Index() {
               }}
 
               disabled={isConnecting || !joinCode}
-              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase hover:brightness-110 disabled:opacity-50"
+              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border border-white/20 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
             >
               {isConnecting ? "Entrando..." : "Entrar"}
             </button>
@@ -222,9 +222,9 @@ function Index() {
           </button>
           <button
             onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full bg-gray-800 px-8 py-3 text-sm font-black tracking-widest transition-all hover:scale-105 hover:bg-gray-700 active:scale-95"
+            className="group relative overflow-hidden rounded-full border border-white/20 bg-gray-800/80 px-8 py-3 text-sm font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:border-yellow-400/50 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
           >
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
             👤 PERSONAGENS
           </button>
           <button 
