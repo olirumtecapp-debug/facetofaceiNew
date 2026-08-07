@@ -7,6 +7,7 @@ import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
 import boardVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
 import { CARD_IMAGES } from "@/assets/chars";
 import { CHARACTERS } from "@/data/characters";
+import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
 import { createRoom, joinRoom } from "@/lib/online.functions";
@@ -280,6 +281,7 @@ function Index() {
           <div className="w-full max-w-[280px] sm:max-w-sm rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
             {(() => {
               const c = CHARACTERS.find(char => char.id === selectedCharId)!;
+              const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
               return (
                 <div className="flex flex-col items-center p-4 text-gray-900">
                   <div className="w-24 sm:w-32 aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
@@ -287,13 +289,10 @@ function Index() {
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
                   <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Gênero:</span> {c.genero}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Cabelo:</span> {c.corCabelo} ({c.estiloCabelo})</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Pele:</span> {c.tomPele}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Olhos:</span> {c.corOlhos}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[10px]">Barba:</span> {c.barbaBigode}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Acessórios:</span> {c.oculos ? "Óculos" : ""} {c.brincos ? "Brincos" : ""} {c.chapeuBoneFaixa !== "Nenhum" ? c.chapeuBoneFaixa : ""}</p>
-                    <p className="flex flex-col gap-0.5"><span className="text-gray-500 uppercase text-[8px]">Perfil:</span> <span className="text-[11px] leading-tight text-gray-800">{c.acessoriosExtra}</span></p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Profissão:</span> {details.profession}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Personalidade:</span> {details.personality}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Hobbies:</span> {details.hobbies.join(", ")}</p>
+                    <p className="flex flex-col gap-0.5"><span className="text-gray-500 uppercase text-[8px]">Sobre:</span> <span className="text-[11px] leading-tight text-gray-800 italic">{details.bio}</span></p>
                   </div>
                   <button
                     onClick={() => setSelectedCharId(null)}
