@@ -274,7 +274,7 @@ function Index() {
             </div>
             <button
               onClick={() => setShowChars(false)}
-              className="mt-3 w-full rounded-xl bg-gray-800 py-3 font-bold hover:bg-gray-700"
+              className="mt-3 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-bold transition-all hover:bg-gray-700 hover:scale-[1.02] active:scale-95"
             >
               FECHAR
             </button>
