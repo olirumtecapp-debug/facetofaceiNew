@@ -252,7 +252,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
           <div className="w-full max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
-              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : "Pergunta da IA"}
+              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : "Pergunta da IA"}
             </div>
             
             <div className="p-8 text-center">
