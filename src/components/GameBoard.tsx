@@ -267,10 +267,15 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                       <div className={`text-6xl font-black italic tracking-tighter ${gameState.pendingQuestion.revealedAnswer === "SIM" ? "text-green-500" : "text-red-500"}`}>
                         {gameState.pendingQuestion.revealedAnswer}
                       </div>
-                      <div className="text-center text-sm font-bold text-gray-400">
-                        {gameState.pendingQuestion.revealedAnswer === "SIM" 
-                          ? "Descarte quem NÃO tem essa característica!" 
-                          : "Descarte quem TEM essa característica!"}
+                      <div className="flex flex-col gap-2">
+                        <div className="text-center text-sm font-bold text-gray-400">
+                          {gameState.pendingQuestion.revealedAnswer === "SIM" 
+                            ? "Descarte quem NÃO tem essa característica!" 
+                            : "Descarte quem TEM essa característica!"}
+                        </div>
+                        <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-3 text-[10px] font-bold text-yellow-500 animate-pulse uppercase tracking-wider">
+                          NÃO ESQUEÇA DE DESCARTAR OS PERSONAGENS ANTES DE FAZER UMA NOVA PERGUNTA!
+                        </div>
                       </div>
                       <button
                         onClick={() => answerQuestion(gameState.pendingQuestion!.revealedAnswer!)}
@@ -315,19 +320,13 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
                   <div className="grid grid-cols-2 gap-4">
                     <button
-                      onClick={() => {
-                        answerQuestion("SIM");
-                        alert("A IA recebeu sua resposta! Agora ela vai descartar os personagens que NÃO possuem essa característica.");
-                      }}
-                      className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(22,163,74,0.3)]"
+                      onClick={() => answerQuestion("SIM")}
+                      className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15_rgba(22,163,74,0.3)]"
                     >
                       SIM
                     </button>
                     <button
-                      onClick={() => {
-                        answerQuestion("NÃO");
-                        alert("A IA recebeu sua resposta! Agora ela vai descartar os personagens que POSSUEM essa característica.");
-                      }}
+                      onClick={() => answerQuestion("NÃO")}
                       className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-red-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(220,38,38,0.3)]"
                     >
                       NÃO
