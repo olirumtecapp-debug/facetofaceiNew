@@ -194,19 +194,27 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
-            <div className="mb-4 grid max-h-[60vh] grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-y-8 gap-x-4 items-start overflow-y-auto custom-scrollbar p-2">
-              {CHARACTERS.map((c) => (
-                <GameCard
-                  key={c.id}
-                  character={c}
-                  isDown={false}
-                  color={oppColor}
-                  onClick={() => {
-                    setIsPalpitando(false);
-                    playerPalpite(c);
-                  }}
-                />
-              ))}
+            <div className="mb-4 grid max-h-[60vh] grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-8 gap-x-4 items-start justify-items-center overflow-y-auto custom-scrollbar p-2">
+              {gameState.playerBoard
+                .filter(item => !item.isDown)
+                .map((item) => (
+                  <div key={item.character.id} className="w-full max-w-[120px]">
+                    <GameCard
+                      character={item.character}
+                      isDown={false}
+                      color={oppColor}
+                      onClick={() => {
+                        setIsPalpitando(false);
+                        playerPalpite(item.character);
+                      }}
+                    />
+                  </div>
+                ))}
+              {gameState.playerBoard.filter(item => !item.isDown).length === 0 && (
+                <div className="col-span-full py-10 text-center text-gray-500 italic">
+                  Nenhum personagem disponível para palpite.
+                </div>
+              )}
             </div>
             <button
               onClick={() => setIsPalpitando(false)}
