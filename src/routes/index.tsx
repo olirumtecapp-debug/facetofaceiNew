@@ -184,7 +184,7 @@ function Index() {
         <img
           src={logoAsset.url}
           alt="FTF - Face to Face"
-          className="h-24 w-auto object-contain sm:h-40 md:h-48"
+          className="h-32 w-auto scale-150 object-contain sm:h-48 md:h-56"
         />
         <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
           {/* Botão Jogar vs IA */}
