@@ -22,12 +22,12 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
           isDown ? "opacity-30 grayscale" : "opacity-100 hover:scale-[1.04]"
         }`}
       >
-        <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-0.5 sm:p-0.5">
+        <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0] p-1">
           <img
             src={src}
             alt={character.nome}
             loading="lazy"
-            className={`h-full w-full contrast-110 ${isThiago ? "object-contain" : "object-cover object-center"}`}
+            className={`h-full w-full object-contain contrast-110`}
           />
         </div>
         {isDown && (
