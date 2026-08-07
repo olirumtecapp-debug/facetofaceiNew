@@ -25,11 +25,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
   const oppColor = playerColor === "AZUL" ? "VERMELHO" : "AZUL";
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0d1117] text-white">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-gradient-to-b from-[#0d1117] via-[#0d1117] to-[#1e62ec]/20 text-white">
       {/* Game Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect for game screen */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vmax] h-[150vmax] animate-lightning-spin opacity-10 bg-[radial-gradient(circle_at_center,transparent_30%,#1e62ec_40%,transparent_41%,#e52e2e_50%,transparent_51%)] blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180vmax] h-[180vmax] animate-lightning-spin opacity-20 bg-[conic-gradient(from_0deg,transparent_0deg,transparent_40deg,#1e62ec_45deg,transparent_50deg,transparent_90deg,transparent_130deg,#e52e2e_135deg,transparent_140deg,transparent_180deg,transparent_220deg,#1e62ec_225deg,transparent_230deg,transparent_270deg,transparent_310deg,#e52e2e_315deg,transparent_320deg,transparent_360deg)] blur-2xl" />
         
         {/* Glow Pulses for game screen */}
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(30,98,236,0.15),transparent_50%),radial-gradient(circle_at_80%_80%,rgba(229,46,46,0.15),transparent_50%)] animate-pulse-glow" />
