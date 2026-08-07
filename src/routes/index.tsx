@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import logoAsset from "@/assets/Logo.png.asset.json";
+import logoAsset from "@/assets/logo.png.asset.json";
 import playIaAsset from "@/assets/play-ia.png.asset.json";
 import playOnlineAsset from "@/assets/play-online.png.asset.json";
 import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
@@ -184,7 +184,7 @@ function Index() {
         <img
           src={logoAsset.url}
           alt="FTF - Face to Face"
-          className="h-32 w-auto scale-150 object-contain sm:h-48 md:h-56"
+          className="h-24 w-auto object-contain sm:h-40 md:h-48"
         />
         <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
           {/* Botão Jogar vs IA */}
