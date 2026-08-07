@@ -46,11 +46,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         >
           <span className="text-sm">{"<"}</span> Voltar
         </button>
-        <div className="min-w-0 text-center">
-          <div className="text-[11px] font-black uppercase tracking-widest text-yellow-400 sm:text-sm">
-            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno de perguntar" : "Aguarde o adversário..."}
+        <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
+          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 sm:text-xs">
+            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno" : "Aguarde o adversário"}
           </div>
-          <div className="text-[10px] font-bold text-gray-500">
+          <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
             Rodada {gameState.turnCount} · IA {difficulty}
           </div>
         </div>
