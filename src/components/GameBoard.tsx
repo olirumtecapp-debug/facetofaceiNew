@@ -46,11 +46,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         >
           <span className="text-sm">{"<"}</span> Voltar
         </button>
-        <div className="min-w-0 text-center">
-          <div className="text-[11px] font-black uppercase tracking-widest text-yellow-400 sm:text-sm">
-            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno de perguntar" : "Aguarde o adversário..."}
+        <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
+          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 sm:text-xs">
+            {gameState.isGameOver ? "FIM DE PARTIDA" : myTurn ? "Seu turno" : "Aguarde o adversário"}
           </div>
-          <div className="text-[10px] font-bold text-gray-500">
+          <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
             Rodada {gameState.turnCount} · IA {difficulty}
           </div>
         </div>
@@ -114,14 +114,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <button
                 onClick={() => setIsPalpitando(true)}
                 disabled={!myTurn}
-                className="rounded-lg bg-[#e52e2e] px-2 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] hover:scale-105 active:scale-95 disabled:opacity-40 disabled:scale-100"
+                className="flex items-center justify-center rounded-lg bg-[#e52e2e] px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
               >
                 Palpite final
               </button>
               <button
                 onClick={passTurn}
                 disabled={!myTurn}
-                className="rounded-lg bg-gray-700 px-2 py-2 text-[11px] font-black uppercase tracking-wide border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:scale-100"
+                className="flex items-center justify-center rounded-lg bg-gray-700 px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
               >
                 Passar a vez
               </button>
@@ -194,7 +194,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
-            <div className="mb-4 grid max-h-[55vh] grid-cols-4 sm:grid-cols-6 gap-y-10 gap-x-2 sm:gap-x-4 items-start overflow-y-auto custom-scrollbar">
+            <div className="mb-4 grid max-h-[55vh] grid-cols-4 sm:grid-cols-6 gap-y-4 gap-x-2 sm:gap-x-4 items-start overflow-y-auto custom-scrollbar p-1">
               {CHARACTERS.map((c) => (
                 <GameCard
                   key={c.id}
@@ -250,36 +250,36 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       {/* Interativo Modal de Pergunta */}
       {gameState.pendingQuestion && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          <div className="w-full max-w-[90%] sm:max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
               {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : "Pergunta da IA"}
             </div>
             
-            <div className="p-8 text-center">
-              <div className="mb-8 text-xl font-bold italic leading-relaxed text-white sm:text-2xl">
+            <div className="flex flex-col items-center p-6 sm:p-8">
+              <div className="mb-6 w-full text-center text-lg font-bold italic leading-tight text-white sm:text-2xl">
                 "{gameState.pendingQuestion.question.text}"
               </div>
 
               {gameState.pendingQuestion.type === "PLAYER" ? (
                 <div className="flex flex-col gap-6">
                   {gameState.pendingQuestion.revealedAnswer ? (
-                    <div className="flex flex-col items-center gap-6 animate-in zoom-in-95 duration-300">
-                      <div className={`text-6xl font-black italic tracking-tighter ${gameState.pendingQuestion.revealedAnswer === "SIM" ? "text-green-500" : "text-red-500"}`}>
+                    <div className="flex w-full flex-col items-center gap-5 animate-in zoom-in-95 duration-300">
+                      <div className={`text-5xl font-black italic tracking-tighter sm:text-6xl ${gameState.pendingQuestion.revealedAnswer === "SIM" ? "text-green-500" : "text-red-500"}`}>
                         {gameState.pendingQuestion.revealedAnswer}
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="text-center text-sm font-bold text-gray-400">
+                      <div className="flex w-full flex-col gap-2">
+                        <div className="text-center text-xs font-bold text-gray-400 sm:text-sm">
                           {gameState.pendingQuestion.revealedAnswer === "SIM" 
                             ? "Descarte quem NÃO tem essa característica!" 
                             : "Descarte quem TEM essa característica!"}
                         </div>
-                        <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-3 text-[10px] font-bold text-yellow-500 animate-pulse uppercase tracking-wider">
+                        <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/30 p-2.5 text-[9px] font-bold text-yellow-500 animate-pulse uppercase tracking-wider leading-tight sm:p-3 sm:text-[10px]">
                           NÃO ESQUEÇA DE DESCARTAR OS PERSONAGENS ANTES DE FAZER UMA NOVA PERGUNTA!
                         </div>
                       </div>
                       <button
                         onClick={() => answerQuestion(gameState.pendingQuestion!.revealedAnswer!)}
-                        className="w-full rounded-xl bg-[#1e62ec] py-4 text-lg font-black text-white transition-all hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(30,98,236,0.3)]"
+                        className="w-full rounded-xl bg-[#1e62ec] py-3 text-base font-black text-white transition-all hover:scale-[1.02] active:scale-95 shadow-[0_4px_12px_rgba(30,98,236,0.3)] sm:py-4 sm:text-lg"
                       >
                         ENTENDI, CONTINUAR
                       </button>
@@ -295,13 +295,13 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                         </div>
                       </div>
                       
-                      <div className="flex flex-col gap-4">
-                        <div className="text-sm font-bold uppercase tracking-widest text-blue-400 animate-pulse">
+                      <div className="flex w-full flex-col gap-4">
+                        <div className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 animate-pulse sm:text-sm">
                           IA está respondendo...
                         </div>
                         <button
                           onClick={revealAIAnswer}
-                          className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
+                          className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-base font-black text-black transition-all hover:scale-[1.02] active:scale-95 sm:py-4 sm:text-lg"
                         >
                           VER RESPOSTA
                         </button>
@@ -310,27 +310,29 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-5">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sua Carta (Lembre-se!)</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sua Carta</div>
                     <div className="w-24 overflow-hidden rounded-lg border-2 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                       <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => answerQuestion("SIM")}
-                      className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15_rgba(22,163,74,0.3)]"
-                    >
-                      SIM
-                    </button>
-                    <button
-                      onClick={() => answerQuestion("NÃO")}
-                      className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-red-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(220,38,38,0.3)]"
-                    >
-                      NÃO
-                    </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => answerQuestion("SIM")}
+                        className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-3 text-lg font-black text-white transition-all hover:bg-green-500 hover:scale-[1.02] active:scale-95 shadow-[0_4px_10px_rgba(22,163,74,0.3)]"
+                      >
+                        SIM
+                      </button>
+                      <button
+                        onClick={() => answerQuestion("NÃO")}
+                        className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-3 text-lg font-black text-white transition-all hover:bg-red-500 hover:scale-[1.02] active:scale-95 shadow-[0_4px_10px_rgba(220,38,38,0.3)]"
+                      >
+                        NÃO
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
