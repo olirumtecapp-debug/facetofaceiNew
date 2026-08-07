@@ -255,10 +255,13 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BackButton({ onClick }: { onClick: () => void }) {
+function BackButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
-    <button onClick={onClick} className="font-bold uppercase tracking-widest text-gray-400 hover:text-white">
-      Voltar
+    <button
+      onClick={onClick}
+      className={`font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-yellow-400 ${className}`}
+    >
+      {"<"} VOLTAR
     </button>
   );
 }

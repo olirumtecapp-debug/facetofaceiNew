@@ -28,8 +28,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
     <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-[#0d1117] text-white">
       {/* Header */}
       <header className="grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#0b0e14] px-3 py-2">
-        <button onClick={onBack} className="text-xs font-bold text-gray-400 hover:text-white">
-          MENU
+        <button
+          onClick={onBack}
+          className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:bg-white/10 hover:text-yellow-400 active:scale-95"
+        >
+          {"<"} Voltar
         </button>
         <div className="min-w-0 text-center">
           <div className="text-[11px] font-black uppercase tracking-widest text-yellow-400 sm:text-sm">
