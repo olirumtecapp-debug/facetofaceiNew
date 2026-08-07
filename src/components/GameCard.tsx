@@ -33,14 +33,18 @@ export const GameCard = ({ character, isDown, color, onClick, isSecret }: CardPr
         }}
       >
         <div 
-          className="flex-1 w-full"
-          style={{
-            backgroundImage: `url(${spriteSheet})`,
-            backgroundSize: "600% 400%",
-            backgroundPosition: `${x}% ${y}%`,
-            backgroundRepeat: "no-repeat"
-          }}
-        />
+          className="flex-1 w-full relative overflow-hidden"
+        >
+          <div 
+            className="absolute inset-[-10%] w-[120%] h-[120%]"
+            style={{
+              backgroundImage: `url(${spriteSheet})`,
+              backgroundSize: "600% 400%",
+              backgroundPosition: `${x}% ${y}%`,
+              backgroundRepeat: "no-repeat",
+            }}
+          />
+        </div>
         {!isSecret && (
           <div className="bg-black/80 py-0.5 text-center text-[9px] font-black text-white uppercase tracking-tighter leading-none">
             {character.nome}

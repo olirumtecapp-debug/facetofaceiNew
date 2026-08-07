@@ -74,23 +74,33 @@ function Index() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0b0e14] p-4 text-white">
       <div className="flex w-full max-w-4xl flex-col items-center gap-16">
-        <img src={logoAsset.url} alt="FTF - FACE TO FACE" className="h-40 object-contain drop-shadow-[0_0_20px_rgba(30,98,236,0.3)]" />
+        <img 
+          src={logoAsset.url} 
+          alt="FTF - FACE TO FACE" 
+          className="h-56 object-contain drop-shadow-[0_0_30px_rgba(30,98,236,0.3)] mix-blend-screen" 
+        />
         
-        <div className="flex w-full flex-col gap-8 md:flex-row">
+        <div className="flex w-full flex-col justify-center items-center gap-10 md:flex-row">
           <button 
             onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-            className="flex-1 rounded-3xl border border-white/10 bg-[#1e62ec] p-8 shadow-2xl transition-all hover:scale-105 hover:bg-[#1e62ec]/90 active:scale-95"
+            className="group relative transition-transform hover:scale-110 active:scale-95"
           >
-            <img src={playIaAsset.url} alt="Jogar vs IA" className="mx-auto mb-6 h-32" />
-            <h2 className="text-center text-3xl font-black italic tracking-tighter">JOGAR VS IA</h2>
+            <img 
+              src={playIaAsset.url} 
+              alt="JOGAR VS IA" 
+              className="h-64 w-64 object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)]" 
+            />
           </button>
           
           <button 
             onClick={() => alert("Multiplayer em breve!")}
-            className="flex-1 rounded-3xl border border-white/10 bg-[#e52e2e] p-8 shadow-2xl transition-all hover:scale-105 hover:bg-[#e52e2e]/90 active:scale-95"
+            className="group relative transition-transform hover:scale-110 active:scale-95"
           >
-            <img src={playOnlineAsset.url} alt="Jogar On-line" className="mx-auto mb-6 h-32" />
-            <h2 className="text-center text-3xl font-black italic tracking-tighter">JOGAR ON-LINE</h2>
+            <img 
+              src={playOnlineAsset.url} 
+              alt="JOGAR ON-LINE" 
+              className="h-64 w-64 object-contain drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)]" 
+            />
           </button>
         </div>
 
