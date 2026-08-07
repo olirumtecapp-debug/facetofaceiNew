@@ -63,8 +63,8 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-2 lg:flex-row lg:gap-3 lg:p-3">
         {/* Board */}
-        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-2 custom-scrollbar">
-          <table className="w-full border-separate border-spacing-2 sm:border-spacing-4">
+        <section className="min-h-0 flex-1 overflow-auto rounded-xl border border-white/5 bg-black/20 p-0 custom-scrollbar">
+          <table className="w-full border-collapse">
             <tbody>
               {Array.from({ length: 6 }).map((_, rowIndex) => (
                 <tr key={rowIndex}>
