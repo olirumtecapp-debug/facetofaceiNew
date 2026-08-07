@@ -328,11 +328,11 @@ function Index() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-[#0b0e14] p-4 text-center text-white sm:gap-10">
+    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-gradient-to-b from-[#0b0e14] via-[#0b0e14] to-[#1e62ec]/30 p-4 text-center text-white sm:gap-10">
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150vmax] h-[150vmax] animate-lightning-spin opacity-20 bg-[radial-gradient(circle_at_center,transparent_30%,#1e62ec_40%,transparent_41%,#e52e2e_50%,transparent_51%)] blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180vmax] h-[180vmax] animate-lightning-spin opacity-30 bg-[conic-gradient(from_0deg,transparent_0deg,transparent_40deg,#1e62ec_45deg,transparent_50deg,transparent_90deg,transparent_130deg,#e52e2e_135deg,transparent_140deg,transparent_180deg,transparent_220deg,#1e62ec_225deg,transparent_230deg,transparent_270deg,transparent_310deg,#e52e2e_315deg,transparent_320deg,transparent_360deg)] blur-2xl" />
         
         {/* Glow Pulses */}
         <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse-glow" />
