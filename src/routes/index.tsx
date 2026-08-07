@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
+type Screen = "MENU" | "CHOOSE_COLOR" | "GAME" | "ONLINE";
 
 function Index() {
   const [screen, setScreen] = useState<Screen>("MENU");
