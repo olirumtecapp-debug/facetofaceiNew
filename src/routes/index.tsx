@@ -255,18 +255,37 @@ function Index() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
           <div className="flex max-h-[95dvh] w-full max-w-2xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
             <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400">Personagens</h2>
-            <div className="grid flex-1 grid-cols-5 gap-y-12 gap-x-4 items-start overflow-y-auto custom-scrollbar p-2 pb-8">
-              {CHARACTERS.map((c) => (
-                <button 
-                  key={c.id} 
-                  onClick={() => setSelectedCharId(c.id)}
-                  className="group relative aspect-[3/4] overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#e0e0e0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95"
-                >
-                  <div className="flex h-full w-full items-center justify-center p-0.5">
-                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-110" />
-                  </div>
-                </button>
-              ))}
+            <div className="flex-1 overflow-auto custom-scrollbar p-2">
+              <table className="w-full border-separate border-spacing-4">
+                <tbody>
+                  {Array.from({ length: 5 }).map((_, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {Array.from({ length: 5 }).map((_, colIndex) => {
+                        const charIndex = rowIndex * 5 + colIndex;
+                        const c = CHARACTERS[charIndex];
+                        return (
+                          <td key={colIndex} className="p-0 align-middle text-center">
+                            {c && (
+                              <button
+                                onClick={() => setSelectedCharId(c.id)}
+                                className="group relative aspect-[3/4] h-[140px] w-full overflow-hidden rounded-lg border-2 border-[#d4af37] bg-[#e0e0e0] p-0 transition-all hover:scale-110 hover:z-10 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] active:scale-95"
+                              >
+                                <div className="flex h-full w-full items-center justify-center overflow-hidden">
+                                  <img
+                                    src={CARD_IMAGES.AZUL[c.id - 1]!}
+                                    alt={c.nome}
+                                    className="h-full w-full object-cover object-center contrast-110"
+                                  />
+                                </div>
+                              </button>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             <button
               onClick={() => setShowChars(false)}
