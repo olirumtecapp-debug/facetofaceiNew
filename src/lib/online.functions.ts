@@ -1,4 +1,4 @@
-import { createServerFn } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export const createRoom = createServerFn({ method: "POST" })
