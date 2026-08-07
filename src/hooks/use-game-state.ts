@@ -83,8 +83,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }));
       setTimeout(nextTurn, 600);
     } else if (type === "AI_PALPITE") {
-      const isCorrect = answer === "SIM";
-      // O palpite da IA é sobre o personagem secreto do JOGADOR
+      // O palpite da IA é considerado correto APENAS se o personagem que ela escolheu 
+      // for REALMENTE o playerSecret do jogador.
+      const guessedCharId = question.id.replace('palpite-', '');
+      const isCorrect = Number(guessedCharId) === gameState.playerSecret.id;
+      
+      // O jogador responde SIM ou NÃO, mas validamos a verdade
+      // Se o jogador disse SIM mas era mentira, ou NÃO mas era verdade, 
+      // a lógica de vitória deve ser baseada na verdade da carta.
+      
       setGameState((prev) => ({
         ...prev,
         isGameOver: true,
