@@ -310,27 +310,29 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-5">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sua Carta (Lembre-se!)</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sua Carta</div>
                     <div className="w-24 overflow-hidden rounded-lg border-2 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                       <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      onClick={() => answerQuestion("SIM")}
-                      className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15_rgba(22,163,74,0.3)]"
-                    >
-                      SIM
-                    </button>
-                    <button
-                      onClick={() => answerQuestion("NÃO")}
-                      className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-red-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(220,38,38,0.3)]"
-                    >
-                      NÃO
-                    </button>
+                  <div className="flex flex-col gap-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => answerQuestion("SIM")}
+                        className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-3 text-lg font-black text-white transition-all hover:bg-green-500 hover:scale-[1.02] active:scale-95 shadow-[0_4px_10px_rgba(22,163,74,0.3)]"
+                      >
+                        SIM
+                      </button>
+                      <button
+                        onClick={() => answerQuestion("NÃO")}
+                        className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-3 text-lg font-black text-white transition-all hover:bg-red-500 hover:scale-[1.02] active:scale-95 shadow-[0_4px_10px_rgba(220,38,38,0.3)]"
+                      >
+                        NÃO
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
