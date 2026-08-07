@@ -261,34 +261,54 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               </div>
 
               {gameState.pendingQuestion.type === "PLAYER" ? (
-                <div className="flex flex-col gap-4">
-                  <div className="text-sm font-bold uppercase tracking-widest text-gray-500">
-                    Aguardando resposta da IA...
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Personagem da IA</div>
+                    <div className="w-24">
+                      <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-black/40 text-4xl">
+                        ❓
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      const ans = getAIResponse(gameState.aiSecret, gameState.pendingQuestion!.question) ? "SIM" : "NÃO";
-                      answerQuestion(ans);
-                    }}
-                    className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
-                  >
-                    CONTINUAR
-                  </button>
+                  
+                  <div className="flex flex-col gap-4">
+                    <div className="text-sm font-bold uppercase tracking-widest text-blue-400 animate-pulse">
+                      IA está respondendo...
+                    </div>
+                    <button
+                      onClick={() => {
+                        const ans = getAIResponse(gameState.aiSecret, gameState.pendingQuestion!.question) ? "SIM" : "NÃO";
+                        answerQuestion(ans);
+                      }}
+                      className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-4 text-lg font-black text-black transition-all hover:scale-105 active:scale-95"
+                    >
+                      VER RESPOSTA
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => answerQuestion("SIM")}
-                    className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black transition-all hover:bg-green-500 hover:scale-105 active:scale-95"
-                  >
-                    SIM
-                  </button>
-                  <button
-                    onClick={() => answerQuestion("NÃO")}
-                    className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black transition-all hover:bg-red-500 hover:scale-105 active:scale-95"
-                  >
-                    NÃO
-                  </button>
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sua Carta (Lembre-se!)</div>
+                    <div className="w-24 overflow-hidden rounded-lg border-2 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                      <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => answerQuestion("SIM")}
+                      className="group relative overflow-hidden rounded-xl border-2 border-green-500/50 bg-green-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-green-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(22,163,74,0.3)]"
+                    >
+                      SIM
+                    </button>
+                    <button
+                      onClick={() => answerQuestion("NÃO")}
+                      className="group relative overflow-hidden rounded-xl border-2 border-red-500/50 bg-red-600 px-6 py-4 text-xl font-black text-white transition-all hover:bg-red-500 hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(220,38,38,0.3)]"
+                    >
+                      NÃO
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
