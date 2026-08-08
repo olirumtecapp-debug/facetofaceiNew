@@ -116,7 +116,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
               <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
                 Adversário
               </div>
-              <div className="flex aspect-[178/224] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
+              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
                 ❓
               </div>
             </div>
@@ -306,8 +306,8 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                     <>
                       <div className="flex flex-col items-center gap-2">
                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Personagem da IA</div>
-                        <div className="w-24 aspect-[178/224] overflow-hidden">
-                          <div className="flex h-full w-full items-center justify-center border-2 border-dashed border-white/20 bg-black/40 text-4xl">
+                        <div className="w-24">
+                          <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-black/40 text-4xl">
                             ❓
                           </div>
                         </div>
@@ -331,7 +331,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                 <div className="flex flex-col gap-5">
                   <div className="flex flex-col items-center gap-2">
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Sua Carta</div>
-                    <div className="w-24 overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                    <div className="w-24 overflow-hidden rounded-lg border-2 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                       <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
                     </div>
                   </div>
