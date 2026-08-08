@@ -306,7 +306,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                     <>
                       <div className="flex flex-col items-center gap-2">
                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Personagem da IA</div>
-                        <div className="w-24 aspect-[178/224] overflow-hidden rounded-lg">
+                        <div className="w-24 aspect-[178/224] overflow-hidden">
                           <div className="flex h-full w-full items-center justify-center border-2 border-dashed border-white/20 bg-black/40 text-4xl">
                             ❓
                           </div>
