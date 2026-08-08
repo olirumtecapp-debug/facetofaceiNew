@@ -49,6 +49,16 @@ import vermelho23 from "./card-vermelho-23.png.asset.json";
 import vermelho24 from "./card-vermelho-24.png.asset.json";
 
 export const CARD_IMAGES: Record<"AZUL" | "VERMELHO", string[]> = {
-  AZUL: [azul1.url, azul2.url, azul3.url, azul4.url, azul5.url, azul6.url, azul7.url, azul8.url, azul9.url, azul10.url, azul11.url, azul12.url, azul13.url, azul14.url, azul15.url, azul16.url, azul17.url, azul18.url, azul19.url, azul20.url, azul21.url, azul22.url, azul23.url, azul24.url],
-  VERMELHO: [vermelho1.url, vermelho2.url, vermelho3.url, vermelho4.url, vermelho5.url, vermelho6.url, vermelho7.url, vermelho8.url, vermelho9.url, vermelho10.url, vermelho11.url, vermelho12.url, vermelho13.url, vermelho14.url, vermelho15.url, vermelho16.url, vermelho17.url, vermelho18.url, vermelho19.url, vermelho20.url, vermelho21.url, vermelho22.url, vermelho23.url, vermelho24.url],
+  AZUL: [
+    (azul1 as any).url, (azul2 as any).url, (azul3 as any).url, (azul4 as any).url, (azul5 as any).url, (azul6 as any).url,
+    (azul7 as any).url, (azul8 as any).url, (azul9 as any).url, (azul10 as any).url, (azul11 as any).url, (azul12 as any).url,
+    (azul13 as any).url, (azul14 as any).url, (azul15 as any).url, (azul16 as any).url, (azul17 as any).url, (azul18 as any).url,
+    (azul19 as any).url, (azul20 as any).url, (azul21 as any).url, (azul22 as any).url, (azul23 as any).url, (azul24 as any).url
+  ],
+  VERMELHO: [
+    (vermelho1 as any).url, (vermelho2 as any).url, (vermelho3 as any).url, (vermelho4 as any).url, (vermelho5 as any).url, (vermelho6 as any).url,
+    (vermelho7 as any).url, (vermelho8 as any).url, (vermelho9 as any).url, (vermelho10 as any).url, (vermelho11 as any).url, (vermelho12 as any).url,
+    (vermelho13 as any).url, (vermelho14 as any).url, (vermelho15 as any).url, (vermelho16 as any).url, (vermelho17 as any).url, (vermelho18 as any).url,
+    (vermelho19 as any).url, (vermelho20 as any).url, (vermelho21 as any).url, (vermelho22 as any).url, (vermelho23 as any).url, (vermelho24 as any).url
+  ],
 };

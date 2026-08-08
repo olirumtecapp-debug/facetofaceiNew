@@ -254,11 +254,11 @@ function Index() {
                     onClick={() => setSelectedCharId(c.id)}
                     className="group relative flex flex-col items-center transition-all hover:z-10"
                   >
-                    <div className="relative flex aspect-[178/224] w-full items-center justify-center overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
+                    <div className="relative flex aspect-[178/224] w-full items-center justify-center overflow-hidden rounded-xl border-2 border-[#d4af37] bg-transparent shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
                       <img
                         src={CARD_IMAGES.AZUL[c.id - 1]!}
                         alt={c.nome}
-                        className="h-full w-full object-cover object-center"
+                        className="h-full w-full object-contain object-center scale-[1.05]"
                       />
                     </div>
                     <span className="mt-2 text-[10px] font-black uppercase italic tracking-tighter text-gray-400 transition-colors group-hover:text-yellow-400 sm:text-xs">
