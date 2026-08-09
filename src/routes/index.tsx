@@ -58,7 +58,7 @@ function Index() {
   if (screen === "CHOOSE_DIFFICULTY") {
     return (
       <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400">Dificuldade da IA</h2>
+        <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Dificuldade da IA</h2>
         <div className="grid w-full max-w-md gap-4">
           {(["Fácil", "Médio", "Difícil"] as Difficulty[]).map((d) => (
             <button
@@ -82,7 +82,7 @@ function Index() {
   if (screen === "CHOOSE_COLOR") {
     return (
       <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400 sm:text-4xl">Escolha sua cor</h2>
+        <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-4xl">Escolha sua cor</h2>
         <div className="flex w-full max-w-2xl flex-col gap-6 md:flex-row">
           {(["AZUL", "VERMELHO"] as const).map((c) => (
             <button
@@ -98,7 +98,7 @@ function Index() {
                 boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.4)" : "0 0 20px rgba(229,46,46,0.4)"
               }}
             >
-              <h3 className="text-2xl font-black italic tracking-tighter" style={{ color: c === "AZUL" ? "#60a5fa" : "#f87171" }}>
+              <h3 className="text-2xl font-black italic tracking-tighter drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]" style={{ color: c === "AZUL" ? "#60a5fa" : "#f87171" }}>
                 Tabuleiro {c.toLowerCase()}
               </h3>
             </button>
@@ -112,7 +112,7 @@ function Index() {
   if (screen === "ONLINE") {
     return (
       <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400">Jogar on-line</h2>
+        <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Jogar on-line</h2>
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
             <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
@@ -251,7 +251,7 @@ function Index() {
       {showChars && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
           <div className="flex max-h-[95dvh] w-full max-w-4xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)] sm:p-6">
-            <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400 sm:mb-6 sm:text-3xl">Personagens</h2>
+            <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:mb-6 sm:text-3xl">Personagens</h2>
             <div className="flex-1 overflow-auto custom-scrollbar p-1">
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 sm:gap-4 lg:gap-6">
                 {CHARACTERS.map((c) => (
