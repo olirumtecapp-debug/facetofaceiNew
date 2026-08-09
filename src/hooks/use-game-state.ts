@@ -115,7 +115,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         .from("rooms")
         .update({ 
           current_question_id: question.id,
-          last_answer: null as string | null,
+          last_answer: null as any,
           last_action_timestamp: new Date().toISOString()
         })
         .eq("code", gameState.roomCode)
@@ -151,7 +151,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         .from("rooms")
         .update({ 
           last_answer: answer,
-          current_question_id: null as string | null,
+          current_question_id: null as any,
           last_action_timestamp: new Date().toISOString()
         })
         .eq("code", gameState.roomCode)
