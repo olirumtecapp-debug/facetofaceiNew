@@ -3,7 +3,9 @@ import { z } from "zod";
 import { getPublicSupabase } from "./online.server";
 
 export const createRoom = createServerFn({ method: "POST" })
-  .inputValidator((data: { guestId: string }) => z.object({ guestId: z.string() }).parse(data))
+  .inputValidator((data: { guestId: string; playerName: string }) => 
+    z.object({ guestId: z.string(), playerName: z.string() }).parse(data)
+  )
   .handler(async ({ data }) => {
     const supabase = getPublicSupabase();
 
@@ -28,7 +30,8 @@ export const createRoom = createServerFn({ method: "POST" })
         room_id: room.id, 
         color: "AZUL", 
         is_ready: false,
-        guest_id: data.guestId 
+        guest_id: data.guestId,
+        name: data.playerName
       });
 
     if (playerError) throw playerError;
@@ -37,8 +40,8 @@ export const createRoom = createServerFn({ method: "POST" })
   });
 
 export const joinRoom = createServerFn({ method: "POST" })
-  .inputValidator((data: { code: string; guestId: string }) => 
-    z.object({ code: z.string(), guestId: z.string() }).parse(data)
+  .inputValidator((data: { code: string; guestId: string; playerName: string }) => 
+    z.object({ code: z.string(), guestId: z.string(), playerName: z.string() }).parse(data)
   )
   .handler(async ({ data }) => {
     const supabase = getPublicSupabase();
@@ -67,9 +70,17 @@ export const joinRoom = createServerFn({ method: "POST" })
           room_id: room.id, 
           color: "VERMELHO", 
           is_ready: false,
-          guest_id: data.guestId 
+          guest_id: data.guestId,
+          name: data.playerName
         });
       if (playerError) throw playerError;
+    } else {
+      // Update name if already exists
+      await supabase
+        .from("room_players")
+        .update({ name: data.playerName })
+        .eq("room_id", room.id)
+        .eq("guest_id", data.guestId);
     }
 
     return { room };
@@ -100,11 +111,22 @@ export const startGame = createServerFn({ method: "POST" })
     // Check if both ready
     const { data: players } = await supabase
       .from("room_players")
-      .select("is_ready")
+      .select("is_ready, guest_id, name")
       .eq("room_id", data.roomId);
     
     if (!players || players.length < 2 || !players.every(p => p.is_ready)) {
       throw new Error("Ambos os jogadores precisam estar prontos");
+    }
+
+    // Assign secret characters for both players on start
+    const CHAR_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
+    for (const player of players) {
+      const randomId = CHAR_IDS[Math.floor(Math.random() * CHAR_IDS.length)]!;
+      await supabase
+        .from("room_players")
+        .update({ secret_character_id: randomId })
+        .eq("room_id", data.roomId)
+        .eq("guest_id", player.guest_id);
     }
 
     const { error } = await supabase

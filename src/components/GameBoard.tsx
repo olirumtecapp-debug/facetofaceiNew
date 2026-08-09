@@ -62,7 +62,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
              gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? "🟠 Aguardando resposta do adversário..." : "Aguardando resposta da IA...") :
              gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
              gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "🟠 VEZ DO ADVERSÁRIO..." : "Turno da IA: Pensando...") :
-             gameState.phase === "PLAYER_RESPONDING" ? "🔵 RESPONDA AO ADVERSÁRIO" :
+             gameState.phase === "PLAYER_RESPONDING" ? (gameState.gameMode === "ONLINE" ? "🔵 RESPONDA AO ADVERSÁRIO" : "🔵 RESPONDA À IA") :
              gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "🟠 Adversário está descartando..." : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
@@ -125,7 +125,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
             <div className="w-12 shrink-0 sm:w-20">
               <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
-                Adversário
+                {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "Adversário") : "IA"}
               </div>
               <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
                 ❓
@@ -196,7 +196,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               {QUESTIONS.filter((q) => q.category === cat).map((q) => (
                 <button
                   key={q.id}
-                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || gameState.askedQuestions.has(q.id)}
+                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || (gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id))}
                   onClick={() => handlePlayerQuestion(q)}
                   className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
                 >
@@ -257,7 +257,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
             </h2>
             <p className="mb-8 text-lg text-gray-300">
-              O personagem da IA era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
+              O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
             </p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button
@@ -281,7 +281,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
           <div className="w-full max-w-[90%] sm:max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
-              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : (gameState.gameMode === "ONLINE" ? "PERGUNTA DO ADVERSÁRIO" : "Pergunta da IA")}
+              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? (gameState.gameMode === "ONLINE" ? "PALPITE DO ADVERSÁRIO" : "PALPITE DA IA") : (gameState.gameMode === "ONLINE" ? "PERGUNTA DO ADVERSÁRIO" : "Pergunta da IA")}
             </div>
             
             <div className="flex flex-col items-center p-6 sm:p-8">
