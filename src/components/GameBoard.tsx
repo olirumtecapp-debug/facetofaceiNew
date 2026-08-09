@@ -196,7 +196,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               {QUESTIONS.filter((q) => q.category === cat).map((q) => (
                 <button
                   key={q.id}
-                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || gameState.askedQuestions.has(q.id)}
+                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || (gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id))}
                   onClick={() => handlePlayerQuestion(q)}
                   className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
                 >

@@ -34,6 +34,7 @@ export type GameState = {
   winner?: "PLAYER" | "AI" | undefined;
   pendingQuestion?: { question: Question; type: "PLAYER" | "AI" | "AI_PALPITE"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
   askedQuestions: Set<string>;
+  myAskedQuestions: Set<string>;
   opponentAskedQuestions: Set<string>;
   aiAskedQuestions: Set<string>;
   playerKnowledge: { [questionId: string]: boolean };
@@ -73,6 +74,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       history: [],
       isGameOver: false,
       askedQuestions: new Set<string>(),
+      myAskedQuestions: new Set<string>(),
       opponentAskedQuestions: new Set<string>(),
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
@@ -172,7 +174,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
         pendingQuestion: undefined,
         askedQuestions: new Set(prev.askedQuestions).add(question.id),
-        myAskedQuestions: new Set((prev as any).myAskedQuestions || []).add(question.id),
+        myAskedQuestions: new Set(prev.myAskedQuestions).add(question.id),
         playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
         phase: "PLAYER_DISCARDING"
       }));
@@ -263,6 +265,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       isGameOver: false,
       winner: undefined,
       askedQuestions: new Set<string>(),
+      myAskedQuestions: new Set<string>(),
       opponentAskedQuestions: new Set<string>(),
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
