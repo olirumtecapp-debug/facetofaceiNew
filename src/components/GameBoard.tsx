@@ -14,7 +14,7 @@ interface GameBoardProps {
 const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
 
 export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: GameBoardProps & { initialRoomCode?: string }) => {
-  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer } = useGameState(
+  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId } = useGameState(
     playerColor,
     difficulty,
     initialRoomCode
@@ -51,18 +51,23 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           <span className="text-sm">{"<"}</span> Voltar
         </button>
         <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
-          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs">
+          <div className={`text-[10px] font-black uppercase tracking-[0.15em] drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs px-3 py-0.5 rounded-full ${
+            gameState.isGameOver ? "text-yellow-400" :
+            gameState.phase === "PLAYER_TURN" ? "bg-green-500/20 text-green-400 border border-green-500/30" :
+            gameState.phase === "PLAYER_RESPONDING" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
+            "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+          }`}>
             {gameState.isGameOver ? "FIM DE PARTIDA" : 
-             gameState.phase === "PLAYER_TURN" ? "Seu turno: Faça uma pergunta" :
-             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? "Aguardando resposta do adversário..." : "Aguardando resposta da IA...") :
-             gameState.phase === "PLAYER_DISCARDING" ? "Seu turno: Descarte e passe a vez" :
-             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "Turno do adversário..." : "Turno da IA: Pensando...") :
-             gameState.phase === "PLAYER_RESPONDING" ? "Responda seu adversário" :
-             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "Adversário está analisando..." : "IA está analisando a resposta...") :
+             gameState.phase === "PLAYER_TURN" ? "🟢 SUA VEZ: Faça uma pergunta" :
+             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? "🟠 Aguardando resposta do adversário..." : "Aguardando resposta da IA...") :
+             gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
+             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "🟠 VEZ DO ADVERSÁRIO..." : "Turno da IA: Pensando...") :
+             gameState.phase === "PLAYER_RESPONDING" ? "🔵 RESPONDA AO ADVERSÁRIO" :
+             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "🟠 Adversário está analisando..." : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
-            Rodada {gameState.turnCount} · IA {difficulty}
+            Rodada {gameState.turnCount} {gameState.gameMode === "IA" ? `· IA ${difficulty}` : "· MULTIPLAYER ONLINE"}
           </div>
         </div>
         <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
@@ -109,7 +114,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         </section>
 
         {/* Side panel */}
-        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px]">
+        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[45vh] lg:max-h-none">
           {/* Secret cards + actions */}
           <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
             <div className="w-12 shrink-0 sm:w-20">
@@ -149,7 +154,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             <div className="border-b border-white/10 p-1.5 text-[10px] font-black uppercase tracking-tight text-gray-500">
               Histórico
             </div>
-            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar">
+            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar max-h-[120px] sm:max-h-none">
               {gameState.history.length === 0 && (
                 <p className="text-center text-[10px] text-gray-600">Faça sua primeira pergunta.</p>
               )}
