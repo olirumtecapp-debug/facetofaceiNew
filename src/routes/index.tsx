@@ -82,26 +82,51 @@ function OnlineLobby({ screen, setScreen, guestId, roomCode, setRoomCode, joinCo
           </div>
         )}
         {screen === "LOBBY" && (
-          <div className="text-center">
-            <p className="text-yellow-400 font-black text-2xl tracking-widest">{roomCode}</p>
-            <button
-              onClick={async () => {
-                await updateReadyFn({ data: { roomId: roomCode, guestId, isReady: true } });
-                toast.success("Pronto!");
-              }}
-              className="mt-4 w-full bg-green-600 py-3 rounded-lg"
-            >
-              ESTOU PRONTO
-            </button>
+          <div className="flex flex-col gap-6 text-center">
+            <div className="space-y-2">
+              <p className="text-gray-400 text-sm font-bold uppercase tracking-wider">Código da Sala</p>
+              <div className="flex items-center justify-center gap-3">
+                <p className="text-yellow-400 font-black text-4xl tracking-widest drop-shadow-md">{roomCode}</p>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(roomCode);
+                    toast.success("Código copiado!");
+                  }}
+                  className="p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  📋
+                </button>
+              </div>
+            </div>
+
+            <div className="py-4 border-y border-white/5 space-y-3">
+              <p className="text-xs font-bold text-gray-500 uppercase">Status dos Jogadores</p>
+              <div className="flex items-center justify-between text-sm px-4">
+                <span className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  Você
+                </span>
+                <span className="text-green-400 font-bold">PRONTO</span>
+              </div>
+              <div className="flex items-center justify-between text-sm px-4">
+                <span className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gray-600" />
+                  Adversário
+                </span>
+                <span className="text-gray-500">AGUARDANDO...</span>
+              </div>
+            </div>
+
             <button
               onClick={async () => {
                 await startGameFn({ data: { roomId: roomCode, guestId } });
                 setScreen("GAME");
               }}
-              className="mt-2 w-full bg-blue-600 py-3 rounded-lg"
+              className="w-full bg-green-600 hover:bg-green-500 py-4 rounded-xl font-black text-xl uppercase italic tracking-widest shadow-lg shadow-green-900/20 transition-all hover:scale-[1.02] active:scale-95"
             >
-              INICIAR PARTIDA
+              COMEÇAR JOGO!
             </button>
+            <p className="text-[10px] text-gray-500 italic">O anfitrião deve iniciar a partida após todos estarem prontos.</p>
           </div>
         )}
       </div>
