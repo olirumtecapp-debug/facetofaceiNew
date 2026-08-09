@@ -319,7 +319,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                     const res = await createRoomFn({ data: { guestId, playerName: playerName.trim() } });
                     setRoomCode(res.code);
                     setRoomData(res.room);
-                    toast.success("Sala criada!");
+                    toast.success(`Sala ${res.code} criada!`);
                   } catch (e) {
                     toast.error("Erro ao criar sala.");
                   } finally {
