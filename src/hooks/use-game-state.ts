@@ -90,10 +90,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       
       // Sync turn to database if online
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
+        // Correct logic: if PLAYER turn ends, set turn to opponent.
+        // If opponent (represented as AI in state) turn ends, set turn to PLAYER.
+        const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
+        
         supabase
           .from("rooms")
           .update({ 
-            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as any,
+            current_turn_player_id: nextPlayerId as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
