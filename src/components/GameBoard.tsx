@@ -59,7 +59,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           }`}>
             {gameState.isGameOver ? "FIM DE PARTIDA" : 
              gameState.phase === "PLAYER_TURN" ? "🟢 SUA VEZ: Faça uma pergunta" :
-             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? `🟠 Aguardando resposta de ${gameState.opponentName || "adversário"}...` : "Aguardando resposta da IA...") :
+             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? `🟠 Aguardando ${gameState.opponentName || "adversário"} responder...` : "Aguardando resposta da IA...") :
              gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
              gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? `🟠 VEZ DE ${gameState.opponentName || "ADVERSÁRIO"}...` : "Turno da IA: Pensando...") :
              gameState.phase === "PLAYER_RESPONDING" ? (gameState.gameMode === "ONLINE" ? `🔵 RESPONDA A ${gameState.opponentName || "ADVERSÁRIO"}` : "🔵 RESPONDA À IA") :
