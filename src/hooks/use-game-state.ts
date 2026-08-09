@@ -73,6 +73,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       history: [],
       isGameOver: false,
       askedQuestions: new Set<string>(),
+      opponentAskedQuestions: new Set<string>(),
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
       aiKnowledge: {},
@@ -194,7 +195,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           ...prev,
           history: [...prev.history, { type: "AI", text: question.text, answer }],
           pendingQuestion: undefined,
-          askedQuestions: new Set(prev.askedQuestions).add(question.id),
+          opponentAskedQuestions: new Set(prev.opponentAskedQuestions).add(question.id),
           aiAskedQuestions: new Set(prev.aiAskedQuestions).add(question.id),
           aiKnowledge: { ...prev.aiKnowledge, [question.id]: answer === "SIM" },
           phase: "AI_DISCARDING"
@@ -261,6 +262,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       isGameOver: false,
       winner: undefined,
       askedQuestions: new Set<string>(),
+      opponentAskedQuestions: new Set<string>(),
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
       aiKnowledge: {},
@@ -348,12 +350,26 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
         const { data: players } = await supabase
           .from("room_players")
-          .select("guest_id")
+          .select("guest_id, secret_character_id")
           .eq("room_id", rooms.id);
         
         const opponent = players?.find(p => p.guest_id !== gameState.guestId);
+        const me = players?.find(p => p.guest_id === gameState.guestId);
+
         if (opponent) {
-          setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
+          const oppSecret = opponent.secret_character_id ? CHARACTERS.find(c => c.id === opponent.secret_character_id) : undefined;
+          setGameState(prev => ({ 
+            ...prev, 
+            opponentId: opponent.guest_id,
+            aiSecret: oppSecret || prev.aiSecret 
+          }));
+        }
+
+        if (me && me.secret_character_id) {
+          const mySecret = CHARACTERS.find(c => c.id === me.secret_character_id);
+          if (mySecret) {
+            setGameState(prev => ({ ...prev, playerSecret: mySecret }));
+          }
         }
 
         // Fetch current room state to determine turn
@@ -361,7 +377,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         if (room) {
           const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
           setGameState(prev => {
-            // Re-sync basic state from DB if we're just re-connecting
             return { 
               ...prev, 
               currentTurn: isMyTurn ? "PLAYER" : "AI",

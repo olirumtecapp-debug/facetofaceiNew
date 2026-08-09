@@ -62,7 +62,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
              gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? "🟠 Aguardando resposta do adversário..." : "Aguardando resposta da IA...") :
              gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
              gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "🟠 VEZ DO ADVERSÁRIO..." : "Turno da IA: Pensando...") :
-             gameState.phase === "PLAYER_RESPONDING" ? "🔵 RESPONDA AO ADVERSÁRIO" :
+             gameState.phase === "PLAYER_RESPONDING" ? (gameState.gameMode === "ONLINE" ? "🔵 RESPONDA AO ADVERSÁRIO" : "🔵 RESPONDA À IA") :
              gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "🟠 Adversário está descartando..." : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
@@ -257,7 +257,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
             </h2>
             <p className="mb-8 text-lg text-gray-300">
-              O personagem da IA era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
+              O personagem do {gameState.gameMode === "ONLINE" ? "adversário" : "IA"} era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
             </p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button

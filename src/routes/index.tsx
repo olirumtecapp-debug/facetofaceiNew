@@ -86,7 +86,7 @@ function Lobby({ room, players, guestId, onLeave, onToggleReady, onStart }: any)
               <div className="flex items-center gap-2">
                 <div className={`h-2 w-2 rounded-full ${p.is_ready ? 'bg-green-500' : 'bg-yellow-500'}`} />
                 <span className="font-black italic text-sm">
-                  {p.guest_id === guestId ? "VOCÊ" : "ADVERSÁRIO"} 
+                  {p.guest_id === guestId ? "VOCÊ" : (p.name || "ADVERSÁRIO")} 
                   {p.guest_id === room.host_id && <span className="ml-2 text-[8px] text-blue-400">(HOST)</span>}
                 </span>
               </div>
