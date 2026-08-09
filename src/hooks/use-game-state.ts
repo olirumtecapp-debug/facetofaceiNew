@@ -57,8 +57,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   }, []);
 
   const [gameState, setGameState] = useState<GameState>(() => {
-    const playerSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
-    const aiSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
+    // For ONLINE mode, we don't randomize here to avoid mismatches; 
+    // we'll wait for the sync effect to fetch the server-assigned secrets.
+    const isOnline = !!initialRoomCode;
+    const playerSecret = isOnline ? CHARACTERS[0]! : CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
+    const aiSecret = isOnline ? CHARACTERS[0]! : CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
     
     return {
       playerColor,
@@ -80,7 +83,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
       aiKnowledge: {},
-      gameMode: initialRoomCode ? "ONLINE" : "IA",
+      gameMode: isOnline ? "ONLINE" : "IA",
       roomCode: initialRoomCode || undefined,
       guestId
     };
@@ -329,9 +332,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 3. Received Answer
           if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
+            const qId = gameState.pendingQuestion.question.id;
             setGameState(prev => ({
               ...prev,
-              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
+              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined,
+              myAskedQuestions: new Set(prev.myAskedQuestions).add(qId)
             }));
           }
         }

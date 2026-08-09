@@ -59,11 +59,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           }`}>
             {gameState.isGameOver ? "FIM DE PARTIDA" : 
              gameState.phase === "PLAYER_TURN" ? "🟢 SUA VEZ: Faça uma pergunta" :
-             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? "🟠 Aguardando resposta do adversário..." : "Aguardando resposta da IA...") :
+             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? `🟠 Aguardando resposta de ${gameState.opponentName || "adversário"}...` : "Aguardando resposta da IA...") :
              gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
-             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "🟠 VEZ DO ADVERSÁRIO..." : "Turno da IA: Pensando...") :
-             gameState.phase === "PLAYER_RESPONDING" ? (gameState.gameMode === "ONLINE" ? "🔵 RESPONDA AO ADVERSÁRIO" : "🔵 RESPONDA À IA") :
-             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "🟠 Adversário está descartando..." : "IA está analisando a resposta...") :
+             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? `🟠 VEZ DE ${gameState.opponentName || "ADVERSÁRIO"}...` : "Turno da IA: Pensando...") :
+             gameState.phase === "PLAYER_RESPONDING" ? (gameState.gameMode === "ONLINE" ? `🔵 RESPONDA A ${gameState.opponentName || "ADVERSÁRIO"}` : "🔵 RESPONDA À IA") :
+             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? `${gameState.opponentName || "Adversário"} está descartando...` : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
@@ -281,7 +281,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
           <div className="w-full max-w-[90%] sm:max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
-              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? (gameState.gameMode === "ONLINE" ? "PALPITE DO ADVERSÁRIO" : "PALPITE DA IA") : (gameState.gameMode === "ONLINE" ? "PERGUNTA DO ADVERSÁRIO" : "Pergunta da IA")}
+              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? (gameState.gameMode === "ONLINE" ? `PALPITE DE ${gameState.opponentName || "ADVERSÁRIO"}` : "PALPITE DA IA") : (gameState.gameMode === "ONLINE" ? `PERGUNTA DE ${gameState.opponentName || "ADVERSÁRIO"}` : "Pergunta da IA")}
             </div>
             
             <div className="flex flex-col items-center p-6 sm:p-8">
