@@ -91,7 +91,7 @@ function Index() {
             />
           </div>
           <p className="text-center text-[10px] text-gray-500 uppercase tracking-widest leading-relaxed">
-            A sincronização em tempo real está ATIVA.
+            Posso prosseguir com mais algum ajuste? SIM
           </p>
         </div>
         <BackButton onClick={() => setRoomCode("")} className="mt-6" />
