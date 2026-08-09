@@ -3,8 +3,6 @@ import { useState } from "react";
 import logoAsset from "@/assets/Logo_FTF_transparente.png.asset.json";
 import playIaAsset from "@/assets/play-ia.png.asset.json";
 import playOnlineAsset from "@/assets/play-online.png.asset.json";
-import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
-import boardVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
 import { CARD_IMAGES } from "@/assets/chars";
 import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
@@ -13,30 +11,11 @@ import { GameBoard } from "@/components/GameBoard";
 import { createRoom, joinRoom, updatePlayerReady, startGame } from "@/lib/online.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-
+import { v4 as uuidv4 } from 'uuid';
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "FTF – Face to Face | Jogo de adivinhar personagens" },
-      {
-        name: "description",
-        content:
-          "Jogue FTF - Face to Face: descubra o personagem secreto do adversário com perguntas de SIM ou NÃO. Modo contra IA em três dificuldades e partidas on-line.",
-      },
-      { property: "og:title", content: "FTF – Face to Face" },
-      {
-        property: "og:description",
-        content: "Duelo de dedução com 24 personagens: faça perguntas, elimine cartas e acerte o palpite final.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
   component: Index,
 });
-
-import { v4 as uuidv4 } from 'uuid';
 
 type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE" | "LOBBY";
 
@@ -49,453 +28,10 @@ const getGuestId = () => {
   return id || 'temp-id';
 };
 
- 
- function Index() {
-   const guestId = getGuestId();
-   const [screen, setScreen] = useState<Screen>("MENU");
-
-   const [showSettings, setShowSettings] = useState(false);
-   const [showDonate, setShowDonate] = useState(false);
-   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [playerColor, setPlayerColor] = useState<"AZUL" | "VERMELHO">("AZUL");
-  const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
-  const [showChars, setShowChars] = useState(false);
-  const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
-  const [roomCode, setRoomCode] = useState("");
-  const [joinCode, setJoinCode] = useState("");
-  const [isConnecting, setIsConnecting] = useState(false);
-  const createRoomFn = useServerFn(createRoom);
-  const joinRoomFn = useServerFn(joinRoom);
-  const updateReadyFn = useServerFn(updatePlayerReady);
-  const startGameFn = useServerFn(startGame);
-
-
-  const toggleFullScreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-      setIsFullScreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-        setIsFullScreen(false);
-      }
-    }
-  };
-
-  const copyPix = () => {
-    const pixCode = "00020101021126580014br.gov.bcb.pix0136ccc2fd5a-cc51-4626-ac9b-8010315042f55204000053039865802BR5924MURILO FERREIRA DA SILVA6009SAO PAULO622905251KYF6GJBG4K0TVYH7QKHP9TSD63042519";
-    navigator.clipboard.writeText(pixCode);
-    toast.success("Código PIX copiado! Banco C6 Favorecido Murilo Ferreira da Silva");
-  };
-
-
-
-  if (screen === "GAME") {
-    return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} initialRoomCode={roomCode || joinCode} />;
-  }
-
-  if (screen === "CHOOSE_DIFFICULTY") {
-    return (
-      <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Dificuldade da IA</h2>
-        <div className="grid w-full max-w-md gap-4">
-          {(["Fácil", "Médio", "Difícil"] as Difficulty[]).map((d) => (
-            <button
-              key={d}
-              onClick={() => {
-                setDifficulty(d);
-                setScreen("CHOOSE_COLOR");
-              }}
-              className="group relative overflow-hidden rounded-xl border-2 border-blue-400/50 bg-gray-800/80 p-5 text-xl font-black italic tracking-wider transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95"
-            >
-              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-600/0 via-blue-600/30 to-blue-600/0 opacity-0 transition-opacity group-hover:opacity-100" />
-              <span className="relative z-10">{d}</span>
-            </button>
-          ))}
-        </div>
-        <BackButton onClick={() => setScreen("MENU")} />
-      </Shell>
-    );
-  }
-
-  if (screen === "CHOOSE_COLOR") {
-    return (
-      <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-4xl">Escolha sua cor</h2>
-        <div className="flex w-full max-w-2xl flex-col gap-6 md:flex-row">
-          {(["AZUL", "VERMELHO"] as const).map((c) => (
-            <button
-              key={c}
-              onClick={() => {
-                setPlayerColor(c);
-                setScreen("GAME");
-              }}
-              className="group flex-1 rounded-2xl border-4 p-8 transition-all hover:scale-105 active:scale-95"
-              style={{
-                borderColor: c === "AZUL" ? "#1e62ec" : "#e52e2e",
-                background: c === "AZUL" ? "rgba(30,98,236,0.5)" : "rgba(229,46,46,0.5)",
-                boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.4)" : "0 0 20px rgba(229,46,46,0.4)"
-              }}
-            >
-              <h3 className="text-2xl font-black italic tracking-tighter drop-shadow-[0_2px_3px_rgba(0,0,0,0.7)]" style={{ color: c === "AZUL" ? "#60a5fa" : "#f87171" }}>
-                Tabuleiro {c.toLowerCase()}
-              </h3>
-            </button>
-          ))}
-        </div>
-        <BackButton onClick={() => setScreen("CHOOSE_DIFFICULTY")} />
-      </Shell>
-    );
-  }
-
-  if (screen === "ONLINE") {
-    return (
-      <Shell>
-        <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Jogar on-line</h2>
-        <div className="w-full max-w-md space-y-4">
-          <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
-            <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
-            {!roomCode ? (
-              <button
-                onClick={async () => {
-                  setIsConnecting(true);
-                  try {
-                    const res = await createRoomFn({ data: { guestId } });
-                    setRoomCode(res.code);
-                    toast.success("Sala criada!");
-                  } catch (e) {
-                    toast.error("Erro ao criar sala.");
-                  } finally {
-                    setIsConnecting(false);
-                  }
-                }}
-                disabled={isConnecting}
-                className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
-              >
-                {isConnecting ? "Criando..." : "Gerar código"}
-              </button>
-            ) : (
-              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500/70">Código da Sala</p>
-                  <div className="flex w-full items-center gap-2">
-                    <div className="flex-1 rounded-lg border-2 border-dashed border-yellow-400/30 bg-black/40 py-3 text-center text-3xl font-black tracking-[0.2em] text-yellow-400">
-                      {roomCode}
-                    </div>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(roomCode);
-                        toast.success("Código copiado!");
-                      }}
-                      className="rounded-lg bg-yellow-400 p-3 text-black transition-all hover:scale-105 active:scale-95"
-                      title="Copiar Código"
-                    >
-                      📋
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-3 rounded-lg bg-blue-500/10 p-4 border border-blue-500/20">
-                  <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
-                  <p className="text-xs font-bold text-blue-400 animate-pulse uppercase tracking-tighter">Aguardando adversário entrar...</p>
-                </div>
-
-                <button
-                  onClick={() => setScreen("GAME")}
-                  className="w-full rounded-lg bg-green-600 py-3 font-black uppercase tracking-widest border-2 border-green-400/50 transition-all hover:brightness-125 active:scale-95"
-                >
-                  Entrar na Sala agora
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
-            <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Entrar em sala</p>
-            <input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="FTF-0000"
-              className="mb-3 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-3 text-center text-xl font-black tracking-widest outline-none focus:border-yellow-400"
-            />
-            <button 
-              onClick={async () => {
-                if (!joinCode) return;
-                setIsConnecting(true);
-                try {
-                  await joinRoomFn({ data: { code: joinCode, guestId } });
-                  setScreen("GAME"); 
-                  toast.success("Entrou na sala!");
-                } catch (e) {
-                  toast.error("Sala não encontrada ou erro ao entrar.");
-                } finally {
-                  setIsConnecting(false);
-                }
-              }}
-              disabled={isConnecting || !joinCode}
-              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border-2 border-[#ff4444]/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
-            >
-              {isConnecting ? "Entrando..." : "Entrar"}
-            </button>
-            <BackButton onClick={() => setScreen("MENU")} className="mt-4 w-full justify-center" />
-
-          </div>
-          <p className="text-center text-xs text-gray-500">
-            As salas funcionam localmente nesta versão; a sincronização em tempo real entre dois dispositivos precisa do
-            backend ativado.
-          </p>
-        </div>
-        <BackButton onClick={() => setScreen("MENU")} className="mt-6" />
-      </Shell>
-    );
-  }
-
-  return (
-    <>
-      <Shell>
-        <div className="relative group flex items-center justify-center">
-          <img
-            src={logoAsset.url}
-            alt="FTF - Face to Face"
-            className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10"
-          />
-        </div>
-        <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
-          {/* Botão Jogar vs IA */}
-          <div className="group relative">
-            {/* Brilho externo azul */}
-            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
-            <button
-              onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
-            >
-              <img 
-                src={playIaAsset.url} 
-                alt="Jogar vs IA" 
-                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
-              />
-            </button>
-          </div>
-
-          {/* Botão Jogar on-line */}
-          <div className="group relative">
-            {/* Brilho externo vermelho */}
-            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
-            <button
-              onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
-            >
-              <img 
-                src={playOnlineAsset.url} 
-                alt="Jogar on-line" 
-                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
-              />
-            </button>
-          </div>
-        </div>
-        <div className="flex w-full max-w-lg items-center justify-between px-4">
-          <button 
-            onClick={() => setShowSettings(true)}
-            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Configurações"
-          >
-            ⚙️
-          </button>
-
-          <button
-            onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-6 py-2.5 text-[10px] font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
-          >
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
-            👤 PERSONAGENS
-          </button>
-          <button 
-            onClick={() => setShowDonate(true)}
-            className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Apoiar"
-          >
-            💗
-          </button>
-
-        </div>
-      </Shell>
-
-      {showChars && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 backdrop-blur-sm">
-          <div className="flex max-h-[95dvh] w-full max-w-4xl flex-col rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-4 shadow-[0_0_40px_rgba(0,0,0,0.5)] sm:p-6">
-            <h2 className="mb-4 text-center text-2xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:mb-6 sm:text-3xl">Personagens</h2>
-            <div className="flex-1 overflow-auto custom-scrollbar p-1">
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 sm:gap-4 lg:gap-6">
-                {CHARACTERS.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedCharId(c.id)}
-                    className="group relative flex flex-col items-center transition-all hover:z-10"
-                  >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-gray-200 p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
-                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-gray-200">
-                        <img
-                          src={CARD_IMAGES.AZUL[c.id - 1]!}
-                          alt={c.nome}
-                          className="h-full w-full object-cover object-center contrast-110"
-                        />
-                      </div>
-                    </div>
-                    <span className="mt-2 text-[10px] font-black uppercase italic tracking-tighter text-gray-400 transition-colors group-hover:text-yellow-400 sm:text-xs">
-                      {c.nome}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <button
-              onClick={() => setShowChars(false)}
-              className="mt-4 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 hover:scale-[1.02] active:scale-95"
-            >
-              FECHAR
-            </button>
-          </div>
-        </div>
-      )}
-
-      {selectedCharId !== null && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-          <div className="w-full max-w-[320px] sm:max-w-md rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
-            {(() => {
-              const c = CHARACTERS.find(char => char.id === selectedCharId)!;
-              const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
-              return (
-                <div className="flex flex-col items-center p-4 text-gray-900">
-                  <div className="w-24 sm:w-32 aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
-                    <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
-                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Profissão:</span> {details.profession}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Personalidade:</span> {details.personality}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Hobbies:</span> {details.hobbies.join(", ")}</p>
-                    <p className="flex flex-col gap-0.5"><span className="text-gray-500 uppercase text-[8px]">Sobre:</span> <span className="text-[11px] leading-tight text-gray-800 italic">{details.bio}</span></p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedCharId(null)}
-                    className="mt-6 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
-                  >
-                    VOLTAR
-                  </button>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      )}
-      {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-6 shadow-2xl">
-            <h2 className="mb-6 text-2xl font-black uppercase italic text-yellow-400 text-center">Configurações</h2>
-            
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <p className="text-xs font-black uppercase tracking-widest text-gray-500">Visualização</p>
-                <button
-                  onClick={toggleFullScreen}
-                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition-all hover:bg-white/10"
-                >
-                  <span className="font-bold">Tela Cheia</span>
-                  <span className="text-xl">{isFullScreen ? "📴" : "📺"}</span>
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-xs font-black uppercase tracking-widest text-gray-500">Instalação</p>
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    Para instalar no <span className="text-white font-bold">Smartphone</span> ou <span className="text-white font-bold">PC</span>:
-                    Clique nos três pontos do navegador e selecione <span className="text-yellow-400">"Instalar Aplicativo"</span> ou <span className="text-yellow-400">"Adicionar à tela de início"</span>.
-                  </p>
-                  <p className="text-[10px] text-gray-500 italic">
-                    Endereço para PC/Notebook: https://facetofacei.lovable.app
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowSettings(false)}
-              className="mt-8 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 active:scale-95"
-            >
-              FECHAR
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showDonate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border-2 border-red-500/30 bg-[#0b0e14] p-6 shadow-2xl">
-            <h2 className="mb-6 text-2xl font-black uppercase italic text-red-500 text-center">Apoiar Projeto</h2>
-            
-            <div className="flex flex-col items-center gap-6">
-              <div className="text-4xl">🎁</div>
-              <p className="text-center text-sm leading-relaxed text-gray-300">
-                Se você gosta do <span className="text-white font-bold uppercase italic tracking-tighter">FTF</span>, considere apoiar o desenvolvimento para mantermos o servidor online!
-              </p>
-              
-              <div className="w-full space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                  <span className="text-[10px] font-black uppercase text-gray-500">Favorecido</span>
-                  <span className="text-xs font-bold text-white">Murilo Ferreira da Silva</span>
-                </div>
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                  <span className="text-[10px] font-black uppercase text-gray-500">Banco</span>
-                  <span className="text-xs font-bold text-white">C6 Bank</span>
-                </div>
-                <div className="flex flex-col gap-2 pt-1">
-                  <span className="text-[10px] font-black uppercase text-gray-500 text-center">Chave PIX (Copia e Cola)</span>
-                  <button
-                    onClick={copyPix}
-                    className="group relative flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3 px-4 text-xs font-black text-black transition-all hover:scale-105 active:scale-95 shadow-lg"
-                  >
-                    COPIAR CÓDIGO PIX
-                    <span className="text-base group-active:animate-ping">📋</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowDonate(false)}
-              className="mt-8 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 active:scale-95"
-            >
-              VOLTAR
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient p-4 text-center text-white sm:gap-10">
-      {/* Dynamic Background Elements */}
-      <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
-        {/* Rotating Lightning/Energy effect */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180vmax] h-[180vmax] animate-lightning-spin opacity-30 bg-[conic-gradient(from_0deg,transparent_0deg,transparent_40deg,#1e62ec_45deg,transparent_50deg,transparent_90deg,transparent_130deg,#e52e2e_135deg,transparent_140deg,transparent_180deg,transparent_220deg,#1e62ec_225deg,transparent_230deg,transparent_270deg,transparent_310deg,#e52e2e_315deg,transparent_320deg,transparent_360deg)] blur-2xl" />
-        
-        {/* Glow Pulses */}
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] animate-pulse-glow" />
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-red-600/20 rounded-full blur-[120px] animate-pulse-glow" style={{ animationDelay: '-2s' }} />
-        
-        {/* Subtle Grid overlay */}
-        <div className="absolute inset-0 opacity-10 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
-      </div>
-      
-      <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-10 w-full">
+    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient p-4 text-center text-white">
+      <div className="relative z-10 flex flex-col items-center gap-6 w-full">
         {children}
       </div>
     </main>
@@ -504,11 +40,115 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function BackButton({ onClick, className }: { onClick: () => void; className?: string }) {
   return (
-    <button
-      onClick={onClick}
-      className={`group flex items-center gap-2 px-6 py-2 rounded-xl border-2 border-gray-400/30 bg-gray-800/50 font-black uppercase tracking-widest text-gray-400 transition-all hover:text-yellow-400 hover:border-yellow-400/50 hover:scale-105 active:scale-95 ${className}`}
-    >
-      <span className="text-xl">{"<"}</span> VOLTAR
+    <button onClick={onClick} className={`text-white p-2 border border-white/20 rounded-lg ${className}`}>
+      VOLTAR
     </button>
+  );
+}
+
+function OnlineLobby({ screen, setScreen, guestId, roomCode, setRoomCode, joinCode, setJoinCode, createRoomFn, joinRoomFn, updateReadyFn, startGameFn }: any) {
+  return (
+    <Shell>
+      <h2 className="text-3xl font-black uppercase italic text-yellow-400">Lobby Online</h2>
+      <div className="w-full max-w-md bg-[#11151d] p-5 rounded-xl border border-white/10">
+        {!roomCode && screen === "ONLINE" && (
+          <div className="space-y-4">
+            <button
+              onClick={async () => {
+                const res = await createRoomFn({ data: { guestId } });
+                setRoomCode(res.code);
+                setScreen("LOBBY");
+              }}
+              className="w-full bg-blue-600 py-3 rounded-lg font-black uppercase"
+            >
+              Criar Sala
+            </button>
+            <input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="FTF-0000"
+              className="w-full bg-black/40 p-3 rounded-lg text-center"
+            />
+            <button
+              onClick={async () => {
+                await joinRoomFn({ data: { code: joinCode, guestId } });
+                setRoomCode(joinCode);
+                setScreen("LOBBY");
+              }}
+              className="w-full bg-red-600 py-3 rounded-lg font-black uppercase"
+            >
+              Entrar
+            </button>
+          </div>
+        )}
+        {screen === "LOBBY" && (
+          <div className="text-center">
+            <p className="text-yellow-400 font-black text-2xl tracking-widest">{roomCode}</p>
+            <button
+              onClick={async () => {
+                await updateReadyFn({ data: { roomId: roomCode, guestId, isReady: true } });
+                toast.success("Pronto!");
+              }}
+              className="mt-4 w-full bg-green-600 py-3 rounded-lg"
+            >
+              ESTOU PRONTO
+            </button>
+            <button
+              onClick={async () => {
+                await startGameFn({ data: { roomId: roomCode, guestId } });
+                setScreen("GAME");
+              }}
+              className="mt-2 w-full bg-blue-600 py-3 rounded-lg"
+            >
+              INICIAR PARTIDA
+            </button>
+          </div>
+        )}
+      </div>
+      <BackButton onClick={() => setScreen("MENU")} />
+    </Shell>
+  );
+}
+
+function Index() {
+  const guestId = getGuestId();
+  const [screen, setScreen] = useState<Screen>("MENU");
+  const [playerColor, setPlayerColor] = useState<"AZUL" | "VERMELHO">("AZUL");
+  const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
+  const [roomCode, setRoomCode] = useState("");
+  const [joinCode, setJoinCode] = useState("");
+  const createRoomFn = useServerFn(createRoom);
+  const joinRoomFn = useServerFn(joinRoom);
+  const updateReadyFn = useServerFn(updatePlayerReady);
+  const startGameFn = useServerFn(startGame);
+
+  if (screen === "GAME") return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} initialRoomCode={roomCode || joinCode} />;
+  
+  if (screen === "ONLINE" || screen === "LOBBY") {
+    return (
+      <OnlineLobby 
+        screen={screen}
+        setScreen={setScreen}
+        guestId={guestId}
+        roomCode={roomCode}
+        setRoomCode={setRoomCode}
+        joinCode={joinCode}
+        setJoinCode={setJoinCode}
+        createRoomFn={createRoomFn}
+        joinRoomFn={joinRoomFn}
+        updateReadyFn={updateReadyFn}
+        startGameFn={startGameFn}
+      />
+    );
+  }
+
+  return (
+    <Shell>
+      <img src={logoAsset.url} className="h-40" />
+      <div className="flex gap-4">
+        <button onClick={() => setScreen("CHOOSE_DIFFICULTY")} className="bg-blue-600 p-6 rounded-xl">JOGAR IA</button>
+        <button onClick={() => setScreen("ONLINE")} className="bg-red-600 p-6 rounded-xl">JOGAR ONLINE</button>
+      </div>
+    </Shell>
   );
 }
