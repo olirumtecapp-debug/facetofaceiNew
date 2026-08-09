@@ -10,7 +10,7 @@ import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
-import { createRoom, joinRoom } from "@/lib/online.functions";
+import { createRoom, joinRoom, updatePlayerReady, startGame } from "@/lib/online.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
@@ -36,10 +36,24 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
+import { v4 as uuidv4 } from 'uuid';
+
+type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE" | "LOBBY";
+
+const getGuestId = () => {
+  let id = typeof window !== 'undefined' ? localStorage.getItem("ftf_guest_id") : null;
+  if (!id && typeof window !== 'undefined') {
+    id = uuidv4();
+    localStorage.setItem("ftf_guest_id", id);
+  }
+  return id || 'temp-id';
+};
+
  
  function Index() {
+   const guestId = getGuestId();
    const [screen, setScreen] = useState<Screen>("MENU");
+
    const [showSettings, setShowSettings] = useState(false);
    const [showDonate, setShowDonate] = useState(false);
    const [isFullScreen, setIsFullScreen] = useState(false);
@@ -52,6 +66,9 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   const [isConnecting, setIsConnecting] = useState(false);
   const createRoomFn = useServerFn(createRoom);
   const joinRoomFn = useServerFn(joinRoom);
+  const updateReadyFn = useServerFn(updatePlayerReady);
+  const startGameFn = useServerFn(startGame);
+
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
