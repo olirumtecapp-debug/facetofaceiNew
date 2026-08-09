@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Head } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+
 import { Shell } from "@/components/Shell";
 import { BackButton } from "@/components/BackButton";
 import { useGame } from "@/context/GameContext";
@@ -15,7 +16,21 @@ const logoAsset = { url: "https://facetofacei.lovable.app/lovable-uploads/4a796f
 const playIaAsset = { url: "https://facetofacei.lovable.app/lovable-uploads/10e05030-f8f8-4e8c-8598-a83689408e08.png" };
 const playOnlineAsset = { url: "https://facetofacei.lovable.app/lovable-uploads/47dbd394-1436-4074-a63e-b830e0a5746b.png" };
 
-export default function Index() {
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Face to Face - Jogo de Adivinhação Online" },
+      { name: "description", content: "O clássico jogo de adivinhação Face to Face agora online e contra IA. Desafie seus amigos!" },
+      { property: "og:title", content: "Face to Face - Jogo de Adivinhação Online" },
+      { property: "og:description", content: "O clássico jogo de adivinhação Face to Face agora online e contra IA. Desafie seus amigos!" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: Index,
+});
+
+function Index() {
   const { setScreen, setDifficulty, setGameMode, setRoomCode: setGlobalRoomCode, screen } = useGame();
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -60,13 +75,6 @@ export default function Index() {
   if (roomCode) {
     return (
       <>
-        <Head>
-          <title>Lobby - Face to Face Online</title>
-          <meta name="description" content="Aguardando jogadores para iniciar a partida de Face to Face Online." />
-          <meta property="og:title" content="Lobby - Face to Face Online" />
-          <meta property="og:description" content="Aguardando jogadores para iniciar a partida de Face to Face Online." />
-          <meta name="twitter:card" content="summary_large_image" />
-        </Head>
         <Shell>
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
@@ -95,12 +103,6 @@ export default function Index() {
   if (screen === "ONLINE") {
     return (
       <>
-        <Head>
-          <title>Multiplayer - Face to Face Online</title>
-          <meta name="description" content="Crie ou entre em uma sala para jogar Face to Face com amigos." />
-          <meta property="og:title" content="Multiplayer - Face to Face Online" />
-          <meta property="og:description" content="Crie ou entre em uma sala para jogar Face to Face com amigos." />
-        </Head>
         <Shell>
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
@@ -170,14 +172,6 @@ export default function Index() {
 
   return (
     <>
-      <Head>
-        <title>Face to Face - Jogo de Adivinhação Online</title>
-        <meta name="description" content="O clássico jogo de adivinhação Face to Face agora online e contra IA. Desafie seus amigos!" />
-        <meta property="og:title" content="Face to Face - Jogo de Adivinhação Online" />
-        <meta property="og:description" content="O clássico jogo de adivinhação Face to Face agora online e contra IA. Desafie seus amigos!" />
-        <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
-      </Head>
       <Shell>
         <div className="relative group flex items-center justify-center">
           <img src={logoAsset.url} alt="FTF" className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10" />
