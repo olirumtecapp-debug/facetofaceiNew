@@ -316,10 +316,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       const syncRoom = async () => {
+        const { data: rooms } = await supabase.from("rooms").select("id").eq("code", gameState.roomCode!).single();
+        if (!rooms) return;
+
         const { data: players } = await supabase
           .from("room_players")
           .select("guest_id")
-          .eq("room_id", (await supabase.from("rooms").select("id").eq("code", gameState.roomCode).single()).data?.id);
+          .eq("room_id", rooms.id);
         
         const opponent = players?.find(p => p.guest_id !== gameState.guestId);
         if (opponent) {
@@ -327,9 +330,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }
 
         // Set initial turn if not set
-        const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode).single();
+        const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
         if (room && !room['current_turn_player_id']) {
-          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode);
+          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode!);
         }
       };
       syncRoom();
