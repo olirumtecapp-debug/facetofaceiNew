@@ -264,11 +264,13 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
             👤 PERSONAGENS
           </button>
           <button 
+            onClick={() => setShowDonate(true)}
             className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Favoritos"
+            aria-label="Apoiar"
           >
             💗
           </button>
+
         </div>
       </Shell>
 
