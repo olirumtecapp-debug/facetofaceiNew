@@ -351,15 +351,23 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }
           }
 
-          // 3. Received Answer
-          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
+          // 3. Received Answer (Opponent responded to my question)
+          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            const qId = gameState.pendingQuestion.question.id;
-            setGameState(prev => ({
-              ...prev,
-              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined,
-              myAskedQuestions: new Set(prev.myAskedQuestions).add(qId)
-            }));
+            
+            setGameState(prev => {
+              // If we are waiting for an answer and the pending question matches 
+              // (or if we don't have a revealed answer yet)
+              if (prev.phase === "WAITING_ANSWER" && prev.pendingQuestion && !prev.pendingQuestion.revealedAnswer) {
+                const qId = prev.pendingQuestion.question.id;
+                return {
+                  ...prev,
+                  pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
+                  myAskedQuestions: new Set(prev.myAskedQuestions).add(qId)
+                };
+              }
+              return prev;
+            });
           }
         }
       )
