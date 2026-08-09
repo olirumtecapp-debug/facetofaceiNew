@@ -10,7 +10,7 @@ import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
-import { createRoom, joinRoom } from "@/lib/online.functions";
+import { createRoom, joinRoom, toggleReady, startGame } from "@/lib/online.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
