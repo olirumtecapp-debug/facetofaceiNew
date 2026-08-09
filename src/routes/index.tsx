@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Head } from "@tanstack/react-router";
 import { Shell } from "@/components/Shell";
 import { BackButton } from "@/components/BackButton";
 import { useGame } from "@/context/GameContext";
@@ -58,7 +59,14 @@ export default function Index() {
 
   if (roomCode) {
     return (
-      <Shell>
+      <>
+        <Head>
+          <title>Lobby - Face to Face Online</title>
+          <meta name="description" content="Aguardando jogadores para iniciar a partida de Face to Face Online." />
+          <meta property="og:title" content="Lobby - Face to Face Online" />
+          <meta property="og:description" content="Aguardando jogadores para iniciar a partida de Face to Face Online." />
+          <meta name="twitter:card" content="summary_large_image" />
+        </Head>
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
             <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Sala Multiplayer</p>
@@ -79,12 +87,20 @@ export default function Index() {
         </div>
         <BackButton onClick={() => setRoomCode("")} className="mt-6" />
       </Shell>
+      </>
     );
   }
 
   if (screen === "ONLINE") {
     return (
-      <Shell>
+      <>
+        <Head>
+          <title>Multiplayer - Face to Face Online</title>
+          <meta name="description" content="Crie ou entre em uma sala para jogar Face to Face com amigos." />
+          <meta property="og:title" content="Multiplayer - Face to Face Online" />
+          <meta property="og:description" content="Crie ou entre em uma sala para jogar Face to Face com amigos." />
+        </Head>
+        <Shell>
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
             <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar ou Entrar em sala</p>
@@ -147,11 +163,20 @@ export default function Index() {
           <BackButton onClick={() => setScreen("MENU")} className="mt-6 w-full justify-center" />
         </div>
       </Shell>
+      </>
     );
   }
 
   return (
     <>
+      <Head>
+        <title>Face to Face - Jogo de Adivinhação Online</title>
+        <meta name="description" content="O clássico jogo de adivinhação Face to Face agora online e contra IA. Desafie seus amigos!" />
+        <meta property="og:title" content="Face to Face - Jogo de Adivinhação Online" />
+        <meta property="og:description" content="O clássico jogo de adivinhação Face to Face agora online e contra IA. Desafie seus amigos!" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+      </Head>
       <Shell>
         <div className="relative group flex items-center justify-center">
           <img src={logoAsset.url} alt="FTF" className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10" />

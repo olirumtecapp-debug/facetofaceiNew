@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { GameProvider } from "@/context/GameContext";
 import { Toaster } from "sonner";
+import { Head } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
