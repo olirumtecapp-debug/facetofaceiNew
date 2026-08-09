@@ -42,6 +42,7 @@ export type GameState = {
   gameMode: GameMode;
   roomCode?: string | undefined;
   opponentId?: string | undefined;
+  opponentName?: string | undefined;
   guestId: string;
 };
 
@@ -118,7 +119,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   }, []);
 
   const handlePlayerQuestion = (question: Question) => {
-    if (gameState.phase !== "PLAYER_TURN" || gameState.isGameOver || gameState.askedQuestions.has(question.id)) return;
+    const isAlreadyAsked = gameState.gameMode === "ONLINE" 
+      ? gameState.myAskedQuestions.has(question.id)
+      : gameState.askedQuestions.has(question.id);
+
+    if (gameState.phase !== "PLAYER_TURN" || gameState.isGameOver || isAlreadyAsked) return;
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       supabase
@@ -290,8 +295,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['current_turn_player_id']) {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => {
-              // If phase is RESPONDING, we stay there until we answer.
-              // Only auto-switch phase for the active player.
               let newPhase = prev.phase;
               if (isMyTurn) {
                 if (prev.phase !== "PLAYER_RESPONDING" && !prev.pendingQuestion) {
@@ -299,7 +302,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 }
               } else {
                 if (prev.phase !== "PLAYER_RESPONDING" && !prev.pendingQuestion) {
-                  newPhase = "AI_TURN"; // Representing opponent's turn
+                  newPhase = "AI_TURN"; 
                 }
               }
 
@@ -331,11 +334,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
             }));
           }
-
-          // 4. Room Re-joined/Status Sync
-          if (newRoomData['status'] === 'PLAYING' && gameState.isGameOver) {
-             // Optional: handle rematch sync
-          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomCode}` },
+        () => {
+          // Room code filter above might be wrong since filter is usually on id. 
+          // We'll rely on the initial effect and maybe add a player change listener if needed.
         }
       )
       .subscribe();
@@ -354,7 +360,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
         const { data: players } = await supabase
           .from("room_players")
-          .select("guest_id, secret_character_id")
+          .select("guest_id, secret_character_id, name")
           .eq("room_id", rooms.id);
         
         const opponent = players?.find(p => p.guest_id !== gameState.guestId);
@@ -365,6 +371,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           setGameState(prev => ({ 
             ...prev, 
             opponentId: opponent.guest_id,
+            opponentName: opponent.name || undefined,
             aiSecret: oppSecret || prev.aiSecret 
           }));
         }

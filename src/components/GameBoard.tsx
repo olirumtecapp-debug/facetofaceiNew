@@ -125,7 +125,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
             <div className="w-12 shrink-0 sm:w-20">
               <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
-                {gameState.gameMode === "ONLINE" ? "Adversário" : "IA"}
+                {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "Adversário") : "IA"}
               </div>
               <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
                 ❓
@@ -257,7 +257,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
             </h2>
             <p className="mb-8 text-lg text-gray-300">
-              O personagem do {gameState.gameMode === "ONLINE" ? "adversário" : "IA"} era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
+              O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
             </p>
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
               <button

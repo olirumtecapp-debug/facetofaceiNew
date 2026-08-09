@@ -111,7 +111,7 @@ export const startGame = createServerFn({ method: "POST" })
     // Check if both ready
     const { data: players } = await supabase
       .from("room_players")
-      .select("is_ready, guest_id")
+      .select("is_ready, guest_id, name")
       .eq("room_id", data.roomId);
     
     if (!players || players.length < 2 || !players.every(p => p.is_ready)) {
