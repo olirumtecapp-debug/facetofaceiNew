@@ -121,7 +121,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     });
   }, []);
 
-  const handlePlayerQuestion = (question: Question) => {
+  const handlePlayerQuestion = async (question: Question) => {
     const isAlreadyAsked = gameState.gameMode === "ONLINE" 
       ? gameState.myAskedQuestions.has(question.id)
       : gameState.askedQuestions.has(question.id);
@@ -129,17 +129,24 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (gameState.phase !== "PLAYER_TURN" || gameState.isGameOver || isAlreadyAsked) return;
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      supabase
-        .from("rooms")
-        .update({ 
-          current_question_id: question.id,
-          last_answer: null as any,
-          last_action_timestamp: new Date().toISOString()
-        })
-        .eq("code", gameState.roomCode)
-        .then(({ error }) => {
-          if (error) toast.error("Erro ao enviar pergunta.");
-        });
+      try {
+        const { error } = await supabase
+          .from("rooms")
+          .update({ 
+            current_question_id: question.id,
+            last_answer: null as any,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", gameState.roomCode);
+        
+        if (error) {
+          toast.error("Erro ao enviar pergunta.");
+          return;
+        }
+      } catch (err) {
+        toast.error("Erro de conexão ao enviar pergunta.");
+        return;
+      }
     }
 
     setGameState((prev) => ({
@@ -159,21 +166,30 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
-  const answerQuestion = (answer: "SIM" | "NÃO") => {
+  const answerQuestion = async (answer: "SIM" | "NÃO") => {
     if (!gameState.pendingQuestion) return;
 
     const { question, type } = gameState.pendingQuestion;
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && type !== "PLAYER") {
-      supabase
-        .from("rooms")
-        .update({ 
-          last_answer: answer,
-          current_question_id: null as any,
-          last_action_timestamp: new Date().toISOString()
-        })
-        .eq("code", gameState.roomCode)
-        .then();
+      try {
+        const { error } = await supabase
+          .from("rooms")
+          .update({ 
+            last_answer: answer,
+            current_question_id: null as any,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", gameState.roomCode);
+        
+        if (error) {
+          toast.error("Erro ao enviar resposta.");
+          return;
+        }
+      } catch (err) {
+        toast.error("Erro de conexão ao enviar resposta.");
+        return;
+      }
     }
 
     if (type === "PLAYER") {
@@ -300,11 +316,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             setGameState(prev => {
               let newPhase = prev.phase;
               if (isMyTurn) {
-                if (prev.phase !== "PLAYER_RESPONDING" && !prev.pendingQuestion) {
+                // If it's my turn, and I'm not responding to something, I'm in TURN phase.
+                // However, if I was WAITING_ANSWER (I sent a question), I should stay there 
+                // until I get the answer sync.
+                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
                   newPhase = "PLAYER_TURN";
                 }
               } else {
-                if (prev.phase !== "PLAYER_RESPONDING" && !prev.pendingQuestion) {
+                // If it's NOT my turn, and I'm not responding, it's AI (Opponent) TURN.
+                if (prev.phase !== "PLAYER_RESPONDING") {
                   newPhase = "AI_TURN"; 
                 }
               }
@@ -317,10 +337,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             });
           }
 
-          // 2. Received Question
+          // 2. Received Question (Opponent sent a question, so I must respond)
           if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
-            if (question) {
+            // Only set to RESPONDING if we don't already have this question pending 
+            // or if we are not already in RESPONDING phase for a different reason.
+            if (question && (!gameState.pendingQuestion || gameState.pendingQuestion.question.id !== question.id)) {
               setGameState(prev => ({
                 ...prev,
                 phase: "PLAYER_RESPONDING",
