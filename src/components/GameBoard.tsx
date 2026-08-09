@@ -13,10 +13,11 @@ interface GameBoardProps {
 
 const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
 
-export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) => {
+export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: GameBoardProps & { initialRoomCode?: string }) => {
   const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer } = useGameState(
     playerColor,
     difficulty,
+    initialRoomCode
   );
   const [isPalpitando, setIsPalpitando] = useState(false);
   const [cat, setCat] = useState(CATEGORIES[1]!);
