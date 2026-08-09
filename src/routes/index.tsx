@@ -352,7 +352,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
               setRoomData(null);
               setPlayers([]);
             }}
-            onToggleReady={async (isReady) => {
+            onToggleReady={async (isReady: boolean) => {
               await toggleReadyFn({ data: { roomId: roomData.id, guestId, isReady } });
             }}
             onStart={async () => {
