@@ -34,6 +34,7 @@ export type GameState = {
   winner?: "PLAYER" | "AI" | undefined;
   pendingQuestion?: { question: Question; type: "PLAYER" | "AI" | "AI_PALPITE"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
   askedQuestions: Set<string>;
+  opponentAskedQuestions: Set<string>;
   aiAskedQuestions: Set<string>;
   playerKnowledge: { [questionId: string]: boolean };
   aiKnowledge: { [questionId: string]: boolean };
