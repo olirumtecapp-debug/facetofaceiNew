@@ -47,7 +47,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   const guestId = useMemo(() => {
     let id = localStorage.getItem("ftf_guest_id");
     if (!id) {
-      id = Math.random().toString(36).substring(2, 15);
+      id = crypto.randomUUID();
       localStorage.setItem("ftf_guest_id", id);
     }
     return id;
@@ -90,20 +90,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       
       // Sync turn to database if online
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
-        // In online mode, "AI" turn means the opponent's turn.
-        // We only update if we are currently the one who just finished our turn phase.
-        const targetPlayerId = newTurn === "PLAYER" ? prev.guestId : prev.opponentId;
-        
-        if (targetPlayerId) {
-          supabase
-            .from("rooms")
-            .update({ 
-              current_turn_player_id: targetPlayerId as any,
-              last_action_timestamp: new Date().toISOString()
-            })
-            .eq("code", prev.roomCode)
-            .then();
-        }
+        supabase
+          .from("rooms")
+          .update({ 
+            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as any,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", prev.roomCode)
+          .then();
       }
 
       return {
@@ -124,9 +118,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         .update({ 
           current_question_id: question.id,
           last_answer: null as any,
-          last_action_timestamp: new Date().toISOString(),
-          // We set it to the opponent's ID to signal it's their turn to answer
-          current_turn_player_id: gameState.opponentId as any
+          last_action_timestamp: new Date().toISOString()
         })
         .eq("code", gameState.roomCode)
         .then(({ error }) => {
@@ -162,9 +154,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         .update({ 
           last_answer: answer,
           current_question_id: null as any,
-          last_action_timestamp: new Date().toISOString(),
-          // Return the turn to the player who asked
-          current_turn_player_id: gameState.opponentId as any
+          last_action_timestamp: new Date().toISOString()
         })
         .eq("code", gameState.roomCode)
         .then();
@@ -288,19 +278,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 1. Sync Turn
           if (newRoomData['current_turn_player_id']) {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
-            setGameState(prev => {
-              // Only update currentTurn/phase if they actually changed or if we are entering a response state
-              const nextTurn = isMyTurn ? "PLAYER" : "AI";
-              
-              // Determine if we should be in responding phase
-              const hasIncomingQuestion = newRoomData['current_question_id'] && !isMyTurn;
-              
-              return {
-                ...prev,
-                currentTurn: nextTurn,
-                phase: hasIncomingQuestion ? "PLAYER_RESPONDING" : (isMyTurn ? "PLAYER_TURN" : "AI_TURN")
-              };
-            });
+            setGameState(prev => ({
+              ...prev,
+              currentTurn: isMyTurn ? "PLAYER" : "AI",
+              phase: isMyTurn 
+                ? (prev.phase === "PLAYER_RESPONDING" || prev.pendingQuestion?.type === "AI" ? "PLAYER_RESPONDING" : "PLAYER_TURN") 
+                : (prev.pendingQuestion?.type === "PLAYER" ? "WAITING_ANSWER" : "AI_TURN")
+            }));
           }
 
           // 2. Received Question (Player B receives)
@@ -316,17 +300,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // 3. Received Answer (Player A receives)
-          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId) {
+          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            setGameState(prev => {
-              if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER") {
-                return {
-                  ...prev,
-                  pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer }
-                };
-              }
-              return prev;
-            });
+            setGameState(prev => ({
+              ...prev,
+              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
+            }));
           }
         }
       )
@@ -346,30 +325,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
         const { data: players } = await supabase
           .from("room_players")
-          .select("guest_id, secret_character_id")
+          .select("guest_id")
           .eq("room_id", rooms.id);
         
         const opponent = players?.find(p => p.guest_id !== gameState.guestId);
-        const me = players?.find(p => p.guest_id === gameState.guestId);
-        
         if (opponent) {
-          setGameState(prev => ({ 
-            ...prev, 
-            opponentId: opponent.guest_id,
-            aiSecret: opponent.secret_character_id ? CHARACTERS.find(c => c.id === opponent.secret_character_id) || prev.aiSecret : prev.aiSecret
-          }));
-        }
-
-        if (me?.secret_character_id) {
-           setGameState(prev => ({ 
-            ...prev, 
-            playerSecret: CHARACTERS.find(c => c.id === me.secret_character_id) || prev.playerSecret
-          }));
+          setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
         }
 
         // Set initial turn if not set (creator is first turn)
         const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
-        if (room) {
+        if (room && !room['current_turn_player_id']) {
+          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode!);
+          setGameState(prev => ({ ...prev, currentTurn: "PLAYER", phase: "PLAYER_TURN" }));
+        } else if (room) {
           const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
           setGameState(prev => ({ 
             ...prev, 

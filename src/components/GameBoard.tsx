@@ -114,7 +114,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         </section>
 
         {/* Side panel */}
-        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[45vh] lg:max-h-none overflow-y-auto">
+        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[45vh] lg:max-h-none">
           {/* Secret cards + actions */}
           <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
             <div className="w-12 shrink-0 sm:w-20">
