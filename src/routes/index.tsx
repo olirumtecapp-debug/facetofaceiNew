@@ -342,9 +342,93 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
           </div>
         </div>
       )}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border-2 border-yellow-400/30 bg-[#0b0e14] p-6 shadow-2xl">
+            <h2 className="mb-6 text-2xl font-black uppercase italic text-yellow-400 text-center">Configurações</h2>
+            
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-500">Visualização</p>
+                <button
+                  onClick={toggleFullScreen}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4 transition-all hover:bg-white/10"
+                >
+                  <span className="font-bold">Tela Cheia</span>
+                  <span className="text-xl">{isFullScreen ? "📴" : "📺"}</span>
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-black uppercase tracking-widest text-gray-500">Instalação</p>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Para instalar no <span className="text-white font-bold">Smartphone</span> ou <span className="text-white font-bold">PC</span>:
+                    Clique nos três pontos do navegador e selecione <span className="text-yellow-400">"Instalar Aplicativo"</span> ou <span className="text-yellow-400">"Adicionar à tela de início"</span>.
+                  </p>
+                  <p className="text-[10px] text-gray-500 italic">
+                    Endereço para PC/Notebook: {typeof window !== 'undefined' ? window.location.origin : 'este site'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowSettings(false)}
+              className="mt-8 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 active:scale-95"
+            >
+              FECHAR
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showDonate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border-2 border-red-500/30 bg-[#0b0e14] p-6 shadow-2xl">
+            <h2 className="mb-6 text-2xl font-black uppercase italic text-red-500 text-center">Apoiar Projeto</h2>
+            
+            <div className="flex flex-col items-center gap-6">
+              <div className="text-4xl">🎁</div>
+              <p className="text-center text-sm leading-relaxed text-gray-300">
+                Se você gosta do <span className="text-white font-bold uppercase italic tracking-tighter">FTF</span>, considere apoiar o desenvolvimento para mantermos o servidor online!
+              </p>
+              
+              <div className="w-full space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <span className="text-[10px] font-black uppercase text-gray-500">Favorecido</span>
+                  <span className="text-xs font-bold text-white">Murilo Ferreira da Silva</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <span className="text-[10px] font-black uppercase text-gray-500">Banco</span>
+                  <span className="text-xs font-bold text-white">C6 Bank</span>
+                </div>
+                <div className="flex flex-col gap-2 pt-1">
+                  <span className="text-[10px] font-black uppercase text-gray-500 text-center">Chave PIX (Copia e Cola)</span>
+                  <button
+                    onClick={copyPix}
+                    className="group relative flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3 px-4 text-xs font-black text-black transition-all hover:scale-105 active:scale-95 shadow-lg"
+                  >
+                    COPIAR CÓDIGO PIX
+                    <span className="text-base group-active:animate-ping">📋</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowDonate(false)}
+              className="mt-8 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 active:scale-95"
+            >
+              VOLTAR
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
