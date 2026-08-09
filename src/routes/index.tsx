@@ -182,11 +182,10 @@ function Index() {
     <>
       <Shell>
         <div className="relative group flex items-center justify-center">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] h-[20%] bg-white/90 blur-md rounded-full -z-10" />
           <img
             src={logoAsset.url}
             alt="FTF - Face to Face"
-            className="h-24 w-auto object-contain sm:h-40 md:h-48 relative z-10"
+            className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10"
           />
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
