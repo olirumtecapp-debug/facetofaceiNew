@@ -22,7 +22,7 @@ import azul20 from "./card-azul-20.png.asset.json";
 import azul21 from "./azul_ENZO.png.asset.json";
 import azul22 from "./card-azul-22.png.asset.json";
 import azul23 from "./card-azul-23.png.asset.json";
-import azul24 from "./card-azul-24.png.asset.json";
+import azul24 from "./tiagoAZUL.png.asset.json";
 import vermelho1 from "./card-vermelho-1.png.asset.json";
 import vermelho2 from "./card-vermelho-2.png.asset.json";
 import vermelho3 from "./card-vermelho-3.png.asset.json";
@@ -46,7 +46,7 @@ import vermelho20 from "./card-vermelho-20.png.asset.json";
 import vermelho21 from "./card-vermelho-21.png.asset.json";
 import vermelho22 from "./card-vermelho-22.png.asset.json";
 import vermelho23 from "./card-vermelho-23.png.asset.json";
-import vermelho24 from "./card-vermelho-24.png.asset.json";
+import vermelho24 from "./tiagoVERMELHO.png.asset.json";
 
 export const CARD_IMAGES: Record<"AZUL" | "VERMELHO", string[]> = {
   AZUL: [azul1.url, azul2.url, azul3.url, azul4.url, azul5.url, azul6.url, azul7.url, azul8.url, azul9.url, azul10.url, azul11.url, azul12.url, azul13.url, azul14.url, azul15.url, azul16.url, azul17.url, azul18.url, azul19.url, azul20.url, azul21.url, azul22.url, azul23.url, azul24.url],
