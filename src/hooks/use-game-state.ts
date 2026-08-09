@@ -94,6 +94,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .from("rooms")
           .update({ 
             current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as any,
+            current_question_id: null as any,
+            last_answer: null as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
@@ -275,19 +277,30 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         (payload) => {
           const newRoomData = payload.new as any;
           
+          // 0. Handle Room Status Change (Start Game)
+          if (newRoomData.status === "PLAYING" && gameState.phase === "PLAYER_TURN" && !gameState.opponentId) {
+             // Trigger a re-sync if status changed to playing
+             window.location.reload(); 
+          }
+
           // 1. Sync Turn
           if (newRoomData['current_turn_player_id']) {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
-            setGameState(prev => ({
-              ...prev,
-              currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn 
-                ? (prev.phase === "PLAYER_RESPONDING" || prev.pendingQuestion?.type === "AI" ? "PLAYER_RESPONDING" : "PLAYER_TURN") 
-                : (prev.pendingQuestion?.type === "PLAYER" ? "WAITING_ANSWER" : "AI_TURN")
-            }));
+            setGameState(prev => {
+              const newTurn = isMyTurn ? "PLAYER" : "AI";
+              const isEnteringMyTurn = prev.currentTurn === "AI" && newTurn === "PLAYER";
+              
+              return {
+                ...prev,
+                currentTurn: newTurn,
+                phase: isMyTurn 
+                  ? (isEnteringMyTurn ? "PLAYER_TURN" : (prev.phase === "PLAYER_RESPONDING" || prev.pendingQuestion?.type === "AI" ? "PLAYER_RESPONDING" : prev.phase)) 
+                  : (prev.pendingQuestion?.type === "PLAYER" ? "WAITING_ANSWER" : "AI_TURN")
+              };
+            });
           }
 
-          // 2. Received Question (Player B receives)
+          // 2. Received Question (Opponent asked something)
           if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             if (question) {
@@ -299,8 +312,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }
           }
 
-          // 3. Received Answer (Player A receives)
-          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
+          // 3. Received Answer (Opponent replied to my question)
+          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             setGameState(prev => ({
               ...prev,
