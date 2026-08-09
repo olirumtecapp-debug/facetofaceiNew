@@ -26,7 +26,7 @@ export const GameCard = ({ character, isDown, color, onClick }: CardProps) => {
             src={src}
             alt={character.nome}
             loading="lazy"
-            className="h-full w-full object-cover object-center contrast-110"
+            className="h-full w-full object-contain object-center contrast-110"
           />
         </div>
         {isDown && (
