@@ -261,9 +261,60 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
+  // Realtime Sync Effect
+  useEffect(() => {
+    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
+
+    const channel = supabase
+      .channel(`room:${gameState.roomCode}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
+        (payload) => {
+          const newRoomData = payload.new;
+          
+          // 1. Sync Turn
+          if (newRoomData.current_turn_player_id) {
+            const isMyTurn = newRoomData.current_turn_player_id === gameState.guestId;
+            setGameState(prev => ({
+              ...prev,
+              currentTurn: isMyTurn ? "PLAYER" : "AI",
+              phase: isMyTurn ? (prev.phase === "PLAYER_RESPONDING" ? "PLAYER_RESPONDING" : "PLAYER_TURN") : "AI_TURN"
+            }));
+          }
+
+          // 2. Received Question (Player B receives)
+          if (newRoomData.current_question_id && newRoomData.current_turn_player_id !== gameState.guestId) {
+            const question = QUESTIONS.find(q => q.id === newRoomData.current_question_id);
+            if (question) {
+              setGameState(prev => ({
+                ...prev,
+                phase: "PLAYER_RESPONDING",
+                pendingQuestion: { question, type: "AI" } // type AI means opponent for UI
+              }));
+            }
+          }
+
+          // 3. Received Answer (Player A receives)
+          if (newRoomData.last_answer && newRoomData.current_turn_player_id === gameState.guestId && gameState.pendingQuestion) {
+            const answer = newRoomData.last_answer as "SIM" | "NÃO";
+            setGameState(prev => ({
+              ...prev,
+              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId, gameState.pendingQuestion]);
+
   // AI Logic Effect
   useEffect(() => {
-    if (gameState.isGameOver) return undefined;
+    if (gameState.isGameOver || gameState.gameMode === "ONLINE") return undefined;
 
     // Phase: AI_TURN -> IA makes a question
     if (gameState.phase === "AI_TURN" && !gameState.pendingQuestion) {
@@ -318,7 +369,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }
 
     return undefined;
-  }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn]);
+  }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn, gameState.gameMode]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
 };
