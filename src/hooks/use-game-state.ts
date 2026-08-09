@@ -312,6 +312,30 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     };
   }, [gameState.gameMode, gameState.roomCode, gameState.guestId, gameState.pendingQuestion]);
 
+  // Initial Online Sync Effect
+  useEffect(() => {
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+      const syncRoom = async () => {
+        const { data: players } = await supabase
+          .from("room_players")
+          .select("guest_id")
+          .eq("room_id", (await supabase.from("rooms").select("id").eq("code", gameState.roomCode).single()).data?.id);
+        
+        const opponent = players?.find(p => p.guest_id !== gameState.guestId);
+        if (opponent) {
+          setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
+        }
+
+        // Set initial turn if not set
+        const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode).single();
+        if (room && !room['current_turn_player_id']) {
+          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode);
+        }
+      };
+      syncRoom();
+    }
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
+
   // AI Logic Effect
   useEffect(() => {
     if (gameState.isGameOver || gameState.gameMode === "ONLINE") return undefined;
