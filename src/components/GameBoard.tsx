@@ -85,12 +85,17 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
                       return (
                         <td key={colIndex} className="p-0 align-middle text-center w-1/6 h-full">
                           {item && (
-                            <GameCard
-                              character={item.character}
-                              isDown={item.isDown}
-                              color={playerColor}
-                              onClick={() => toggleCard(item.character.id)}
-                            />
+                            <div className="flex flex-col items-center">
+                              <GameCard
+                                character={item.character}
+                                isDown={item.isDown}
+                                color={playerColor}
+                                onClick={() => toggleCard(item.character.id)}
+                              />
+                              <span className={`mt-0.5 text-[8px] font-black uppercase italic tracking-tighter sm:text-[9px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] ${item.isDown ? 'text-gray-500' : 'text-white'}`}>
+                                {item.character.nome}
+                              </span>
+                            </div>
                           )}
                         </td>
                       );
