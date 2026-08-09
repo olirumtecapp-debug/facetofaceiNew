@@ -2,30 +2,44 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getPublicSupabase } from "./online.server";
 
-export const createRoom = createServerFn({ method: "POST" }).handler(async () => {
-  const supabase = getPublicSupabase();
+export const createRoom = createServerFn({ method: "POST" })
+  .inputValidator((data: { guestId: string }) => z.object({ guestId: z.string() }).parse(data))
+  .handler(async ({ data }) => {
+    const supabase = getPublicSupabase();
 
-  const code = `FTF-${Math.floor(1000 + Math.random() * 9000)}`;
+    const code = `FTF-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const { data: room, error: roomError } = await supabase
-    .from("rooms")
-    .insert({ code, status: "WAITING" })
-    .select()
-    .single();
+    const { data: room, error: roomError } = await supabase
+      .from("rooms")
+      .insert({ 
+        code, 
+        status: "WAITING",
+        host_id: data.guestId,
+        current_turn_player_id: data.guestId
+      })
+      .select()
+      .single();
 
-  if (roomError) throw roomError;
+    if (roomError) throw roomError;
 
-  const { error: playerError } = await supabase
-    .from("room_players")
-    .insert({ room_id: room.id, color: "AZUL", is_ready: true });
+    const { error: playerError } = await supabase
+      .from("room_players")
+      .insert({ 
+        room_id: room.id, 
+        color: "AZUL", 
+        is_ready: false,
+        guest_id: data.guestId 
+      });
 
-  if (playerError) throw playerError;
+    if (playerError) throw playerError;
 
-  return { room, code };
-});
+    return { room, code };
+  });
 
 export const joinRoom = createServerFn({ method: "POST" })
-  .inputValidator((data: { code: string }) => z.object({ code: z.string() }).parse(data))
+  .inputValidator((data: { code: string; guestId: string }) => 
+    z.object({ code: z.string(), guestId: z.string() }).parse(data)
+  )
   .handler(async ({ data }) => {
     const supabase = getPublicSupabase();
 
@@ -38,11 +52,67 @@ export const joinRoom = createServerFn({ method: "POST" })
 
     if (roomError || !room) throw new Error("Sala não encontrada ou já iniciada");
 
-    const { error: playerError } = await supabase
+    // Check if player already in room
+    const { data: existingPlayer } = await supabase
       .from("room_players")
-      .insert({ room_id: room.id, color: "VERMELHO", is_ready: true });
+      .select()
+      .eq("room_id", room.id)
+      .eq("guest_id", data.guestId)
+      .maybeSingle();
 
-    if (playerError) throw playerError;
+    if (!existingPlayer) {
+      const { error: playerError } = await supabase
+        .from("room_players")
+        .insert({ 
+          room_id: room.id, 
+          color: "VERMELHO", 
+          is_ready: false,
+          guest_id: data.guestId 
+        });
+      if (playerError) throw playerError;
+    }
 
     return { room };
+  });
+
+export const toggleReady = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string; isReady: boolean }) => 
+    z.object({ roomId: z.string(), guestId: z.string(), isReady: z.boolean() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const supabase = getPublicSupabase();
+    const { error } = await supabase
+      .from("room_players")
+      .update({ is_ready: data.isReady })
+      .eq("room_id", data.roomId)
+      .eq("guest_id", data.guestId);
+    if (error) throw error;
+    return { success: true };
+  });
+
+export const startGame = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string }) => 
+    z.object({ roomId: z.string(), guestId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const supabase = getPublicSupabase();
+    
+    // Check if both ready
+    const { data: players } = await supabase
+      .from("room_players")
+      .select("is_ready")
+      .eq("room_id", data.roomId);
+    
+    if (!players || players.length < 2 || !players.every(p => p.is_ready)) {
+      throw new Error("Ambos os jogadores precisam estar prontos");
+    }
+
+    const { error } = await supabase
+      .from("rooms")
+      .update({ status: "PLAYING" })
+      .eq("id", data.roomId)
+      .eq("host_id", data.guestId);
+      
+    if (error) throw error;
+    return { success: true };
   });

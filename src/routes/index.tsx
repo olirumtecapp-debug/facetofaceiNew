@@ -36,6 +36,107 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+import { useEffect as useRealtimeEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+function Lobby({ room, players, guestId, onLeave, onToggleReady, onStart }: any) {
+  useRealtimeEffect(() => {
+    const channel = supabase
+      .channel(`lobby:${room.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${room.id}` },
+        () => {
+          // Trigger a refresh of players if needed, or rely on root component's effect
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [room.id]);
+
+  const me = players.find((p: any) => p.guest_id === guestId);
+  const isHost = room.host_id === guestId;
+  const allReady = players.length === 2 && players.every((p: any) => p.is_ready);
+
+  return (
+    <div className="w-full max-w-md space-y-4 animate-in fade-in zoom-in-95 duration-300">
+      <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500/70">Código da Sala</p>
+          <div className="flex w-full items-center gap-2">
+            <div className="flex-1 rounded-lg border-2 border-dashed border-yellow-400/30 bg-black/40 py-3 text-center text-3xl font-black tracking-[0.2em] text-yellow-400">
+              {room.code}
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(room.code);
+                toast.success("Código copiado!");
+              }}
+              className="rounded-lg bg-yellow-400 p-3 text-black transition-all hover:scale-105 active:scale-95"
+            >
+              📋
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3 mb-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Jogadores Conectados</p>
+          {players.map((p: any) => (
+            <div key={p.guest_id} className="flex items-center justify-between rounded-lg bg-white/5 p-3 border border-white/5">
+              <div className="flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full ${p.is_ready ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                <span className="font-black italic text-sm">
+                  {p.guest_id === guestId ? "VOCÊ" : "ADVERSÁRIO"} 
+                  {p.guest_id === room.host_id && <span className="ml-2 text-[8px] text-blue-400">(HOST)</span>}
+                </span>
+              </div>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded ${p.is_ready ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}`}>
+                {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
+              </span>
+            </div>
+          ))}
+          {players.length < 2 && (
+            <div className="flex items-center gap-3 rounded-lg bg-blue-500/5 p-3 border border-blue-500/10">
+              <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
+              <p className="text-[10px] font-bold text-blue-400 animate-pulse uppercase tracking-widest">Aguardando adversário...</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => onToggleReady(!me?.is_ready)}
+            className={`w-full rounded-lg py-3 font-black uppercase tracking-widest border-2 transition-all active:scale-95 ${
+              me?.is_ready 
+                ? 'bg-yellow-500 border-yellow-400/50 text-black hover:brightness-110' 
+                : 'bg-green-600 border-green-400/50 text-white hover:brightness-125'
+            }`}
+          >
+            {me?.is_ready ? 'CANCELAR PRONTO' : 'ESTOU PRONTO'}
+          </button>
+
+          {isHost && (
+            <button
+              onClick={onStart}
+              disabled={!allReady}
+              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-40 disabled:grayscale"
+            >
+              INICIAR PARTIDA
+            </button>
+          )}
+
+          <button
+            onClick={onLeave}
+            className="w-full rounded-lg bg-gray-800 py-3 font-black uppercase tracking-widest border-2 border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95"
+          >
+            SAIR DA SALA
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
  
  function Index() {
@@ -47,11 +148,62 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
   const [showChars, setShowChars] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
+  const guestId = (typeof window !== 'undefined') 
+    ? (localStorage.getItem("ftf_guest_id") || (() => {
+        const id = crypto.randomUUID();
+        localStorage.setItem("ftf_guest_id", id);
+        return id;
+      })())
+    : "";
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [roomData, setRoomData] = useState<any>(null);
+  const [players, setPlayers] = useState<any[]>([]);
+  
   const createRoomFn = useServerFn(createRoom);
   const joinRoomFn = useServerFn(joinRoom);
+  const toggleReadyFn = useServerFn(toggleReady);
+  const startGameFn = useServerFn(startGame);
+
+  useRealtimeEffect(() => {
+    if (!roomData?.id) return;
+
+    const fetchPlayers = async () => {
+      const { data } = await supabase
+        .from("room_players")
+        .select("*")
+        .eq("room_id", roomData.id);
+      if (data) setPlayers(data);
+    };
+
+    fetchPlayers();
+
+    const roomSub = supabase
+      .channel(`room_state:${roomData.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomData.id}` },
+        (payload) => {
+          setRoomData(payload.new);
+          if ((payload.new as any).status === "PLAYING") {
+            setScreen("GAME");
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${roomData.id}` },
+        () => {
+          fetchPlayers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(roomSub);
+    };
+  }, [roomData?.id]);
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -135,16 +287,18 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
     return (
       <Shell>
         <h2 className="text-3xl font-black uppercase italic text-yellow-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Jogar on-line</h2>
-        <div className="w-full max-w-md space-y-4">
-          <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
-            <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
-            {!roomCode ? (
+        
+        {!roomData ? (
+          <div className="w-full max-w-md space-y-4">
+            <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
+              <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
               <button
                 onClick={async () => {
                   setIsConnecting(true);
                   try {
-                    const res = await createRoomFn();
+                    const res = await createRoomFn({ data: { guestId } });
                     setRoomCode(res.code);
+                    setRoomData(res.room);
                     toast.success("Sala criada!");
                   } catch (e) {
                     toast.error("Erro ao criar sala.");
@@ -153,81 +307,63 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                   }
                 }}
                 disabled={isConnecting}
-                className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
+                className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-50"
               >
                 {isConnecting ? "Criando..." : "Gerar código"}
               </button>
-            ) : (
-              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500/70">Código da Sala</p>
-                  <div className="flex w-full items-center gap-2">
-                    <div className="flex-1 rounded-lg border-2 border-dashed border-yellow-400/30 bg-black/40 py-3 text-center text-3xl font-black tracking-[0.2em] text-yellow-400">
-                      {roomCode}
-                    </div>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(roomCode);
-                        toast.success("Código copiado!");
-                      }}
-                      className="rounded-lg bg-yellow-400 p-3 text-black transition-all hover:scale-105 active:scale-95"
-                      title="Copiar Código"
-                    >
-                      📋
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center gap-3 rounded-lg bg-blue-500/10 p-4 border border-blue-500/20">
-                  <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
-                  <p className="text-xs font-bold text-blue-400 animate-pulse uppercase tracking-tighter">Aguardando adversário entrar...</p>
-                </div>
+            </div>
 
-                <button
-                  onClick={() => setScreen("GAME")}
-                  className="w-full rounded-lg bg-green-600 py-3 font-black uppercase tracking-widest border-2 border-green-400/50 transition-all hover:brightness-125 active:scale-95"
-                >
-                  Entrar na Sala agora
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
-            <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Entrar em sala</p>
-            <input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="FTF-0000"
-              className="mb-3 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-3 text-center text-xl font-black tracking-widest outline-none focus:border-yellow-400"
-            />
-            <button 
-              onClick={async () => {
-                if (!joinCode) return;
-                setIsConnecting(true);
-                try {
-                  await joinRoomFn({ data: { code: joinCode } });
-                  setScreen("GAME"); 
-                  toast.success("Entrou na sala!");
-                } catch (e) {
-                  toast.error("Sala não encontrada ou erro ao entrar.");
-                } finally {
-                  setIsConnecting(false);
-                }
-              }}
-              disabled={isConnecting || !joinCode}
-              className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border-2 border-[#ff4444]/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(229,46,46,0.5)] active:scale-95 disabled:opacity-50"
-            >
-              {isConnecting ? "Entrando..." : "Entrar"}
-            </button>
+            <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
+              <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Entrar em sala</p>
+              <input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="FTF-0000"
+                className="mb-3 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-3 text-center text-xl font-black tracking-widest outline-none focus:border-yellow-400"
+              />
+              <button 
+                onClick={async () => {
+                  if (!joinCode) return;
+                  setIsConnecting(true);
+                  try {
+                    const res = await joinRoomFn({ data: { code: joinCode, guestId } });
+                    setRoomData(res.room);
+                    toast.success("Entrou na sala!");
+                  } catch (e) {
+                    toast.error("Sala não encontrada.");
+                  } finally {
+                    setIsConnecting(false);
+                  }
+                }}
+                disabled={isConnecting || !joinCode}
+                className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border-2 border-[#ff4444]/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-50"
+              >
+                {isConnecting ? "Entrando..." : "Entrar"}
+              </button>
+            </div>
             <BackButton onClick={() => setScreen("MENU")} className="mt-4 w-full justify-center" />
-
           </div>
-          <p className="text-center text-xs text-gray-500">
-            As salas funcionam localmente nesta versão; a sincronização em tempo real entre dois dispositivos precisa do
-            backend ativado.
-          </p>
-        </div>
-        <BackButton onClick={() => setScreen("MENU")} className="mt-6" />
+        ) : (
+          <Lobby 
+            room={roomData} 
+            players={players} 
+            guestId={guestId}
+            onLeave={() => {
+              setRoomData(null);
+              setPlayers([]);
+            }}
+            onToggleReady={async (isReady) => {
+              await toggleReadyFn({ data: { roomId: roomData.id, guestId, isReady } });
+            }}
+            onStart={async () => {
+              try {
+                await startGameFn({ data: { roomId: roomData.id, guestId } });
+              } catch (e: any) {
+                toast.error(e.message);
+              }
+            }}
+          />
+        )}
       </Shell>
     );
   }
