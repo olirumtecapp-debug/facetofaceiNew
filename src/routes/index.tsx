@@ -143,7 +143,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                 onClick={async () => {
                   setIsConnecting(true);
                   try {
-                    const res = await createRoomFn();
+                    const res = await createRoomFn({ data: { guestId } });
                     setRoomCode(res.code);
                     toast.success("Sala criada!");
                   } catch (e) {
@@ -205,7 +205,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                 if (!joinCode) return;
                 setIsConnecting(true);
                 try {
-                  await joinRoomFn({ data: { code: joinCode } });
+                  await joinRoomFn({ data: { code: joinCode, guestId } });
                   setScreen("GAME"); 
                   toast.success("Entrou na sala!");
                 } catch (e) {
