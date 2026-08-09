@@ -14,7 +14,9 @@ export const createRoom = createServerFn({ method: "POST" })
       .insert({ 
         code, 
         status: "WAITING",
-        current_turn_player_id: data.guestId 
+        current_turn_player_id: data.guestId,
+        current_question_id: null,
+        last_answer: null
       })
       .select()
       .single();
@@ -27,7 +29,8 @@ export const createRoom = createServerFn({ method: "POST" })
         room_id: room.id, 
         color: "AZUL", 
         is_ready: false,
-        guest_id: data.guestId
+        guest_id: data.guestId,
+        secret_character_id: Math.floor(1 + Math.random() * 24)
       });
 
     if (playerError) throw playerError;
@@ -58,7 +61,8 @@ export const joinRoom = createServerFn({ method: "POST" })
         room_id: room.id, 
         color: "VERMELHO", 
         is_ready: false,
-        guest_id: data.guestId
+        guest_id: data.guestId,
+        secret_character_id: Math.floor(1 + Math.random() * 24)
       });
 
     if (playerError) throw playerError;

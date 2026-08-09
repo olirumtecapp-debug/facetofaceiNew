@@ -288,13 +288,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 1. Sync Turn
           if (newRoomData['current_turn_player_id']) {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
-            setGameState(prev => ({
-              ...prev,
-              currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn 
-                ? (prev.phase === "PLAYER_RESPONDING" || prev.pendingQuestion?.type === "AI" ? "PLAYER_RESPONDING" : "PLAYER_TURN") 
-                : (prev.pendingQuestion?.type === "PLAYER" ? "WAITING_ANSWER" : "AI_TURN")
-            }));
+            setGameState(prev => {
+              // Only update currentTurn/phase if they actually changed or if we are entering a response state
+              const nextTurn = isMyTurn ? "PLAYER" : "AI";
+              
+              // Determine if we should be in responding phase
+              const hasIncomingQuestion = newRoomData['current_question_id'] && !isMyTurn;
+              
+              return {
+                ...prev,
+                currentTurn: nextTurn,
+                phase: hasIncomingQuestion ? "PLAYER_RESPONDING" : (isMyTurn ? "PLAYER_TURN" : "AI_TURN")
+              };
+            });
           }
 
           // 2. Received Question (Player B receives)
@@ -310,12 +316,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // 3. Received Answer (Player A receives)
-          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
+          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            setGameState(prev => ({
-              ...prev,
-              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
-            }));
+            setGameState(prev => {
+              if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER") {
+                return {
+                  ...prev,
+                  pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer }
+                };
+              }
+              return prev;
+            });
           }
         }
       )
