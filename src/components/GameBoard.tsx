@@ -50,7 +50,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
           <span className="text-sm">{"<"}</span> Voltar
         </button>
         <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
-          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 sm:text-xs">
+          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs">
             {gameState.isGameOver ? "FIM DE PARTIDA" : 
              gameState.phase === "PLAYER_TURN" ? "Seu turno: Faça uma pergunta" :
              gameState.phase === "WAITING_ANSWER" ? "Aguardando resposta da IA..." :
@@ -201,7 +201,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
       {isPalpitando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-6 lg:max-w-3xl">
-            <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] sm:text-3xl">
+            <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-3xl">
               QUEM É O PERSONAGEM?
             </h2>
             <div className="mb-4 grid max-h-[50vh] grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-y-6 gap-x-4 items-start justify-items-center overflow-y-auto custom-scrollbar p-2">
@@ -241,7 +241,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md">
           <div className="text-center">
             <h2
-              className={`mb-4 text-4xl font-black italic sm:text-6xl ${gameState.winner === "PLAYER" ? "text-green-500" : "text-[#e52e2e]"}`}
+              className={`mb-4 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${gameState.winner === "PLAYER" ? "text-green-500" : "text-[#e52e2e]"}`}
             >
               {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
             </h2>
@@ -274,7 +274,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
             </div>
             
             <div className="flex flex-col items-center p-6 sm:p-8">
-              <div className="mb-6 w-full text-center text-lg font-bold italic leading-tight text-white sm:text-2xl">
+              <div className="mb-6 w-full text-center text-lg font-bold italic leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-2xl">
                 "{gameState.pendingQuestion.question.text}"
               </div>
 
