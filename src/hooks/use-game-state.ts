@@ -91,7 +91,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         supabase
           .from("rooms")
           .update({ 
-            current_turn_player_id: newTurn === "PLAYER" ? prev.guestId : prev.opponentId,
+            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as string | null,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
@@ -115,7 +115,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         .from("rooms")
         .update({ 
           current_question_id: question.id,
-          last_answer: null,
+          last_answer: null as string | null,
           last_action_timestamp: new Date().toISOString()
         })
         .eq("code", gameState.roomCode)
@@ -151,7 +151,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         .from("rooms")
         .update({ 
           last_answer: answer,
-          current_question_id: null,
+          current_question_id: null as string | null,
           last_action_timestamp: new Date().toISOString()
         })
         .eq("code", gameState.roomCode)
