@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import logoAsset from "@/assets/Logo_FTF_transparente_1.png.asset.json";
+import logoAsset from "@/assets/Logo_FTF_transparente.png.asset.json";
 import playIaAsset from "@/assets/play-ia.png.asset.json";
 import playOnlineAsset from "@/assets/play-online.png.asset.json";
 import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
@@ -181,11 +181,14 @@ function Index() {
   return (
     <>
       <Shell>
-        <img
-          src={logoAsset.url}
-          alt="FTF - Face to Face"
-          className="h-24 w-auto object-contain sm:h-40 md:h-48"
-        />
+        <div className="relative group flex items-center justify-center">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] h-[20%] bg-white/90 blur-md rounded-full -z-10" />
+          <img
+            src={logoAsset.url}
+            alt="FTF - Face to Face"
+            className="h-24 w-auto object-contain sm:h-40 md:h-48 relative z-10"
+          />
+        </div>
         <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
           {/* Botão Jogar vs IA */}
           <div className="group relative">
@@ -195,7 +198,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-48 sm:w-56 md:w-64 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playIaAsset.url} 
@@ -213,7 +216,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-48 sm:w-56 md:w-64 items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playOnlineAsset.url} 
