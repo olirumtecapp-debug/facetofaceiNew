@@ -157,6 +157,9 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
     : "";
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [playerName, setPlayerName] = useState(() => {
+    return localStorage.getItem("ftf_player_name") || "";
+  });
   const [isConnecting, setIsConnecting] = useState(false);
   const [roomData, setRoomData] = useState<any>(null);
   const [players, setPlayers] = useState<any[]>([]);
