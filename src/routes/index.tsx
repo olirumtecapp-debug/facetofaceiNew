@@ -249,11 +249,13 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
         </div>
         <div className="flex w-full max-w-lg items-center justify-between px-4">
           <button 
+            onClick={() => setShowSettings(true)}
             className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Configurações"
           >
             ⚙️
           </button>
+
           <button
             onClick={() => setShowChars(true)}
             className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-6 py-2.5 text-[10px] font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
