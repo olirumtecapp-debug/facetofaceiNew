@@ -172,6 +172,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
         pendingQuestion: undefined,
         askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        myAskedQuestions: new Set((prev as any).myAskedQuestions || []).add(question.id),
         playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
         phase: "PLAYER_DISCARDING"
       }));

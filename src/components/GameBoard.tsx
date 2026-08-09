@@ -125,7 +125,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
             <div className="w-12 shrink-0 sm:w-20">
               <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
-                Adversário
+                {gameState.gameMode === "ONLINE" ? "Adversário" : "IA"}
               </div>
               <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
                 ❓
@@ -281,7 +281,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
           <div className="w-full max-w-[90%] sm:max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
-              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : (gameState.gameMode === "ONLINE" ? "PERGUNTA DO ADVERSÁRIO" : "Pergunta da IA")}
+              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? (gameState.gameMode === "ONLINE" ? "PALPITE DO ADVERSÁRIO" : "PALPITE DA IA") : (gameState.gameMode === "ONLINE" ? "PERGUNTA DO ADVERSÁRIO" : "Pergunta da IA")}
             </div>
             
             <div className="flex flex-col items-center p-6 sm:p-8">
