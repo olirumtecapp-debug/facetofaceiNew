@@ -37,9 +37,12 @@ export const Route = createFileRoute("/")({
 });
 
 type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
-
-function Index() {
-  const [screen, setScreen] = useState<Screen>("MENU");
+ 
+ function Index() {
+   const [screen, setScreen] = useState<Screen>("MENU");
+   const [showSettings, setShowSettings] = useState(false);
+   const [showDonate, setShowDonate] = useState(false);
+   const [isFullScreen, setIsFullScreen] = useState(false);
   const [playerColor, setPlayerColor] = useState<"AZUL" | "VERMELHO">("AZUL");
   const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
   const [showChars, setShowChars] = useState(false);
