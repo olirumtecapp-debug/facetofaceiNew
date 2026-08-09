@@ -67,6 +67,7 @@ export default function Index() {
           <meta property="og:description" content="Aguardando jogadores para iniciar a partida de Face to Face Online." />
           <meta name="twitter:card" content="summary_large_image" />
         </Head>
+        <Shell>
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
             <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Sala Multiplayer</p>
