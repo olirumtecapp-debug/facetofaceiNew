@@ -91,7 +91,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         supabase
           .from("rooms")
           .update({ 
-            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as string | null,
+            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
