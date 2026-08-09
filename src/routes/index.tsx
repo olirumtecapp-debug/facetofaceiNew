@@ -294,12 +294,29 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
         {!roomData ? (
           <div className="w-full max-w-md space-y-4">
             <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
+              <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Seu Nome</p>
+              <input
+                value={playerName}
+                onChange={(e) => {
+                  setPlayerName(e.target.value);
+                  localStorage.setItem("ftf_player_name", e.target.value);
+                }}
+                placeholder="Digite seu nome..."
+                className="mb-3 w-full rounded-lg border border-white/10 bg-black/40 px-3 py-3 text-center text-lg font-bold outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
               <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
               <button
                 onClick={async () => {
+                  if (!playerName.trim()) {
+                    toast.error("Digite seu nome primeiro!");
+                    return;
+                  }
                   setIsConnecting(true);
                   try {
-                    const res = await createRoomFn({ data: { guestId } });
+                    const res = await createRoomFn({ data: { guestId, playerName: playerName.trim() } });
                     setRoomCode(res.code);
                     setRoomData(res.room);
                     toast.success("Sala criada!");
@@ -326,10 +343,14 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
               />
               <button 
                 onClick={async () => {
+                  if (!playerName.trim()) {
+                    toast.error("Digite seu nome primeiro!");
+                    return;
+                  }
                   if (!joinCode) return;
                   setIsConnecting(true);
                   try {
-                    const res = await joinRoomFn({ data: { code: joinCode, guestId } });
+                    const res = await joinRoomFn({ data: { code: joinCode, guestId, playerName: playerName.trim() } });
                     setRoomData(res.room);
                     toast.success("Entrou na sala!");
                   } catch (e) {
