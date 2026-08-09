@@ -59,21 +59,33 @@ export type Database = {
         Row: {
           code: string
           created_at: string | null
+          current_question_id: string | null
+          current_turn_player_id: string | null
           id: string
+          last_action_timestamp: string | null
+          last_answer: string | null
           status: string
           winner_id: string | null
         }
         Insert: {
           code: string
           created_at?: string | null
+          current_question_id?: string | null
+          current_turn_player_id?: string | null
           id?: string
+          last_action_timestamp?: string | null
+          last_answer?: string | null
           status: string
           winner_id?: string | null
         }
         Update: {
           code?: string
           created_at?: string | null
+          current_question_id?: string | null
+          current_turn_player_id?: string | null
           id?: string
+          last_action_timestamp?: string | null
+          last_answer?: string | null
           status?: string
           winner_id?: string | null
         }
