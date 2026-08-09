@@ -38,8 +38,8 @@ export type GameState = {
   playerKnowledge: { [questionId: string]: boolean };
   aiKnowledge: { [questionId: string]: boolean };
   gameMode: GameMode;
-  roomCode?: string;
-  opponentId?: string;
+  roomCode?: string | undefined;
+  opponentId?: string | undefined;
   guestId: string;
 };
 
