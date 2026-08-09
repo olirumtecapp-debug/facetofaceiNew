@@ -30,7 +30,7 @@ export const createRoom = createServerFn({ method: "POST" })
         color: "AZUL", 
         is_ready: false,
         guest_id: data.guestId,
-        secret_character_id: Math.floor(1 + Math.random() * 24)
+        secret_character_id: 1 + Math.floor(Math.random() * 24)
       });
 
     if (playerError) throw playerError;
@@ -62,7 +62,7 @@ export const joinRoom = createServerFn({ method: "POST" })
         color: "VERMELHO", 
         is_ready: false,
         guest_id: data.guestId,
-        secret_character_id: Math.floor(1 + Math.random() * 24)
+        secret_character_id: 1 + Math.floor(Math.random() * 24)
       });
 
     if (playerError) throw playerError;
