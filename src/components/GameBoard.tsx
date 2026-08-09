@@ -63,7 +63,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
              gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
              gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "🟠 VEZ DO ADVERSÁRIO..." : "Turno da IA: Pensando...") :
              gameState.phase === "PLAYER_RESPONDING" ? "🔵 RESPONDA AO ADVERSÁRIO" :
-             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "🟠 Adversário está analisando..." : "IA está analisando a resposta...") :
+             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "🟠 Adversário está descartando..." : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">

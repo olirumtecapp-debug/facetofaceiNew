@@ -90,10 +90,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       
       // Sync turn to database if online
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
+        // Correct logic: if PLAYER turn ends, set turn to opponent.
+        // If opponent (represented as AI in state) turn ends, set turn to PLAYER.
+        const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
+        
         supabase
           .from("rooms")
           .update({ 
-            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as any,
+            current_turn_player_id: nextPlayerId as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
@@ -278,16 +282,29 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 1. Sync Turn
           if (newRoomData['current_turn_player_id']) {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
-            setGameState(prev => ({
-              ...prev,
-              currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn 
-                ? (prev.phase === "PLAYER_RESPONDING" || prev.pendingQuestion?.type === "AI" ? "PLAYER_RESPONDING" : "PLAYER_TURN") 
-                : (prev.pendingQuestion?.type === "PLAYER" ? "WAITING_ANSWER" : "AI_TURN")
-            }));
+            setGameState(prev => {
+              // If phase is RESPONDING, we stay there until we answer.
+              // Only auto-switch phase for the active player.
+              let newPhase = prev.phase;
+              if (isMyTurn) {
+                if (prev.phase !== "PLAYER_RESPONDING" && !prev.pendingQuestion) {
+                  newPhase = "PLAYER_TURN";
+                }
+              } else {
+                if (prev.phase !== "PLAYER_RESPONDING" && !prev.pendingQuestion) {
+                  newPhase = "AI_TURN"; // Representing opponent's turn
+                }
+              }
+
+              return {
+                ...prev,
+                currentTurn: isMyTurn ? "PLAYER" : "AI",
+                phase: newPhase
+              };
+            });
           }
 
-          // 2. Received Question (Player B receives)
+          // 2. Received Question
           if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             if (question) {
@@ -299,13 +316,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }
           }
 
-          // 3. Received Answer (Player A receives)
+          // 3. Received Answer
           if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             setGameState(prev => ({
               ...prev,
               pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
             }));
+          }
+
+          // 4. Room Re-joined/Status Sync
+          if (newRoomData['status'] === 'PLAYING' && gameState.isGameOver) {
+             // Optional: handle rematch sync
           }
         }
       )
@@ -333,18 +355,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
         }
 
-        // Set initial turn if not set (creator is first turn)
+        // Fetch current room state to determine turn
         const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
-        if (room && !room['current_turn_player_id']) {
-          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode!);
-          setGameState(prev => ({ ...prev, currentTurn: "PLAYER", phase: "PLAYER_TURN" }));
-        } else if (room) {
+        if (room) {
           const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
-          setGameState(prev => ({ 
-            ...prev, 
-            currentTurn: isMyTurn ? "PLAYER" : "AI",
-            phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN"
-          }));
+          setGameState(prev => {
+            // Re-sync basic state from DB if we're just re-connecting
+            return { 
+              ...prev, 
+              currentTurn: isMyTurn ? "PLAYER" : "AI",
+              phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN"
+            };
+          });
         }
       };
       syncRoom();
