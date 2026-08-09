@@ -9,8 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicMigrateSchemaRouteImport } from './routes/api/public/migrate-schema'
 
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMigrateSchemaRoute = ApiPublicMigrateSchemaRouteImport.update({
   id: '/api/public/migrate-schema',
   path: '/api/public/migrate-schema',
@@ -18,29 +24,40 @@ const ApiPublicMigrateSchemaRoute = ApiPublicMigrateSchemaRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
   '/api/public/migrate-schema': typeof ApiPublicMigrateSchemaRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/api/public/migrate-schema': typeof ApiPublicMigrateSchemaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/api/public/migrate-schema': typeof ApiPublicMigrateSchemaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/api/public/migrate-schema'
+  fullPaths: '/' | '/api/public/migrate-schema'
   fileRoutesByTo: FileRoutesByTo
-  to: '/api/public/migrate-schema'
-  id: '__root__' | '/api/public/migrate-schema'
+  to: '/' | '/api/public/migrate-schema'
+  id: '__root__' | '/' | '/api/public/migrate-schema'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   ApiPublicMigrateSchemaRoute: typeof ApiPublicMigrateSchemaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/migrate-schema': {
       id: '/api/public/migrate-schema'
       path: '/api/public/migrate-schema'
@@ -52,6 +69,7 @@ declare module '@tanstack/react-router' {
 }
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   ApiPublicMigrateSchemaRoute: ApiPublicMigrateSchemaRoute,
 }
 export const routeTree = rootRouteImport
