@@ -271,11 +271,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
         (payload) => {
-          const newRoomData = payload.new;
+          const newRoomData = payload.new as any;
           
           // 1. Sync Turn
-          if (newRoomData.current_turn_player_id) {
-            const isMyTurn = newRoomData.current_turn_player_id === gameState.guestId;
+          if (newRoomData['current_turn_player_id']) {
+            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => ({
               ...prev,
               currentTurn: isMyTurn ? "PLAYER" : "AI",
@@ -284,20 +284,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // 2. Received Question (Player B receives)
-          if (newRoomData.current_question_id && newRoomData.current_turn_player_id !== gameState.guestId) {
-            const question = QUESTIONS.find(q => q.id === newRoomData.current_question_id);
+          if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
+            const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             if (question) {
               setGameState(prev => ({
                 ...prev,
                 phase: "PLAYER_RESPONDING",
-                pendingQuestion: { question, type: "AI" } // type AI means opponent for UI
+                pendingQuestion: { question, type: "AI" }
               }));
             }
           }
 
           // 3. Received Answer (Player A receives)
-          if (newRoomData.last_answer && newRoomData.current_turn_player_id === gameState.guestId && gameState.pendingQuestion) {
-            const answer = newRoomData.last_answer as "SIM" | "NÃO";
+          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
+            const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             setGameState(prev => ({
               ...prev,
               pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
