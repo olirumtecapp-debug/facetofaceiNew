@@ -367,7 +367,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                     Clique nos três pontos do navegador e selecione <span className="text-yellow-400">"Instalar Aplicativo"</span> ou <span className="text-yellow-400">"Adicionar à tela de início"</span>.
                   </p>
                   <p className="text-[10px] text-gray-500 italic">
-                    Endereço para PC/Notebook: {typeof window !== 'undefined' ? window.location.origin : 'este site'}
+                    Endereço para PC/Notebook: https://facetofacei.lovable.app
                   </p>
                 </div>
               </div>
