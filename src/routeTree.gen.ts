@@ -9,50 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicMigrateSchemaRouteImport } from './routes/api/public/migrate-schema'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ApiPublicMigrateSchemaRoute = ApiPublicMigrateSchemaRouteImport.update({
+  id: '/api/public/migrate-schema',
+  path: '/api/public/migrate-schema',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/api/public/migrate-schema': typeof ApiPublicMigrateSchemaRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/api/public/migrate-schema': typeof ApiPublicMigrateSchemaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/api/public/migrate-schema': typeof ApiPublicMigrateSchemaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/api/public/migrate-schema'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/api/public/migrate-schema'
+  id: '__root__' | '/api/public/migrate-schema'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  ApiPublicMigrateSchemaRoute: typeof ApiPublicMigrateSchemaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/api/public/migrate-schema': {
+      id: '/api/public/migrate-schema'
+      path: '/api/public/migrate-schema'
+      fullPath: '/api/public/migrate-schema'
+      preLoaderRoute: typeof ApiPublicMigrateSchemaRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  ApiPublicMigrateSchemaRoute: ApiPublicMigrateSchemaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
