@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
 import { Question, QUESTIONS } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type GamePhase = 
   | "PLAYER_TURN"        // Jogador pode perguntar
@@ -12,6 +14,8 @@ export type GamePhase =
   | "PLAYER_RESPONDING"  // Jogador responde
   | "AI_DISCARDING"      // IA descarta seus personagens
   | "AI_PASS_TURN";      // IA encerra seu turno
+
+export type GameMode = "IA" | "ONLINE";
 
 export type GameState = {
   playerColor: "AZUL" | "VERMELHO";
@@ -33,9 +37,22 @@ export type GameState = {
   aiAskedQuestions: Set<string>;
   playerKnowledge: { [questionId: string]: boolean };
   aiKnowledge: { [questionId: string]: boolean };
+  gameMode: GameMode;
+  roomCode?: string;
+  opponentId?: string;
+  guestId: string;
 };
 
-export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
+export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
+  const guestId = useMemo(() => {
+    let id = localStorage.getItem("ftf_guest_id");
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("ftf_guest_id", id);
+    }
+    return id;
+  }, []);
+
   const [gameState, setGameState] = useState<GameState>(() => {
     const playerSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
     const aiSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
@@ -58,6 +75,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
       aiKnowledge: {},
+      gameMode: initialRoomCode ? "ONLINE" : "IA",
+      roomCode: initialRoomCode,
+      guestId
     };
   });
 
