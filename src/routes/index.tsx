@@ -138,26 +138,58 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
         <div className="w-full max-w-md space-y-4">
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
             <p className="mb-3 text-sm font-bold uppercase tracking-widest text-gray-400">Criar sala (2 jogadores)</p>
-            <button
-              onClick={async () => {
-                setIsConnecting(true);
-                try {
-                  const res = await createRoomFn();
-                  setRoomCode(res.code);
-                  toast.success("Sala criada!");
-                } catch (e) {
-                  toast.error("Erro ao criar sala.");
-                } finally {
-                  setIsConnecting(false);
-                }
-              }}
-              disabled={isConnecting}
-              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
-            >
-              {isConnecting ? "Criando..." : "Gerar código"}
-            </button>
-            {roomCode && (
-              <p className="mt-3 text-center text-2xl font-black tracking-widest text-yellow-400">{roomCode}</p>
+            {!roomCode ? (
+              <button
+                onClick={async () => {
+                  setIsConnecting(true);
+                  try {
+                    const res = await createRoomFn();
+                    setRoomCode(res.code);
+                    toast.success("Sala criada!");
+                  } catch (e) {
+                    toast.error("Erro ao criar sala.");
+                  } finally {
+                    setIsConnecting(false);
+                  }
+                }}
+                disabled={isConnecting}
+                className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 hover:shadow-[0_0_15px_rgba(30,98,236,0.5)] active:scale-95 disabled:opacity-50"
+              >
+                {isConnecting ? "Criando..." : "Gerar código"}
+              </button>
+            ) : (
+              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500/70">Código da Sala</p>
+                  <div className="flex w-full items-center gap-2">
+                    <div className="flex-1 rounded-lg border-2 border-dashed border-yellow-400/30 bg-black/40 py-3 text-center text-3xl font-black tracking-[0.2em] text-yellow-400">
+                      {roomCode}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(roomCode);
+                        toast.success("Código copiado!");
+                      }}
+                      className="rounded-lg bg-yellow-400 p-3 text-black transition-all hover:scale-105 active:scale-95"
+                      title="Copiar Código"
+                    >
+                      📋
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center gap-3 rounded-lg bg-blue-500/10 p-4 border border-blue-500/20">
+                  <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
+                  <p className="text-xs font-bold text-blue-400 animate-pulse uppercase tracking-tighter">Aguardando adversário entrar...</p>
+                </div>
+
+                <button
+                  onClick={() => setScreen("GAME")}
+                  className="w-full rounded-lg bg-green-600 py-3 font-black uppercase tracking-widest border-2 border-green-400/50 transition-all hover:brightness-125 active:scale-95"
+                >
+                  Entrar na Sala agora
+                </button>
+              </div>
             )}
           </div>
           <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">

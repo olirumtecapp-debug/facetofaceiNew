@@ -83,6 +83,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   const nextTurn = useCallback(() => {
     setGameState((prev) => {
+      if (prev.isGameOver) return prev;
+      
       const isAITurnEnding = prev.currentTurn === "AI";
       const newTurn = isAITurnEnding ? "PLAYER" : "AI";
       
@@ -279,7 +281,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             setGameState(prev => ({
               ...prev,
               currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn ? (prev.phase === "PLAYER_RESPONDING" ? "PLAYER_RESPONDING" : "PLAYER_TURN") : "AI_TURN"
+              phase: isMyTurn 
+                ? (prev.phase === "PLAYER_RESPONDING" || prev.pendingQuestion?.type === "AI" ? "PLAYER_RESPONDING" : "PLAYER_TURN") 
+                : (prev.pendingQuestion?.type === "PLAYER" ? "WAITING_ANSWER" : "AI_TURN")
             }));
           }
 
@@ -329,10 +333,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
         }
 
-        // Set initial turn if not set
+        // Set initial turn if not set (creator is first turn)
         const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
         if (room && !room['current_turn_player_id']) {
           await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode!);
+          setGameState(prev => ({ ...prev, currentTurn: "PLAYER", phase: "PLAYER_TURN" }));
+        } else if (room) {
+          const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
+          setGameState(prev => ({ 
+            ...prev, 
+            currentTurn: isMyTurn ? "PLAYER" : "AI",
+            phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN"
+          }));
         }
       };
       syncRoom();
@@ -398,5 +410,5 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     return undefined;
   }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn, gameState.gameMode]);
 
-  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId };
 };
