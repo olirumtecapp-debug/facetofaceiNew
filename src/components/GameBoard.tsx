@@ -54,11 +54,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           <div className="text-[10px] font-black uppercase tracking-[0.15em] text-yellow-400 drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs">
             {gameState.isGameOver ? "FIM DE PARTIDA" : 
              gameState.phase === "PLAYER_TURN" ? "Seu turno: Faça uma pergunta" :
-             gameState.phase === "WAITING_ANSWER" ? "Aguardando resposta da IA..." :
+             gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? "Aguardando resposta do adversário..." : "Aguardando resposta da IA...") :
              gameState.phase === "PLAYER_DISCARDING" ? "Seu turno: Descarte e passe a vez" :
-             gameState.phase === "AI_TURN" ? "Turno da IA: Pensando..." :
-             gameState.phase === "PLAYER_RESPONDING" ? "Responda a IA" :
-             gameState.phase === "AI_DISCARDING" ? "IA está analisando a resposta..." :
+             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? "Turno do adversário..." : "Turno da IA: Pensando...") :
+             gameState.phase === "PLAYER_RESPONDING" ? "Responda seu adversário" :
+             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? "Adversário está analisando..." : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
@@ -276,7 +276,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
           <div className="w-full max-w-[90%] sm:max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>
-              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : "Pergunta da IA"}
+              {gameState.pendingQuestion.type === "PLAYER" ? "Sua Pergunta" : gameState.pendingQuestion.type === "AI_PALPITE" ? "PALPITE DA IA" : (gameState.gameMode === "ONLINE" ? "PERGUNTA DO ADVERSÁRIO" : "Pergunta da IA")}
             </div>
             
             <div className="flex flex-col items-center p-6 sm:p-8">
@@ -311,7 +311,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                   ) : (
                     <>
                       <div className="flex flex-col items-center gap-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Personagem da IA</div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                          {gameState.gameMode === "ONLINE" ? "Personagem do Adversário" : "Personagem da IA"}
+                        </div>
                         <div className="w-24">
                           <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-black/40 text-4xl">
                             ❓
@@ -321,14 +323,16 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       
                       <div className="flex w-full flex-col gap-4">
                         <div className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 animate-pulse sm:text-sm">
-                          IA está respondendo...
+                          {gameState.gameMode === "ONLINE" ? "Aguardando resposta..." : "IA está respondendo..."}
                         </div>
-                        <button
-                          onClick={revealAIAnswer}
-                          className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-base font-black text-black transition-all hover:scale-[1.02] active:scale-95 sm:py-4 sm:text-lg"
-                        >
-                          VER RESPOSTA
-                        </button>
+                        {gameState.gameMode !== "ONLINE" && (
+                          <button
+                            onClick={revealAIAnswer}
+                            className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-white px-6 py-3 text-base font-black text-black transition-all hover:scale-[1.02] active:scale-95 sm:py-4 sm:text-lg"
+                          >
+                            VER RESPOSTA
+                          </button>
+                        )}
                       </div>
                     </>
                   )}
@@ -364,7 +368,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             
             <div className="bg-white/5 p-4 text-center">
               <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
-                {gameState.pendingQuestion.type === "PLAYER" ? "A IA vai responder com base no personagem dela" : "Responda honestamente sobre o seu personagem"}
+                {gameState.pendingQuestion.type === "PLAYER" 
+                  ? (gameState.gameMode === "ONLINE" ? "Seu adversário responderá em tempo real" : "A IA vai responder com base no personagem dela") 
+                  : "Responda honestamente sobre o seu personagem"}
               </p>
             </div>
           </div>

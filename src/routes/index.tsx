@@ -74,7 +74,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
 
   if (screen === "GAME") {
-    return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} />;
+    return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} initialRoomCode={roomCode || joinCode} />;
   }
 
   if (screen === "CHOOSE_DIFFICULTY") {
