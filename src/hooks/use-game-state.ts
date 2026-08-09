@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
 import { Question, QUESTIONS } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type GamePhase = 
   | "PLAYER_TURN"        // Jogador pode perguntar
@@ -12,6 +14,8 @@ export type GamePhase =
   | "PLAYER_RESPONDING"  // Jogador responde
   | "AI_DISCARDING"      // IA descarta seus personagens
   | "AI_PASS_TURN";      // IA encerra seu turno
+
+export type GameMode = "IA" | "ONLINE";
 
 export type GameState = {
   playerColor: "AZUL" | "VERMELHO";
@@ -33,9 +37,22 @@ export type GameState = {
   aiAskedQuestions: Set<string>;
   playerKnowledge: { [questionId: string]: boolean };
   aiKnowledge: { [questionId: string]: boolean };
+  gameMode: GameMode;
+  roomCode?: string | undefined;
+  opponentId?: string | undefined;
+  guestId: string;
 };
 
-export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty) => {
+export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
+  const guestId = useMemo(() => {
+    let id = localStorage.getItem("ftf_guest_id");
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("ftf_guest_id", id);
+    }
+    return id;
+  }, []);
+
   const [gameState, setGameState] = useState<GameState>(() => {
     const playerSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
     const aiSecret = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!;
@@ -58,15 +75,32 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
       aiKnowledge: {},
+      gameMode: initialRoomCode ? "ONLINE" : "IA",
+      roomCode: initialRoomCode || undefined,
+      guestId
     };
   });
 
   const nextTurn = useCallback(() => {
     setGameState((prev) => {
       const isAITurnEnding = prev.currentTurn === "AI";
+      const newTurn = isAITurnEnding ? "PLAYER" : "AI";
+      
+      // Sync turn to database if online
+      if (prev.gameMode === "ONLINE" && prev.roomCode) {
+        supabase
+          .from("rooms")
+          .update({ 
+            current_turn_player_id: (newTurn === "PLAYER" ? prev.guestId : (prev.opponentId || null)) as any,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", prev.roomCode)
+          .then();
+      }
+
       return {
         ...prev,
-        currentTurn: isAITurnEnding ? "PLAYER" : "AI",
+        currentTurn: newTurn,
         phase: isAITurnEnding ? "PLAYER_TURN" : "AI_TURN",
         turnCount: isAITurnEnding ? prev.turnCount + 1 : prev.turnCount,
       };
@@ -76,6 +110,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   const handlePlayerQuestion = (question: Question) => {
     if (gameState.phase !== "PLAYER_TURN" || gameState.isGameOver || gameState.askedQuestions.has(question.id)) return;
 
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+      supabase
+        .from("rooms")
+        .update({ 
+          current_question_id: question.id,
+          last_answer: null as any,
+          last_action_timestamp: new Date().toISOString()
+        })
+        .eq("code", gameState.roomCode)
+        .then(({ error }) => {
+          if (error) toast.error("Erro ao enviar pergunta.");
+        });
+    }
+
     setGameState((prev) => ({
       ...prev,
       phase: "WAITING_ANSWER",
@@ -84,6 +132,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   const revealAIAnswer = () => {
+    if (gameState.gameMode === "ONLINE") return;
     if (!gameState.pendingQuestion || gameState.pendingQuestion.type !== "PLAYER") return;
     const answer = getAIResponse(gameState.aiSecret, gameState.pendingQuestion.question) ? "SIM" : "NÃO";
     setGameState(prev => ({
@@ -96,6 +145,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (!gameState.pendingQuestion) return;
 
     const { question, type } = gameState.pendingQuestion;
+
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode && type !== "PLAYER") {
+      supabase
+        .from("rooms")
+        .update({ 
+          last_answer: answer,
+          current_question_id: null as any,
+          last_action_timestamp: new Date().toISOString()
+        })
+        .eq("code", gameState.roomCode)
+        .then();
+    }
 
     if (type === "PLAYER") {
       setGameState((prev) => ({
@@ -120,15 +181,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         pendingQuestion: undefined,
       }));
     } else {
-      // AI Question being answered by player
+      // AI or Opponent Question being answered by player
       setGameState((prev) => {
-        const newRemaining = prev.aiRemainingChars.filter((c) => {
-          const matches = question.check(c);
-          return answer === "SIM" ? matches : !matches;
-        });
         return {
           ...prev,
-          aiRemainingChars: newRemaining,
           history: [...prev.history, { type: "AI", text: question.text, answer }],
           pendingQuestion: undefined,
           askedQuestions: new Set(prev.askedQuestions).add(question.id),
@@ -205,9 +261,87 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
+  // Realtime Sync Effect
+  useEffect(() => {
+    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
+
+    const channel = supabase
+      .channel(`room:${gameState.roomCode}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
+        (payload) => {
+          const newRoomData = payload.new as any;
+          
+          // 1. Sync Turn
+          if (newRoomData['current_turn_player_id']) {
+            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
+            setGameState(prev => ({
+              ...prev,
+              currentTurn: isMyTurn ? "PLAYER" : "AI",
+              phase: isMyTurn ? (prev.phase === "PLAYER_RESPONDING" ? "PLAYER_RESPONDING" : "PLAYER_TURN") : "AI_TURN"
+            }));
+          }
+
+          // 2. Received Question (Player B receives)
+          if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
+            const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
+            if (question) {
+              setGameState(prev => ({
+                ...prev,
+                phase: "PLAYER_RESPONDING",
+                pendingQuestion: { question, type: "AI" }
+              }));
+            }
+          }
+
+          // 3. Received Answer (Player A receives)
+          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId && gameState.pendingQuestion) {
+            const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
+            setGameState(prev => ({
+              ...prev,
+              pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId, gameState.pendingQuestion]);
+
+  // Initial Online Sync Effect
+  useEffect(() => {
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+      const syncRoom = async () => {
+        const { data: rooms } = await supabase.from("rooms").select("id").eq("code", gameState.roomCode!).single();
+        if (!rooms) return;
+
+        const { data: players } = await supabase
+          .from("room_players")
+          .select("guest_id")
+          .eq("room_id", rooms.id);
+        
+        const opponent = players?.find(p => p.guest_id !== gameState.guestId);
+        if (opponent) {
+          setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
+        }
+
+        // Set initial turn if not set
+        const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
+        if (room && !room['current_turn_player_id']) {
+          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode!);
+        }
+      };
+      syncRoom();
+    }
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
+
   // AI Logic Effect
   useEffect(() => {
-    if (gameState.isGameOver) return undefined;
+    if (gameState.isGameOver || gameState.gameMode === "ONLINE") return undefined;
 
     // Phase: AI_TURN -> IA makes a question
     if (gameState.phase === "AI_TURN" && !gameState.pendingQuestion) {
@@ -262,7 +396,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }
 
     return undefined;
-  }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn]);
+  }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn, gameState.gameMode]);
 
   return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer };
 };
