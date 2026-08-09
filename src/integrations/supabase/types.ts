@@ -20,6 +20,7 @@ export type Database = {
           guest_id: string
           is_ready: boolean | null
           last_active: string | null
+          name: string | null
           room_id: string
           score: number | null
           secret_character_id: number | null
@@ -30,6 +31,7 @@ export type Database = {
           guest_id?: string
           is_ready?: boolean | null
           last_active?: string | null
+          name?: string | null
           room_id: string
           score?: number | null
           secret_character_id?: number | null
@@ -40,6 +42,7 @@ export type Database = {
           guest_id?: string
           is_ready?: boolean | null
           last_active?: string | null
+          name?: string | null
           room_id?: string
           score?: number | null
           secret_character_id?: number | null
