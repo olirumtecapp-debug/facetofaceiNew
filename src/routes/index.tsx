@@ -198,12 +198,12 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-48 sm:w-56 md:w-64 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-44 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-52 md:h-32 md:w-60"
             >
               <img 
                 src={playIaAsset.url} 
                 alt="Jogar vs IA" 
-                className="h-full w-auto object-contain contrast-125 brightness-110" 
+                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
               />
             </button>
           </div>
