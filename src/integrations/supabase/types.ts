@@ -61,6 +61,7 @@ export type Database = {
           created_at: string | null
           current_question_id: string | null
           current_turn_player_id: string | null
+          host_id: string | null
           id: string
           last_action_timestamp: string | null
           last_answer: string | null
@@ -72,6 +73,7 @@ export type Database = {
           created_at?: string | null
           current_question_id?: string | null
           current_turn_player_id?: string | null
+          host_id?: string | null
           id?: string
           last_action_timestamp?: string | null
           last_answer?: string | null
@@ -83,6 +85,7 @@ export type Database = {
           created_at?: string | null
           current_question_id?: string | null
           current_turn_player_id?: string | null
+          host_id?: string | null
           id?: string
           last_action_timestamp?: string | null
           last_answer?: string | null
