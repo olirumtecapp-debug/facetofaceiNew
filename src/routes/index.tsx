@@ -94,8 +94,8 @@ function Index() {
               className="group flex-1 rounded-2xl border-4 p-8 transition-all hover:scale-105 active:scale-95"
               style={{
                 borderColor: c === "AZUL" ? "#1e62ec" : "#e52e2e",
-                background: c === "AZUL" ? "rgba(30,98,236,0.12)" : "rgba(229,46,46,0.12)",
-                boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.2)" : "0 0 20px rgba(229,46,46,0.2)"
+                background: c === "AZUL" ? "rgba(30,98,236,0.4)" : "rgba(229,46,46,0.4)",
+                boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.4)" : "0 0 20px rgba(229,46,46,0.4)"
               }}
             >
               <h3 className="text-2xl font-black italic tracking-tighter" style={{ color: c === "AZUL" ? "#1e62ec" : "#e52e2e" }}>
@@ -195,7 +195,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-transparent p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playIaAsset.url} 
@@ -213,7 +213,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-transparent p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playOnlineAsset.url} 
@@ -258,8 +258,8 @@ function Index() {
                     onClick={() => setSelectedCharId(c.id)}
                     className="group relative flex flex-col items-center transition-all hover:z-10"
                   >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-transparent p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
-                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-transparent">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-gray-200 p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
+                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-gray-200">
                         <img
                           src={CARD_IMAGES.AZUL[c.id - 1]!}
                           alt={c.nome}
