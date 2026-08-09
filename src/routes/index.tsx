@@ -94,11 +94,11 @@ function Index() {
               className="group flex-1 rounded-2xl border-4 p-8 transition-all hover:scale-105 active:scale-95"
               style={{
                 borderColor: c === "AZUL" ? "#1e62ec" : "#e52e2e",
-                background: c === "AZUL" ? "rgba(30,98,236,0.4)" : "rgba(229,46,46,0.4)",
+                background: c === "AZUL" ? "rgba(30,98,236,0.5)" : "rgba(229,46,46,0.5)",
                 boxShadow: c === "AZUL" ? "0 0 20px rgba(30,98,236,0.4)" : "0 0 20px rgba(229,46,46,0.4)"
               }}
             >
-              <h3 className="text-2xl font-black italic tracking-tighter" style={{ color: c === "AZUL" ? "#1e62ec" : "#e52e2e" }}>
+              <h3 className="text-2xl font-black italic tracking-tighter" style={{ color: c === "AZUL" ? "#60a5fa" : "#f87171" }}>
                 Tabuleiro {c.toLowerCase()}
               </h3>
             </button>
