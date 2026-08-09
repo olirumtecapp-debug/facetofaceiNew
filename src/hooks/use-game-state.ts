@@ -76,7 +76,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       playerKnowledge: {},
       aiKnowledge: {},
       gameMode: initialRoomCode ? "ONLINE" : "IA",
-      roomCode: initialRoomCode,
+      roomCode: initialRoomCode || undefined,
       guestId
     };
   });
