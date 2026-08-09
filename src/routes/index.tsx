@@ -53,6 +53,25 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   const createRoomFn = useServerFn(createRoom);
   const joinRoomFn = useServerFn(joinRoom);
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullScreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullScreen(false);
+      }
+    }
+  };
+
+  const copyPix = () => {
+    const pixCode = "00020101021126580014br.gov.bcb.pix0136ccc2fd5a-cc51-4626-ac9b-8010315042f55204000053039865802BR5924MURILO FERREIRA DA SILVA6009SAO PAULO622905251KYF6GJBG4K0TVYH7QKHP9TSD63042519";
+    navigator.clipboard.writeText(pixCode);
+    toast.success("Código PIX copiado! Banco C6 Favorecido Murilo Ferreira da Silva");
+  };
+
+
 
   if (screen === "GAME") {
     return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} />;
