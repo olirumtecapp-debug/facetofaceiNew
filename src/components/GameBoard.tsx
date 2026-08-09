@@ -28,7 +28,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack }: GameBoardProps) =
   const oppColor = playerColor === "AZUL" ? "VERMELHO" : "AZUL";
 
   return (
-    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-gradient-to-b from-[#0d1117] via-[#0d1117] to-[#1e62ec]/20 text-white">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-main-gradient text-white">
       {/* Game Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect for game screen */}

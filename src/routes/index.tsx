@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import logoAsset from "@/assets/logo.png.asset.json";
+import logoAsset from "@/assets/Logo_FTF_transparente.png.asset.json";
 import playIaAsset from "@/assets/play-ia.png.asset.json";
 import playOnlineAsset from "@/assets/play-online.png.asset.json";
 import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
@@ -195,7 +195,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-transparent p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playIaAsset.url} 
@@ -213,7 +213,7 @@ function Index() {
             {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-[#e0e0e0] p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
+              className="relative flex h-24 w-fit items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-transparent p-0.5 transition-all hover:scale-105 active:scale-95 sm:h-28 md:h-32"
             >
               <img 
                 src={playOnlineAsset.url} 
@@ -258,8 +258,8 @@ function Index() {
                     onClick={() => setSelectedCharId(c.id)}
                     className="group relative flex flex-col items-center transition-all hover:z-10"
                   >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-[#c0c0c0] p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
-                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-[#c0c0c0]">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border-2 border-[#d4af37] bg-transparent p-1 shadow-lg transition-all group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] group-active:scale-95">
+                      <div className="flex h-full w-full items-center justify-center overflow-hidden bg-transparent">
                         <img
                           src={CARD_IMAGES.AZUL[c.id - 1]!}
                           alt={c.nome}
@@ -320,7 +320,7 @@ function Index() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-gradient-to-b from-[#0b0e14] via-[#0b0e14] to-[#1e62ec]/30 p-4 text-center text-white sm:gap-10">
+    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient p-4 text-center text-white sm:gap-10">
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect */}

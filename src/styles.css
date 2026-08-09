@@ -184,3 +184,20 @@
 @utility animate-pulse-glow {
   animation: pulse-glow 4s ease-in-out infinite;
 }
+
+@utility bg-main-gradient {
+  background:
+    repeating-linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.07) 0px,
+      rgba(255, 255, 255, 0.07) 6px,
+      transparent 6px,
+      transparent 48px
+    ),
+    linear-gradient(
+      to bottom,
+      #0a142d 0%,
+      #78bee2 100%
+    );
+  background-attachment: fixed;
+}
