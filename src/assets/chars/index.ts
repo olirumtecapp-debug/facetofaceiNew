@@ -1,5 +1,6 @@
 // Auto-generated: individual character card images
 import azul1 from "./card-azul-1.png.asset.json";
+import azul2 from "./card-azul-2.png.asset.json";
 import azul3 from "./azul_BERNARDO.png.asset.json";
 import azul4 from "./azul_CAIO.png.asset.json";
 import azul5 from "./card-azul-5.png.asset.json";
@@ -11,7 +12,11 @@ import azul10 from "./azul_ARTHUR.png.asset.json";
 import azul11 from "./azul_DAVI.png.asset.json";
 import azul12 from "./azul_CAMILA.png.asset.json";
 import azul13 from "./azul_BEATRIZ.png.asset.json";
-...
+import azul14 from "./card-azul-14.png.asset.json";
+import azul15 from "./card-azul-15.png.asset.json";
+import azul16 from "./card-azul-16.png.asset.json";
+import azul17 from "./card-azul-17.png.asset.json";
+import azul18 from "./card-azul-18.png.asset.json";
 import azul19 from "./azul_HEITOR.png.asset.json";
 import azul20 from "./card-azul-20.png.asset.json";
 import azul21 from "./azul_ENZO.png.asset.json";
