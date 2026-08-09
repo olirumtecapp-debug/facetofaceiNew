@@ -351,18 +351,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           setGameState(prev => ({ ...prev, opponentId: opponent.guest_id }));
         }
 
-        // Set initial turn if not set (creator is first turn)
+        // Fetch current room state to determine turn
         const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
-        if (room && !room['current_turn_player_id']) {
-          await supabase.from("rooms").update({ current_turn_player_id: gameState.guestId }).eq("code", gameState.roomCode!);
-          setGameState(prev => ({ ...prev, currentTurn: "PLAYER", phase: "PLAYER_TURN" }));
-        } else if (room) {
+        if (room) {
           const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
-          setGameState(prev => ({ 
-            ...prev, 
-            currentTurn: isMyTurn ? "PLAYER" : "AI",
-            phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN"
-          }));
+          setGameState(prev => {
+            // Re-sync basic state from DB if we're just re-connecting
+            return { 
+              ...prev, 
+              currentTurn: isMyTurn ? "PLAYER" : "AI",
+              phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN"
+            };
+          });
         }
       };
       syncRoom();
