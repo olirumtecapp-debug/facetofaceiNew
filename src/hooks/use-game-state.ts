@@ -309,10 +309,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         setGameState(prev => ({
           ...prev,
           isGameOver: true,
-          winner: isCorrect ? "WINNER" : "LOSER"
+          winner: isCorrect ? "WINNER" : "LOSER",
+          phase: "PLAYER_TURN",
+          playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
+          aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
         }));
 
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        await declareWinner({ 
+          data: { 
+            roomId: gameState.roomId || "", 
+            winnerId 
+          } 
+        });
         console.log("[FTF FINAL GUESS SERVER RESPONSE SENT]");
       } catch (error) {
         console.error("Erro ao declarar vencedor no palpite final:", error);
@@ -397,17 +405,52 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             const didIWin = winnerId === gameState.guestId;
             const matchWinnerId = newRoomData['match_winner_id'];
             
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: true,
-              winner: didIWin ? "WINNER" : "LOSER",
-              matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-              phase: "PLAYER_TURN",
-              pendingQuestion: undefined,
-              lastActionTime: Date.now()
-            }));
+            // Get secret character of the winner (which was the secret of the loser)
+            // But we need the SECRET of the OPPONENT to show to the player.
+            // If I am the winner, the secret I need to see is the loser's secret.
+            // If I am the loser, the secret I need to see is my own secret? 
+            // Actually, usually you want to see the secret you were trying to guess.
+            
+            setGameState(prev => {
+              const winnerId = newRoomData['winner_id'];
+              const didIWin = winnerId === gameState.guestId;
+              
+              // Only update if not already set or if data changed to avoid loops
+              if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) {
+                return prev;
+              }
+              
+              return {
+                ...prev,
+                isGameOver: true,
+                winner: didIWin ? "WINNER" : "LOSER",
+                matchWinnerId,
+                playerScore: didIWin ? prev.playerScore + 1 : prev.playerScore, // Optimistic update for syncing
+                aiScore: !didIWin ? prev.aiScore + 1 : prev.aiScore,
+                rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+                rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+                phase: "PLAYER_TURN",
+                pendingQuestion: undefined,
+                lastActionTime: Date.now()
+              };
+            });
+          }
+
+          // Fetch opponent secret character on game over to ensure it's accurate
+          if (newRoomData['status'] === "FINISHED") {
+             supabase.from('room_players')
+              .select('secret_character_id')
+              .eq('room_id', gameState.roomId!)
+              .neq('guest_id', gameState.guestId)
+              .single()
+              .then(({data}) => {
+                if (data?.secret_character_id) {
+                  const secretChar = CHARACTERS.find(c => c.id === data.secret_character_id);
+                  if (secretChar) {
+                    setGameState(prev => ({ ...prev, aiSecret: secretChar }));
+                  }
+                }
+              });
           }
 
           // Handle Rematch State Changes
@@ -420,23 +463,42 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // Handle New Round Start (Reset)
-          if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
+          if (newRoomData['status'] === "PLAYING" && (payload.old as any)?.['status'] === "FINISHED") {
             console.log("[FTF NEW ROUND STARTING]");
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: false,
-              winner: undefined,
-              rematchStatus: 'idle',
-              rematchRequestedBy: null,
-              askedQuestions: new Set(),
-              myAskedQuestions: new Set(),
-              opponentAskedQuestions: new Set(),
-              turnCount: 1,
-              history: [],
-              pendingQuestion: undefined,
-              playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
-              lastActionTime: Date.now()
-            }));
+            
+            // Fetch fresh scores from database to ensure sync
+            supabase.from('room_players')
+              .select('guest_id, score, secret_character_id')
+              .eq('room_id', gameState.roomId!)
+              .then(({data}) => {
+                if (data) {
+                  const me = data.find(p => p.guest_id === gameState.guestId);
+                  const opponent = data.find(p => p.guest_id !== gameState.guestId);
+                  
+                  const secretChar = CHARACTERS.find(c => c.id === opponent?.secret_character_id);
+                  const mySecret = CHARACTERS.find(c => c.id === me?.secret_character_id);
+
+                  setGameState(prev => ({
+                    ...prev,
+                    isGameOver: false,
+                    winner: undefined,
+                    playerScore: me?.score || 0,
+                    aiScore: opponent?.score || 0,
+                    playerSecret: mySecret || prev.playerSecret,
+                    aiSecret: secretChar || prev.aiSecret,
+                    rematchStatus: 'idle',
+                    rematchRequestedBy: null,
+                    askedQuestions: new Set(),
+                    myAskedQuestions: new Set(),
+                    opponentAskedQuestions: new Set(),
+                    turnCount: 1,
+                    history: [],
+                    pendingQuestion: undefined,
+                    playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+                    lastActionTime: Date.now()
+                  }));
+                }
+              });
           }
 
           // Handle Turn Changes
