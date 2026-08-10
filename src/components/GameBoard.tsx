@@ -304,10 +304,15 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </p>
 
             {gameState.gameMode === "ONLINE" && !gameState.matchWinnerId && (
-              <div className="mb-8">
+              <div className="mb-8 flex flex-col items-center gap-4">
                 {gameState.winner === "LOSER" ? (
                   gameState.rematchStatus === "requested" ? (
-                    <p className="animate-pulse font-bold text-yellow-400">Aguardando resposta de {gameState.opponentName}...</p>
+                    <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 w-full">
+                      <p className="animate-pulse font-black text-yellow-400 uppercase tracking-widest">
+                        Pedido de revanche enviado...
+                      </p>
+                      <p className="text-xs text-yellow-400/70 mt-1">Aguardando resposta de {gameState.opponentName}</p>
+                    </div>
                   ) : (
                     <button
                       onClick={async () => {
@@ -321,7 +326,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                   )
                 ) : (
                   gameState.rematchStatus === "requested" ? (
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm w-full">
                       <p className="mb-4 text-lg font-black uppercase tracking-widest text-yellow-400">
                         {gameState.opponentName} QUER UMA REVANCHE. VOCÊ ACEITA?
                       </p>
