@@ -395,69 +395,54 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   return (
     <>
       <Shell>
-        {/* Logo Container com efeito de profundidade */}
-        <div className="relative group flex items-center justify-center mb-4">
-          <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full animate-pulse" />
+        <div className="relative group flex items-center justify-center">
           <img
             src={logoAsset.url}
             alt="FTF - Face to Face"
-            className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]"
+            className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10"
           />
         </div>
-
-        {/* Tabuleiro Principal / Estações de Jogo */}
-        <div className="plastic-board relative flex w-full max-w-4xl flex-col items-center justify-center gap-8 rounded-[2rem] p-8 sm:flex-row sm:gap-12 md:p-12">
-          
-          {/* Divisor Central Estilizado */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden h-[70%] w-1 rounded-full bg-white/5 sm:block" />
-
-          {/* Estação VS IA (Azul) */}
-          <div className="group relative flex flex-col items-center gap-4">
-            <div className="absolute -inset-4 rounded-3xl bg-blue-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
+        <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
+          {/* Botão Jogar vs IA */}
+          <div className="group relative">
+            {/* Brilho externo azul */}
+            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
             
+            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="bevel-toy-blue relative flex h-32 w-44 items-center justify-center overflow-hidden rounded-2xl p-2 transition-all hover:-translate-y-1 active:translate-y-1 sm:h-36 sm:w-52 md:h-44 md:w-64"
+              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent)]" />
               <img 
                 src={playIaAsset.url} 
                 alt="Jogar vs IA" 
-                className="relative z-10 h-[85%] w-auto object-contain drop-shadow-lg contrast-125 brightness-110" 
+                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
               />
             </button>
-            <span className="text-xs font-black uppercase italic tracking-[0.3em] text-blue-400/80 drop-shadow-md">VS COMPUTADOR</span>
           </div>
 
-          {/* Elemento "VS" */}
-          <div className="relative z-20 flex h-12 w-12 items-center justify-center rounded-full border-4 border-[#2d3852] bg-[#1a2235] text-lg font-black italic text-white/20 shadow-xl sm:-mx-6 sm:mt-0">
-            VS
-          </div>
-
-          {/* Estação ONLINE (Vermelho) */}
-          <div className="group relative flex flex-col items-center gap-4">
-            <div className="absolute -inset-4 rounded-3xl bg-red-500/5 opacity-0 transition-opacity group-hover:opacity-100" />
+          {/* Botão Jogar on-line */}
+          <div className="group relative">
+            {/* Brilho externo vermelho */}
+            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
             
+            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
             <button
               onClick={() => setScreen("ONLINE")}
-              className="bevel-toy-red relative flex h-32 w-44 items-center justify-center overflow-hidden rounded-2xl p-2 transition-all hover:-translate-y-1 active:translate-y-1 sm:h-36 sm:w-52 md:h-44 md:w-64"
+              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1),transparent)]" />
               <img 
                 src={playOnlineAsset.url} 
                 alt="Jogar on-line" 
-                className="relative z-10 h-[85%] w-auto object-contain drop-shadow-lg contrast-125 brightness-110" 
+                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
               />
             </button>
-            <span className="text-xs font-black uppercase italic tracking-[0.3em] text-red-500/80 drop-shadow-md">DUELO ONLINE</span>
           </div>
         </div>
-
-        {/* Barra de Ações Inferior */}
-        <div className="flex w-full max-w-lg items-center justify-between px-6 py-4">
+        <div className="flex w-full max-w-lg items-center justify-between px-4">
           <button 
             onClick={() => setShowSettings(true)}
-            className="toy-button-inset text-2xl transition-all hover:scale-110 active:scale-95 p-3 rounded-xl" 
+            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Configurações"
           >
             ⚙️
@@ -465,18 +450,19 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
           <button
             onClick={() => setShowChars(true)}
-            className="bevel-toy-yellow group relative overflow-hidden rounded-xl px-8 py-3 text-[11px] font-black tracking-[0.25em] text-black transition-all hover:scale-105 active:translate-y-0.5"
+            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-6 py-2.5 text-[10px] font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
           >
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
             👤 PERSONAGENS
           </button>
-          
           <button 
             onClick={() => setShowDonate(true)}
-            className="toy-button-inset text-2xl transition-all hover:scale-110 active:scale-95 p-3 rounded-xl" 
+            className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
             aria-label="Apoiar"
           >
             💗
           </button>
+
         </div>
       </Shell>
 
