@@ -187,22 +187,53 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
     const syncGameState = async (roomData: any) => {
       const winnerId = roomData['winner_id'], status = roomData['status'];
+      
+      // Se houver um vencedor definido no banco, FORÇAR o estado de Game Over
       if (winnerId || status === "FINISHED") {
-        const didIWin = winnerId === gameState.guestId, matchWinnerId = roomData['match_winner_id'];
-        setGameState(prev => {
-          if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) return prev;
-          return { ...prev, isGameOver: true, winner: didIWin ? "WINNER" : "LOSER", matchWinnerId: matchWinnerId || prev.matchWinnerId, rematchStatus: roomData['rematch_status'] || prev.rematchStatus, rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy, phase: "PLAYER_TURN", pendingQuestion: undefined, lastActionTime: Date.now() };
-        });
+        const didIWin = winnerId === gameState.guestId;
+        const matchWinnerId = roomData['match_winner_id'];
+        
+        // Revelar personagens secretos IMEDIATAMENTE ao detectar fim de jogo
         if (gameState.roomId) {
           const { data } = await supabase.from('room_players').select('guest_id, score, secret_character_id').eq('room_id', gameState.roomId);
           if (data) {
-            const opponent = data.find(p => p.guest_id !== gameState.guestId), me = data.find(p => p.guest_id === gameState.guestId);
+            const opponent = data.find(p => p.guest_id !== gameState.guestId);
+            const me = data.find(p => p.guest_id === gameState.guestId);
+            
             if (opponent && opponent.secret_character_id) {
               const secretChar = CHARACTERS.find(c => c.id === opponent.secret_character_id);
-              if (secretChar) setGameState(prev => ({ ...prev, aiSecret: secretChar, playerScore: me?.score ?? prev.playerScore, aiScore: opponent?.score ?? prev.aiScore }));
+              
+              setGameState(prev => ({ 
+                ...prev, 
+                isGameOver: true, 
+                winner: didIWin ? "WINNER" : "LOSER",
+                aiSecret: secretChar || prev.aiSecret,
+                playerScore: me?.score ?? prev.playerScore,
+                aiScore: opponent?.score ?? prev.aiScore,
+                matchWinnerId: matchWinnerId || prev.matchWinnerId,
+                rematchStatus: roomData['rematch_status'] || prev.rematchStatus,
+                rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
+                phase: "PLAYER_TURN", 
+                pendingQuestion: undefined,
+                lastActionTime: Date.now()
+              }));
+              return; // Estado aplicado, podemos sair
             }
           }
         }
+        
+        // Fallback caso a query de players demore
+        setGameState(prev => ({
+          ...prev,
+          isGameOver: true,
+          winner: didIWin ? "WINNER" : "LOSER",
+          matchWinnerId: matchWinnerId || prev.matchWinnerId,
+          rematchStatus: roomData['rematch_status'] || prev.rematchStatus,
+          rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
+          phase: "PLAYER_TURN",
+          pendingQuestion: undefined,
+          lastActionTime: Date.now()
+        }));
       }
       if (roomData['rematch_status'] && status === "FINISHED") setGameState(prev => ({ ...prev, rematchStatus: roomData['rematch_status'], rematchRequestedBy: roomData['rematch_requested_by'] }));
       if (status === "PLAYING" && roomData['current_question_id'] === null && roomData['last_answer'] === null && roomData['winner_id'] === null) {
