@@ -104,10 +104,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         // If opponent (represented as AI in state) turn ends, set turn to PLAYER.
         const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
         
+        console.log("Multiplayer: Trocando turno para", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
+
         supabase
           .from("rooms")
           .update({ 
             current_turn_player_id: nextPlayerId as any,
+            last_answer: null as any, // Limpa a última resposta ao iniciar novo turno
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
