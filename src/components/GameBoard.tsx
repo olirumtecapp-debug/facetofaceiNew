@@ -330,8 +330,6 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                     <span className="text-[#e52e2e] drop-shadow-[0_0_10px_rgba(229,46,46,0.3)]">{gameState.aiScore}</span>
                   </div>
                 </div>
-                  <span className="text-[#e52e2e] truncate max-w-[150px]">{gameState.playerColor === "VERMELHO" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.aiScore}</span>
-                </div>
 
                 <div className="mb-6 flex flex-col items-center gap-3">
                   <div className="w-24 sm:w-32">
