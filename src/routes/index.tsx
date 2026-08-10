@@ -520,7 +520,22 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
           <div className="w-full max-w-[320px] sm:max-w-md h-[90dvh] sm:h-auto sm:min-h-[550px] rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
             {(() => {
               const c = CHARACTERS.find(char => char.id === selectedCharId)!;
-              const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
+              const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase());
+              
+              if (!details) {
+                return (
+                  <div className="flex flex-col items-center justify-center p-8 text-gray-900 h-full">
+                    <p className="text-center font-bold text-red-600 mb-4">Erro: Detalhes do personagem não encontrados.</p>
+                    <button
+                      onClick={() => setSelectedCharId(null)}
+                      className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black text-white"
+                    >
+                      VOLTAR
+                    </button>
+                  </div>
+                );
+              }
+
               return (
                 <div className="flex flex-col items-center p-4 text-gray-900 h-full">
                   <div className="w-24 sm:w-32 aspect-square mb-4 shrink-0 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
