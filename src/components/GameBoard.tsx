@@ -95,10 +95,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
-          <span className="text-[#1e62ec]">{gameState.playerScore}</span>
+        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black shadow-inner">
+          <span className="text-[#1e62ec] drop-shadow-[0_0_8px_rgba(30,98,236,0.4)]">
+            {gameState.playerColor === "AZUL" ? gameState.playerScore : gameState.aiScore}
+          </span>
           <span className="text-gray-600">×</span>
-          <span className="text-[#e52e2e]">{gameState.aiScore}</span>
+          <span className="text-[#e52e2e] drop-shadow-[0_0_8px_rgba(229,46,46,0.4)]">
+            {gameState.playerColor === "VERMELHO" ? gameState.playerScore : gameState.aiScore}
+          </span>
         </div>
       </header>
 
@@ -304,10 +308,15 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </p>
 
             {gameState.gameMode === "ONLINE" && !gameState.matchWinnerId && (
-              <div className="mb-8">
+              <div className="mb-8 flex flex-col items-center gap-4">
                 {gameState.winner === "LOSER" ? (
                   gameState.rematchStatus === "requested" ? (
-                    <p className="animate-pulse font-bold text-yellow-400">Aguardando resposta de {gameState.opponentName}...</p>
+                    <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 w-full">
+                      <p className="animate-pulse font-black text-yellow-400 uppercase tracking-widest">
+                        Pedido de revanche enviado...
+                      </p>
+                      <p className="text-xs text-yellow-400/70 mt-1">Aguardando resposta de {gameState.opponentName}</p>
+                    </div>
                   ) : (
                     <button
                       onClick={async () => {
@@ -321,7 +330,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                   )
                 ) : (
                   gameState.rematchStatus === "requested" ? (
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm w-full">
                       <p className="mb-4 text-lg font-black uppercase tracking-widest text-yellow-400">
                         {gameState.opponentName} QUER UMA REVANCHE. VOCÊ ACEITA?
                       </p>
@@ -347,13 +356,19 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       </div>
                     </div>
                   ) : (
-                    <p className="font-bold text-gray-400 italic">Aguardando solicitação de revanche de {gameState.opponentName}...</p>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 w-full">
+                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest animate-pulse">
+                        Aguardando pedido de revanche de {gameState.opponentName || "adversário"}...
+                      </p>
+                    </div>
                   )
                 )}
                 {gameState.rematchStatus === "declined" && (
-                  <p className="mt-4 font-bold text-red-400 uppercase tracking-widest animate-in fade-in zoom-in-95">
-                    {gameState.opponentName} RECUSOU A REVANCHE.
-                  </p>
+                  <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 w-full animate-in fade-in zoom-in-95">
+                    <p className="font-bold text-red-400 uppercase tracking-widest">
+                      {gameState.opponentName || "O adversário"} RECUSOU A REVANCHE.
+                    </p>
+                  </div>
                 )}
               </div>
             )}
