@@ -366,7 +366,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
-          if (newRoomData['status'] === "PLAYING" && payload.old?.status === "FINISHED") {
+          if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
             // New round started
             setGameState(prev => ({
               ...prev,
