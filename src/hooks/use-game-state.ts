@@ -141,6 +141,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .update({ 
             current_question_id: question.id,
             last_answer: null as any,
+            question_asked_by: gameState.guestId,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", gameState.roomCode);
@@ -197,6 +198,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .update({ 
             last_answer: answer,
             current_question_id: null as any,
+            question_asked_by: prev.opponentId || null, // Armazena quem perguntou
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", gameState.roomCode);
@@ -370,15 +372,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 2. Received Question (Opponent sent a question, so I must respond)
           // PRIORIDADE: Se current_question_id está presente, devemos estar na fase de resposta ou espera
           if (newRoomData['current_question_id']) {
-            const isFromOpponent = newRoomData['current_turn_player_id'] !== gameState.guestId;
+            const askerId = newRoomData['question_asked_by'];
+            const isFromOpponent = askerId && askerId !== gameState.guestId;
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             
             if (question) {
               if (isFromOpponent) {
-                console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
+                console.log("[FTF QUESTION] received from opponent:", question.text);
                 setGameState(prev => {
-                  // Se já processamos essa pergunta, não repetimos
-                  if (prev.pendingQuestion?.question.id === question.id) {
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
                     return prev;
                   }
                   return {
@@ -388,10 +390,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                     lastActionTime: Date.now()
                   };
                 });
-              } else {
+              } else if (askerId === gameState.guestId) {
                 // Pergunta enviada por mim: garantir estado de espera
                 setGameState(prev => {
-                  if (prev.pendingQuestion?.question.id === question.id) return prev;
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev;
                   return {
                     ...prev,
                     phase: "WAITING_ANSWER",
@@ -407,21 +409,23 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // Se last_answer existe e current_question_id é nulo, a pergunta foi respondida
           if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
+            const askerId = newRoomData['question_asked_by'];
+            const isMyQuestion = askerId === gameState.guestId;
 
-            setGameState(prev => {
-              // Se eu enviei uma pergunta e recebi a resposta
-              if (isMyTurn && prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
-                console.log("Multiplayer: Resposta recebida do adversário:", answer);
-                return {
-                  ...prev,
-                  pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                  myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
-                  lastActionTime: Date.now()
-                };
-              }
-              return prev;
-            });
+            if (isMyQuestion) {
+              setGameState(prev => {
+                if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
+                  console.log("[FTF ANSWER] received from opponent:", answer);
+                  return {
+                    ...prev,
+                    pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
+                    myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
+                    lastActionTime: Date.now()
+                  };
+                }
+                return prev;
+              });
+            }
           }
 
           // 4. Limpeza: Se ambos são nulos, resetar estado de pergunta pendente
