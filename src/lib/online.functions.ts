@@ -287,7 +287,7 @@ export const handleRematchResponse = createServerFn({ method: "POST" })
     } else {
       const { error } = await supabase
         .from("rooms")
-        .update({ rematch_status: 'declined' })
+        .update({ rematch_status: 'declined', status: 'FINISHED' })
         .eq("id", data.roomId);
       if (error) throw error;
     }
