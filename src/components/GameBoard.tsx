@@ -279,129 +279,150 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
 
       {/* Game over */}
       {gameState.isGameOver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-6 backdrop-blur-xl">
           <div className="text-center max-w-lg w-full">
-            {gameState.matchWinnerId && (
-              <div className="mb-6 animate-bounce text-2xl font-black text-yellow-400 sm:text-4xl drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
-                🏆 CONFRONTO ENCERRADO! 🏆
+            {gameState.winner === ("ABANDONED" as any) ? (
+              <div className="flex flex-col items-center">
+                <div className="mb-6 text-6xl">👻</div>
+                <h2 className="mb-8 text-3xl font-black text-white uppercase italic">
+                  Alguém fugiu da luta...
+                </h2>
+                <button
+                  onClick={onBack}
+                  className="w-full max-w-xs rounded-xl border-2 border-yellow-400/50 bg-yellow-400 py-4 font-black text-black transition-all hover:bg-yellow-300 hover:scale-[1.05]"
+                >
+                  VOLTAR AO MENU
+                </button>
               </div>
-            )}
-            
-            <h2
-              className={`mb-4 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${
-                gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
-              }`}
-            >
-              {gameState.matchWinnerId 
-                ? (gameState.matchWinnerId === gameState.guestId ? "VOCÊ VENCEU O CONFRONTO!" : "VOCÊ PERDEU O CONFRONTO")
-                : (gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!")
-              }
-            </h2>
+            ) : (
+              <>
+                {gameState.matchWinnerId && (
+                  <div className="mb-6 animate-bounce text-2xl font-black text-yellow-400 sm:text-4xl drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
+                    🏆 CONFRONTO ENCERRADO! 🏆
+                  </div>
+                )}
+                
+                <h2
+                  className={`mb-4 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${
+                    gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
+                  }`}
+                >
+                  {gameState.matchWinnerId 
+                    ? (gameState.matchWinnerId === gameState.guestId ? "VOCÊ VENCEU O CONFRONTO!" : "VOCÊ PERDEU O CONFRONTO")
+                    : (gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : `VOCÊ PERDEU! [${gameState.opponentName || "ADVERSÁRIO"}]`)
+                  }
+                </h2>
 
-            <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black">
-              <span className="text-[#1e62ec] truncate max-w-[150px]">{gameState.playerColor === "AZUL" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.playerScore}</span>
-              <span className="text-gray-500">×</span>
-              <span className="text-[#e52e2e] truncate max-w-[150px]">{gameState.playerColor === "VERMELHO" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.aiScore}</span>
-            </div>
+                <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black text-white">
+                  <span className="text-[#1e62ec] truncate max-w-[150px]">{gameState.playerColor === "AZUL" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.playerScore}</span>
+                  <span className="text-gray-500">×</span>
+                  <span className="text-[#e52e2e] truncate max-w-[150px]">{gameState.playerColor === "VERMELHO" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.aiScore}</span>
+                </div>
 
-            <div className="mb-6 flex flex-col items-center gap-3">
-              <div className="w-24 sm:w-32">
-                <GameCard 
-                  character={gameState.aiSecret} 
-                  isDown={false} 
-                  color={oppColor} 
-                  onClick={() => {}} 
-                />
-              </div>
-              <p className="text-lg text-gray-300">
-                O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white uppercase">{gameState.aiSecret.nome}</span>
-              </p>
-            </div>
+                <div className="mb-6 flex flex-col items-center gap-3">
+                  <div className="w-24 sm:w-32">
+                    <GameCard 
+                      character={gameState.aiSecret} 
+                      isDown={false} 
+                      color={oppColor} 
+                      onClick={() => {}} 
+                    />
+                  </div>
+                  <p className="text-lg text-gray-300">
+                    O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white uppercase">{gameState.aiSecret.nome}</span>
+                  </p>
+                </div>
 
-            {gameState.gameMode === "ONLINE" && !gameState.matchWinnerId && (
-              <div className="mb-8 flex flex-col items-center gap-4">
-                {gameState.winner === "LOSER" ? (
-                  gameState.rematchStatus === "requested" ? (
-                    <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 w-full">
-                      <p className="animate-pulse font-black text-yellow-400 uppercase tracking-widest">
-                        Pedido de revanche enviado...
-                      </p>
-                      <p className="text-xs text-yellow-400/70 mt-1">Aguardando resposta de {gameState.opponentName}</p>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        const { requestRematch } = await import("@/lib/online.functions");
-                        await requestRematch({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId } });
-                      }}
-                      className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
-                    >
-                      PEDIR REVANCHE
-                    </button>
-                  )
-                ) : (
-                  <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 w-full">
-                    {gameState.rematchStatus === "requested" ? (
-                      <div className="flex flex-col gap-3">
-                        <p className="text-lg font-black uppercase tracking-widest text-yellow-400">
-                          {gameState.opponentName} QUER UMA REVANCHE. ACEITA?
-                        </p>
-                        <div className="flex gap-4">
+                <div className="flex flex-col gap-3">
+                  {gameState.gameMode === "ONLINE" ? (
+                    <>
+                      {gameState.rematchStatus === 'requested' ? (
+                        gameState.rematchRequestedBy === gameState.guestId ? (
+                          <div className="rounded-xl bg-blue-500/20 py-4 font-bold text-blue-400 border border-blue-500/30">
+                            AGUARDANDO ADVERSÁRIO...
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-3">
+                            <div className="animate-pulse text-yellow-400 font-black mb-1 text-lg">REVANCHE SOLICITADA!</div>
+                            <div className="flex gap-4">
+                              <button
+                                onClick={async () => {
+                                  const { handleRematchResponse } = await import("@/lib/online.functions");
+                                  await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
+                                }}
+                                className="flex-1 rounded-xl bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
+                              >
+                                ACEITAR
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  const { handleRematchResponse } = await import("@/lib/online.functions");
+                                  await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: false } });
+                                }}
+                                className="flex-1 rounded-xl bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
+                              >
+                                RECUSAR
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      ) : gameState.rematchStatus === 'declined' ? (
+                        <div className="flex flex-col gap-3">
+                          <div className="text-red-400 font-bold mb-2 italic">Ah, desistiu? Campeão precisa descansar mesmo 😏</div>
                           <button
-                            onClick={async () => {
-                              const { handleRematchResponse } = await import("@/lib/online.functions");
-                              await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
-                            }}
-                            className="flex-1 rounded-lg bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
+                            onClick={onBack}
+                            className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-700 py-3 font-black text-white"
                           >
-                            ACEITAR
-                          </button>
-                          <button
-                            onClick={async () => {
-                              const { handleRematchResponse } = await import("@/lib/online.functions");
-                              await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: false } });
-                            }}
-                            className="flex-1 rounded-lg bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
-                          >
-                            RECUSAR
+                            VOLTAR AO MENU
                           </button>
                         </div>
-                      </div>
-                    ) : (
-                      <p className="font-black text-blue-400 uppercase tracking-widest animate-pulse">
-                        Aguardando pedido de revanche de {gameState.opponentName || "adversário"}...
-                      </p>
-                    )}
-                  </div>
-                )}
-                {gameState.rematchStatus === "declined" && (
-                  <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 w-full animate-in fade-in zoom-in-95">
-                    <p className="font-bold text-red-400 uppercase tracking-widest">
-                      {gameState.rematchStatus === "declined" ? "REVANCHE RECUSADA! 🏆" : "O ADVERSÁRIO RECUSOU A REVANCHE."}
-                    </p>
-                  </div>
-                )}
-              </div>
+                      ) : (
+                        <div className="flex flex-col gap-3">
+                          {gameState.winner === "LOSER" && (
+                            <button
+                              onClick={async () => {
+                                const { requestRematch } = await import("@/lib/online.functions");
+                                await requestRematch({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId } });
+                              }}
+                              className="w-full rounded-xl border-2 border-yellow-400/50 bg-yellow-400 py-3 font-black text-black hover:bg-yellow-300"
+                            >
+                              PEDIR REVANCHE
+                            </button>
+                          )}
+                          <button
+                            onClick={async () => {
+                              if (gameState.roomId) {
+                                const { supabase } = await import("@/integrations/supabase/client");
+                                await supabase.from("rooms").update({ status: "ABANDONED" as any }).eq("id", gameState.roomId);
+                              }
+                              onBack();
+                            }}
+                            className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-700 py-3 font-black text-white hover:bg-gray-600"
+                          >
+                            VOLTAR AO MENU
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={rematch}
+                        className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 active:scale-95"
+                      >
+                        REVANCHE
+                      </button>
+                      <button
+                        onClick={onBack}
+                        className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
+                      >
+                        MENU
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
             )}
-
-            <div className="flex flex-col justify-center gap-3 sm:flex-row">
-              {gameState.gameMode !== "ONLINE" && !gameState.isGameOver ? null : (
-                gameState.gameMode === "IA" && (
-                  <button
-                    onClick={rematch}
-                    className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
-                  >
-                    REVANCHE
-                  </button>
-                )
-              )}
-              <button
-                onClick={onBack}
-                className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
-              >
-                MENU
-              </button>
-            </div>
           </div>
         </div>
       )}
