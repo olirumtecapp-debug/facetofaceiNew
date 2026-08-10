@@ -277,7 +277,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         </div>
       )}
 
-      {/* Game over */}
+      {/* Game over - Forçado a z-100 para cobrir o tabuleiro */}
       {gameState.isGameOver && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-6 backdrop-blur-xl">
           <div className="text-center max-w-lg w-full animate-in fade-in zoom-in duration-300">
