@@ -328,7 +328,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       PEDIR REVANCHE
                     </button>
                   )
-                ) : (
+                ) : gameState.winner === "WINNER" ? (
                   gameState.rematchStatus === "requested" ? (
                     <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm w-full">
                       <p className="mb-4 text-lg font-black uppercase tracking-widest text-yellow-400">
@@ -362,7 +362,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       </p>
                     </div>
                   )
-                )}
+                ) : null}
                 {gameState.rematchStatus === "declined" && (
                   <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 w-full animate-in fade-in zoom-in-95">
                     <p className="font-bold text-red-400 uppercase tracking-widest">
