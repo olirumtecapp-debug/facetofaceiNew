@@ -138,7 +138,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
-        console.log("Multiplayer: Enviando pergunta para a sala", gameState.roomCode);
+        console.log("[FTF ONLINE QUESTION SEND]", {
+          gameMode: gameState.gameMode,
+          roomId: gameState.roomId,
+          playerId: gameState.guestId,
+          question: question.text
+        });
+
         const { error } = await supabase
           .from("rooms")
           .update({ 
@@ -154,6 +160,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           toast.error("Erro ao enviar pergunta.");
           return;
         }
+
+        console.log("[FTF ONLINE QUESTION SAVED]", { questionId: question.id, status: "waiting_answer" });
 
         setGameState(prev => ({
           ...prev,
@@ -194,7 +202,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && (type === "AI" || type === "AI_PALPITE")) {
       try {
-        console.log("[FTF ANSWER] sending:", answer);
+        console.log("[FTF ONLINE ANSWER SEND]", { answer });
         
         const { error } = await supabase
           .from("rooms")
@@ -210,6 +218,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           toast.error("Erro ao enviar resposta.");
           return;
         }
+        console.log("[FTF ONLINE ANSWER SAVED]", { answer });
       } catch (err) {
         toast.error("Erro de conexão ao enviar resposta.");
         return;
@@ -334,9 +343,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   useEffect(() => {
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
-      console.log("[FTF REALTIME] Disabling realtime for mode:", gameState.gameMode);
+      console.log("[FTF REALTIME] Realtime disabled for mode:", gameState.gameMode);
+      setGameState(prev => ({ 
+        ...prev, 
+        pendingQuestion: prev.gameMode === "IA" ? prev.pendingQuestion : undefined 
+      }));
       return;
     }
+
+    console.log("[FTF REALTIME SUBSCRIBE]", {
+      roomCode: gameState.roomCode,
+      roomId: gameState.roomId,
+      playerId: gameState.guestId
+    });
 
     const channel = supabase
       .channel(`room_${gameState.roomCode}_${gameState.guestId}`)
@@ -344,8 +363,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
         (payload) => {
+          // STRICT GUARD: If mode changed to IA, ignore all background room updates
           if (gameState.gameMode !== "ONLINE") return;
+
           const newRoomData = payload.new as any;
+          console.log("[FTF REALTIME EVENT]", {
+            eventType: payload.eventType,
+            status: newRoomData.status,
+            question: newRoomData.current_question_id
+          });
           
           if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
             const winnerId = newRoomData['winner_id'];
@@ -371,7 +397,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
-            // New round started
             setGameState(prev => ({
               ...prev,
               isGameOver: false,
@@ -420,6 +445,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             
             if (question) {
               if (isFromOpponent) {
+                console.log("[FTF ONLINE QUESTION RECEIVED]", {
+                  myPlayerId: gameState.guestId,
+                  questionId: question.id,
+                  authorId: askerId,
+                  status: "waiting_answer"
+                });
+
                 setGameState(prev => {
                   if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
                     return prev;
@@ -448,9 +480,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             const askerId = newRoomData['question_asked_by'];
-            const isMyQuestion = askerId && askerId !== gameState.guestId;
+            // If the opponent answered MY question
+            const isMyQuestionResponse = askerId && askerId !== gameState.guestId;
 
-            if (isMyQuestion) {
+            if (isMyQuestionResponse) {
+              console.log("[FTF ONLINE ANSWER RECEIVED]", { answer });
               setGameState(prev => {
                 if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
                   return {
@@ -470,7 +504,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
         }
       )
-      .on(
+      .subscribe((status) => {
+        console.log("[FTF REALTIME STATUS]", status);
+      });
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomCode}` },
         (payload) => {
