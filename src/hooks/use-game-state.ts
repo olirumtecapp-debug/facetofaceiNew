@@ -353,24 +353,38 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // 2. Received Question (Opponent sent a question, so I must respond)
-          if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
+          if (newRoomData['current_question_id']) {
+            const isFromOpponent = newRoomData['current_turn_player_id'] !== gameState.guestId;
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             
             if (question) {
-              console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
-              setGameState(prev => {
-                // Se já estivermos respondendo ESTA pergunta, não faz nada
-                if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+              if (isFromOpponent) {
+                console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
+                setGameState(prev => {
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+                    return prev;
+                  }
+                  return {
+                    ...prev,
+                    phase: "PLAYER_RESPONDING",
+                    pendingQuestion: { question, type: "AI" },
+                    lastActionTime: Date.now()
+                  };
+                });
+              } else {
+                // If the question is from me, ensure I am in WAITING_ANSWER
+                setGameState(prev => {
+                  if (prev.phase === "PLAYER_TURN") {
+                    return {
+                      ...prev,
+                      phase: "WAITING_ANSWER",
+                      pendingQuestion: { question, type: "PLAYER" },
+                      lastActionTime: Date.now()
+                    };
+                  }
                   return prev;
-                }
-                
-                return {
-                  ...prev,
-                  phase: "PLAYER_RESPONDING",
-                  pendingQuestion: { question, type: "AI" },
-                  lastActionTime: Date.now()
-                };
-              });
+                });
+              }
             }
           }
 
