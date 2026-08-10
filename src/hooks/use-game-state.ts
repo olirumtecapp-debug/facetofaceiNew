@@ -258,20 +258,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
-  const autoDownCards = (question: Question, answer: "SIM" | "NÃO") => {
-    setGameState((prev) => ({
-      ...prev,
-      playerBoard: prev.playerBoard.map((item) => {
-        const matches = question.check(item.character);
-        if (answer === "SIM" && !matches) return { ...item, isDown: true };
-        if (answer === "NÃO" && matches) return { ...item, isDown: true };
-        return item;
-      }),
-    }));
-  };
-
-  const playerPalpite = (character: Character) => {
+  const playerPalpite = async (character: Character) => {
     const isCorrect = character.id === gameState.aiSecret.id;
+    
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+      if (isCorrect) {
+        // We only notify the server if WE win by guessing
+        const { declareWinner } = await import("@/lib/online.functions");
+        await declareWinner({ data: { roomId: (gameState as any).roomId || "", winnerId: gameState.guestId } });
+      } else {
+        // If we guess wrong, the opponent wins
+        const { declareWinner } = await import("@/lib/online.functions");
+        await declareWinner({ data: { roomId: (gameState as any).roomId || "", winnerId: gameState.opponentId! } });
+      }
+      return; // Realtime will handle the state update
+    }
+
     setGameState((prev) => ({
       ...prev,
       isGameOver: true,
