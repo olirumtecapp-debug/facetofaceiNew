@@ -548,6 +548,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             aiSecret: oppSecret,
             opponentId: opponent?.guest_id,
             opponentName: opponent?.name || undefined,
+            playerName: me?.name || prev.playerName,
+            roomId: roomData.id, // Ensure roomId is stored
+            playerScore: me?.score || 0,
+            aiScore: opponent?.score || 0,
             currentTurn: isMyTurn ? "PLAYER" : "AI",
             phase: newPhase,
             pendingQuestion,
