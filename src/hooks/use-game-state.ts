@@ -198,6 +198,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   useEffect(() => {
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
+
+    // Use a ref to store the latest gameState to avoid stale closure issues in syncGameState
     const syncGameState = async (roomData: any) => {
       const winnerId = roomData['winner_id'], status = roomData['status'];
       
