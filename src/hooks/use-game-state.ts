@@ -44,6 +44,7 @@ export type GameState = {
   opponentId?: string | undefined;
   opponentName?: string | undefined;
   guestId: string;
+  lastActionTime?: number;
 };
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
@@ -85,7 +86,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       aiKnowledge: {},
       gameMode: isOnline ? "ONLINE" : "IA",
       roomCode: initialRoomCode || undefined,
-      guestId
+      guestId,
+      lastActionTime: Date.now()
     };
   });
 
@@ -153,6 +155,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       ...prev,
       phase: "WAITING_ANSWER",
       pendingQuestion: { question, type: "PLAYER" },
+      lastActionTime: Date.now()
     }));
   };
 
@@ -332,7 +335,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               return {
                 ...prev,
                 currentTurn: isMyTurn ? "PLAYER" : "AI",
-                phase: newPhase
+                phase: newPhase,
+                lastActionTime: Date.now()
               };
             });
           }
@@ -346,7 +350,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               setGameState(prev => ({
                 ...prev,
                 phase: "PLAYER_RESPONDING",
-                pendingQuestion: { question, type: "AI" }
+                pendingQuestion: { question, type: "AI" },
+                lastActionTime: Date.now()
               }));
             }
           }
@@ -363,7 +368,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 return {
                   ...prev,
                   pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                  myAskedQuestions: new Set(prev.myAskedQuestions).add(qId)
+                  myAskedQuestions: new Set(prev.myAskedQuestions).add(qId),
+                  lastActionTime: Date.now()
                 };
               }
               return prev;
@@ -426,7 +432,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             return { 
               ...prev, 
               currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN"
+              phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN",
+              lastActionTime: Date.now()
             };
           });
         }
