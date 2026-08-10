@@ -100,17 +100,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       
       // Sync turn to database if online
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
-        // Correct logic: if PLAYER turn ends, set turn to opponent.
-        // If opponent (represented as AI in state) turn ends, set turn to PLAYER.
+        // Se o turno do PLAYER acaba, o turno vai para o adversário (representado como AI no state).
+        // Se o turno do adversário (AI no state) acaba, o turno vai para o PLAYER.
         const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
         
-        console.log("Multiplayer: Trocando turno para", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
+        console.log("[FTF TURN] changing to:", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
 
         supabase
           .from("rooms")
           .update({ 
             current_turn_player_id: nextPlayerId as any,
-            last_answer: null as any, // Limpa a última resposta ao iniciar novo turno
+            last_answer: null as any,
+            current_question_id: null as any, // Garante limpeza total
+            question_asked_by: null as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
@@ -141,6 +143,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .update({ 
             current_question_id: question.id,
             last_answer: null as any,
+            question_asked_by: gameState.guestId,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", gameState.roomCode);
@@ -190,13 +193,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && type !== "PLAYER") {
       try {
-        console.log("Multiplayer: Respondendo à pergunta com", answer);
-        // Primeiro envia a resposta e remove a pergunta do servidor
+        console.log("[FTF ANSWER] sending:", answer);
+        
+        // Obter o ID do oponente do estado atual
+        const opponentId = gameState.opponentId || null;
+
         const { error } = await supabase
           .from("rooms")
           .update({ 
             last_answer: answer,
             current_question_id: null as any,
+            question_asked_by: opponentId as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", gameState.roomCode);
@@ -341,12 +348,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               if (isMyTurn) {
                 // Se for minha vez, e eu não estiver aguardando resposta (pergunta enviada) 
                 // ou respondendo (pergunta recebida), volto para o estado de perguntar.
-                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
+                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
                   newPhase = "PLAYER_TURN";
                 }
                 
-                // Se eu recebi a resposta (last_answer) e o turno mudou para mim,
-                // significa que o adversário respondeu e passou a vez (ou o sistema passou).
+                // Se eu recebi a resposta e o turno mudou para mim (conclusão do ciclo)
                 if (newRoomData['last_answer'] === null && prev.pendingQuestion?.revealedAnswer) {
                    newPhase = "PLAYER_TURN";
                 }
@@ -370,15 +376,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 2. Received Question (Opponent sent a question, so I must respond)
           // PRIORIDADE: Se current_question_id está presente, devemos estar na fase de resposta ou espera
           if (newRoomData['current_question_id']) {
-            const isFromOpponent = newRoomData['current_turn_player_id'] !== gameState.guestId;
+            const askerId = newRoomData['question_asked_by'];
+            const isFromOpponent = askerId && askerId !== gameState.guestId;
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             
             if (question) {
               if (isFromOpponent) {
-                console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
+                console.log("[FTF QUESTION] received from opponent:", question.text);
                 setGameState(prev => {
-                  // Se já processamos essa pergunta, não repetimos
-                  if (prev.pendingQuestion?.question.id === question.id) {
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
                     return prev;
                   }
                   return {
@@ -388,10 +394,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                     lastActionTime: Date.now()
                   };
                 });
-              } else {
+              } else if (askerId === gameState.guestId) {
                 // Pergunta enviada por mim: garantir estado de espera
                 setGameState(prev => {
-                  if (prev.pendingQuestion?.question.id === question.id) return prev;
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev;
                   return {
                     ...prev,
                     phase: "WAITING_ANSWER",
@@ -407,21 +413,23 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // Se last_answer existe e current_question_id é nulo, a pergunta foi respondida
           if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
+            const askerId = newRoomData['question_asked_by'];
+            const isMyQuestion = askerId === gameState.guestId;
 
-            setGameState(prev => {
-              // Se eu enviei uma pergunta e recebi a resposta
-              if (isMyTurn && prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
-                console.log("Multiplayer: Resposta recebida do adversário:", answer);
-                return {
-                  ...prev,
-                  pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                  myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
-                  lastActionTime: Date.now()
-                };
-              }
-              return prev;
-            });
+            if (isMyQuestion) {
+              setGameState(prev => {
+                if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
+                  console.log("[FTF ANSWER] received from opponent:", answer);
+                  return {
+                    ...prev,
+                    pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
+                    myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
+                    lastActionTime: Date.now()
+                  };
+                }
+                return prev;
+              });
+            }
           }
 
           // 4. Limpeza: Se ambos são nulos, resetar estado de pergunta pendente
@@ -454,77 +462,76 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       const syncRoom = async () => {
-        const { data: rooms } = await supabase.from("rooms").select("id").eq("code", gameState.roomCode!).single();
-        if (!rooms) return;
-
-        const { data: players } = await supabase
-          .from("room_players")
-          .select("guest_id, secret_character_id, name")
-          .eq("room_id", rooms.id);
+        console.log("[FTF REALTIME] Syncing room on mount:", gameState.roomCode);
+        const { data: roomData, error } = await supabase
+          .from("rooms")
+          .select("*, room_players(*)")
+          .eq("code", gameState.roomCode!)
+          .single();
         
-        const opponent = players?.find(p => p.guest_id !== gameState.guestId);
-        const me = players?.find(p => p.guest_id === gameState.guestId);
+        if (error || !roomData) return;
 
-        if (opponent) {
-          const oppSecret = opponent.secret_character_id ? CHARACTERS.find(c => c.id === opponent.secret_character_id) : undefined;
-          setGameState(prev => ({ 
-            ...prev, 
-            opponentId: opponent.guest_id,
-            opponentName: opponent.name || undefined,
-            aiSecret: oppSecret || prev.aiSecret 
-          }));
-        }
+        const players = roomData.room_players || [];
+        const opponent = players.find((p: any) => p.guest_id !== gameState.guestId);
+        const me = players.find((p: any) => p.guest_id === gameState.guestId);
+
+        const isMyTurn = roomData.current_turn_player_id === gameState.guestId;
+        const currentQuestionId = roomData.current_question_id;
+        const lastAnswer = roomData.last_answer;
+        const askerId = roomData.question_asked_by;
+
+        let mySecret = gameState.playerSecret;
+        let oppSecret = gameState.aiSecret;
 
         if (me && me.secret_character_id) {
-          const mySecret = CHARACTERS.find(c => c.id === me.secret_character_id);
-          if (mySecret) {
-            setGameState(prev => ({ ...prev, playerSecret: mySecret }));
-          }
+          const char = CHARACTERS.find(c => c.id === me.secret_character_id);
+          if (char) mySecret = char;
         }
 
-        // Fetch current room state to determine turn and pending question
-        const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
-        if (room) {
-          const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
-          const currentQuestionId = room['current_question_id'];
-          const lastAnswer = room['last_answer'];
-          
-          setGameState(prev => {
-            let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
-            let pendingQuestion = undefined;
+        if (opponent && opponent.secret_character_id) {
+          const char = CHARACTERS.find(c => c.id === opponent.secret_character_id);
+          if (char) oppSecret = char;
+        }
+        
+        setGameState(prev => {
+          let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+          let pendingQuestion = undefined;
 
-            if (currentQuestionId) {
-              const question = QUESTIONS.find(q => q.id === currentQuestionId);
-              if (question) {
-                if (isMyTurn) {
-                  // I asked, but didn't get answer yet
-                  if (!lastAnswer) {
-                    newPhase = "WAITING_ANSWER";
-                    pendingQuestion = { question, type: "PLAYER" as const };
-                  }
-                } else {
-                  // Opponent asked, I must respond
-                  if (!lastAnswer) {
-                    newPhase = "PLAYER_RESPONDING";
-                    pendingQuestion = { question, type: "AI" as const };
-                  }
-                }
+          if (currentQuestionId) {
+            const question = QUESTIONS.find(q => q.id === currentQuestionId);
+            if (question) {
+              if (askerId === gameState.guestId) {
+                newPhase = "WAITING_ANSWER";
+                pendingQuestion = { question, type: "PLAYER" as const };
+              } else {
+                newPhase = "PLAYER_RESPONDING";
+                pendingQuestion = { question, type: "AI" as const };
               }
             }
+          } else if (lastAnswer && askerId === gameState.guestId) {
+            // Se eu perguntei e já tem resposta, mas ainda é meu turno, 
+            // significa que estou na fase de descarte/aguardando ver a resposta.
+            // No entanto, como current_question_id é null, não temos a referência direta aqui
+            // a menos que o estado local já tenha. Se for um refresh, o histórico ajudaria.
+            // Para simplificar a correção do bug principal, focamos em perguntas pendentes.
+          }
 
-            return { 
-              ...prev, 
-              currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: newPhase,
-              pendingQuestion,
-              lastActionTime: Date.now()
-            };
-          });
-        }
+          return {
+            ...prev,
+            playerSecret: mySecret,
+            aiSecret: oppSecret,
+            opponentId: opponent?.guest_id,
+            opponentName: opponent?.name || undefined,
+            currentTurn: isMyTurn ? "PLAYER" : "AI",
+            phase: newPhase,
+            pendingQuestion,
+            lastActionTime: Date.now()
+          };
+        });
       };
       syncRoom();
     }
-  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
+  }, [gameState.roomCode, gameState.guestId]);
 
   // AI Logic Effect
   useEffect(() => {
