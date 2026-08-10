@@ -330,14 +330,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             setGameState(prev => {
               let newPhase = prev.phase;
               if (isMyTurn) {
-                // If it's my turn, and I'm not responding to something, I'm in TURN phase.
-                // However, if I was WAITING_ANSWER (I sent a question), I should stay there 
-                // until I get the answer sync.
+                // Se for minha vez, e eu não estiver aguardando resposta (pergunta enviada) 
+                // ou respondendo (pergunta recebida), volto para o estado de perguntar.
                 if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
                   newPhase = "PLAYER_TURN";
                 }
               } else {
-                // If it's NOT my turn, and I'm not responding, it's AI (Opponent) TURN.
+                // Se não for minha vez, e eu não tiver uma pergunta pendente para responder,
+                // estou no turno da "IA" (adversário).
                 if (prev.phase !== "PLAYER_RESPONDING") {
                   newPhase = "AI_TURN"; 
                 }
@@ -353,6 +353,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // 2. Received Question (Opponent sent a question, so I must respond)
+          // PRIORIDADE: Se current_question_id está presente, devemos estar na fase de resposta ou espera
           if (newRoomData['current_question_id']) {
             const isFromOpponent = newRoomData['current_turn_player_id'] !== gameState.guestId;
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
@@ -361,7 +362,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               if (isFromOpponent) {
                 console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
                 setGameState(prev => {
-                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+                  // Se já processamos essa pergunta, não repetimos
+                  if (prev.pendingQuestion?.question.id === question.id) {
                     return prev;
                   }
                   return {
@@ -372,37 +374,46 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                   };
                 });
               } else {
-                // If the question is from me, ensure I am in WAITING_ANSWER
+                // Pergunta enviada por mim: garantir estado de espera
                 setGameState(prev => {
-                  if (prev.phase === "PLAYER_TURN") {
-                    return {
-                      ...prev,
-                      phase: "WAITING_ANSWER",
-                      pendingQuestion: { question, type: "PLAYER" },
-                      lastActionTime: Date.now()
-                    };
-                  }
-                  return prev;
+                  if (prev.pendingQuestion?.question.id === question.id) return prev;
+                  return {
+                    ...prev,
+                    phase: "WAITING_ANSWER",
+                    pendingQuestion: { question, type: "PLAYER" },
+                    lastActionTime: Date.now()
+                  };
                 });
               }
             }
           }
 
           // 3. Received Answer (Opponent responded to my question)
-          if (newRoomData['last_answer'] && newRoomData['current_turn_player_id'] === gameState.guestId) {
+          // Se last_answer existe e current_question_id é nulo, a pergunta foi respondida
+          if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            
+            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
+
             setGameState(prev => {
-              // If we are waiting for an answer and the pending question matches 
-              // (or if we don't have a revealed answer yet)
-              if (prev.phase === "WAITING_ANSWER" && prev.pendingQuestion && !prev.pendingQuestion.revealedAnswer) {
-                const qId = prev.pendingQuestion.question.id;
+              // Se eu enviei uma pergunta e recebi a resposta
+              if (isMyTurn && prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
+                console.log("Multiplayer: Resposta recebida do adversário:", answer);
                 return {
                   ...prev,
                   pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                  myAskedQuestions: new Set(prev.myAskedQuestions).add(qId),
+                  myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
                   lastActionTime: Date.now()
                 };
+              }
+              return prev;
+            });
+          }
+
+          // 4. Limpeza: Se ambos são nulos, resetar estado de pergunta pendente
+          if (!newRoomData['current_question_id'] && !newRoomData['last_answer']) {
+            setGameState(prev => {
+              if (prev.pendingQuestion) {
+                return { ...prev, pendingQuestion: undefined };
               }
               return prev;
             });
