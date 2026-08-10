@@ -50,6 +50,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
 
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-main-gradient text-white">
+      {/* Forçar exibição da tela de Game Over sobre qualquer outra fase no modo Online */}
       {/* Game Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect for game screen */}

@@ -168,7 +168,7 @@ export const declareWinner = createServerFn({ method: "POST" })
       .from("rooms")
       .update({ 
         winner_id: data.winnerId as any,
-        match_winner_id: null as any, // Clear match winner to prevent stale victory screen on rematch
+        match_winner_id: null as any,
         status: "FINISHED",
         current_question_id: null as any,
         last_answer: null as any,
