@@ -280,11 +280,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       if (isCorrect) {
         // We only notify the server if WE win by guessing
         const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: (gameState as any).roomId || "", winnerId: gameState.guestId } });
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.guestId } });
       } else {
         // If we guess wrong, the opponent wins
         const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: (gameState as any).roomId || "", winnerId: gameState.opponentId! } });
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.opponentId! } });
       }
       return; // Realtime will handle the state update
     }
