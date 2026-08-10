@@ -191,7 +191,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     const { question, type } = gameState.pendingQuestion;
 
-    if (gameState.gameMode === "ONLINE" && gameState.roomCode && type !== "PLAYER") {
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode && (type === "AI" || type === "AI_PALPITE")) {
       try {
         console.log("[FTF ANSWER] sending:", answer);
         
