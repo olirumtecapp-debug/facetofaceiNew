@@ -290,12 +290,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }
     };
     const pollInterval = setInterval(async () => {
-      const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
+      if (!gameState.roomCode) return;
+      const { data: room, error } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode).single();
+      if (error) {
+        console.error("Polling error:", error);
+        return;
+      }
       if (room) {
         if (room.status === "ABANDONED") setGameState(prev => { if (prev.winner === "ABANDONED") return prev; toast.error("Ops, parece que alguém desistiu da luta 👻"); return { ...prev, isGameOver: true, winner: "ABANDONED" }; });
         else syncGameState(room);
       }
-    }, 3000);
+    }, 2000);
     const channel = supabase.channel(`room_${gameState.roomCode}_${gameState.guestId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` }, (payload) => {
         if (gameState.gameMode !== "ONLINE") return;
