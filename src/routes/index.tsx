@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import logoAsset from "@/assets/Logo_FTF_transparente.png.asset.json";
-import playIaAsset from "@/assets/play-ia.png.asset.json";
-import playOnlineAsset from "@/assets/play-online.png.asset.json";
-import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
-import boardVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
-import { CARD_IMAGES } from "@/assets/chars";
+ import logoAsset from "@/assets/Logo_FTF_transparente.png.asset.json";
+ import homeImageAsset from "@/assets/home-interface.png.asset.json";
+ import playIaAsset from "@/assets/play-ia.png.asset.json";
+ import playOnlineAsset from "@/assets/play-online.png.asset.json";
+ import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
+ import boardVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
+ import { CARD_IMAGES } from "@/assets/chars";
 import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
