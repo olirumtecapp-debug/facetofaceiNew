@@ -346,12 +346,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               if (isMyTurn) {
                 // Se for minha vez, e eu não estiver aguardando resposta (pergunta enviada) 
                 // ou respondendo (pergunta recebida), volto para o estado de perguntar.
-                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
+                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
                   newPhase = "PLAYER_TURN";
                 }
                 
-                // Se eu recebi a resposta (last_answer) e o turno mudou para mim,
-                // significa que o adversário respondeu e passou a vez (ou o sistema passou).
+                // Se eu recebi a resposta e o turno mudou para mim (conclusão do ciclo)
                 if (newRoomData['last_answer'] === null && prev.pendingQuestion?.revealedAnswer) {
                    newPhase = "PLAYER_TURN";
                 }
