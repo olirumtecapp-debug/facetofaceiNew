@@ -354,7 +354,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             setGameState(prev => ({
               ...prev,
               isGameOver: true,
-              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner),
+              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : undefined),
               matchWinnerId,
               rematchStatus: newRoomData['rematch_status'] || 'idle',
               rematchRequestedBy: newRoomData['rematch_requested_by'],
