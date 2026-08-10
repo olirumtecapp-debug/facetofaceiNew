@@ -403,6 +403,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             const didIWin = winnerId === gameState.guestId;
             const matchWinnerId = newRoomData['match_winner_id'];
             
+            // Get secret character of the winner (which was the secret of the loser)
+            // But we need the SECRET of the OPPONENT to show to the player.
+            // If I am the winner, the secret I need to see is the loser's secret.
+            // If I am the loser, the secret I need to see is my own secret? 
+            // Actually, usually you want to see the secret you were trying to guess.
+            
             setGameState(prev => {
               // Only update if not already set or if data changed to avoid loops
               if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) {
@@ -421,6 +427,23 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 lastActionTime: Date.now()
               };
             });
+          }
+
+          // Fetch opponent secret character on game over to ensure it's accurate
+          if (newRoomData['status'] === "FINISHED" && !gameState.isGameOver) {
+             supabase.from('room_players')
+              .select('secret_character_id')
+              .eq('room_id', gameState.roomId)
+              .neq('guest_id', gameState.guestId)
+              .single()
+              .then(({data}) => {
+                if (data?.secret_character_id) {
+                  const secretChar = CHARACTERS.find(c => c.id === data.secret_character_id);
+                  if (secretChar) {
+                    setGameState(prev => ({ ...prev, aiSecret: secretChar }));
+                  }
+                }
+              });
           }
 
           // Handle Rematch State Changes
