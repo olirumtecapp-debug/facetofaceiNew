@@ -203,7 +203,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .update({ 
             last_answer: answer,
             current_question_id: null as any,
-            question_asked_by: opponentId as any,
+            question_asked_by: gameState.guestId as any, // Marcar que EU respondi (a resposta é 'de' mim)
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", gameState.roomCode);
