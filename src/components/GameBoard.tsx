@@ -326,10 +326,10 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                         {gameState.opponentName} QUER UMA REVANCHE. VOCÊ ACEITA?
                       </p>
                       <div className="flex gap-4">
-                        <button
+                        button
                           onClick={async () => {
                             const { handleRematchResponse } = await import("@/lib/online.functions");
-                            await handleRematchResponse({ data: { roomId: (gameState as any).roomId || "", guestId: gameState.guestId, accept: true } });
+                            await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
                           }}
                           className="flex-1 rounded-lg bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
                         >
@@ -338,7 +338,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                         <button
                           onClick={async () => {
                             const { handleRematchResponse } = await import("@/lib/online.functions");
-                            await handleRematchResponse({ data: { roomId: (gameState as any).roomId || "", guestId: gameState.guestId, accept: false } });
+                            await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: false } });
                           }}
                           className="flex-1 rounded-lg bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
                         >
