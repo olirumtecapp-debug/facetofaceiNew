@@ -191,14 +191,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && type !== "PLAYER") {
       try {
-        console.log("Multiplayer: Respondendo à pergunta com", answer);
-        // Primeiro envia a resposta e remove a pergunta do servidor
+        console.log("[FTF ANSWER] sending:", answer);
+        
+        // Obter o ID do oponente do estado atual
+        const opponentId = gameState.opponentId || null;
+
         const { error } = await supabase
           .from("rooms")
           .update({ 
             last_answer: answer,
             current_question_id: null as any,
-            question_asked_by: prev.opponentId || null, // Armazena quem perguntou
+            question_asked_by: opponentId as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", gameState.roomCode);
