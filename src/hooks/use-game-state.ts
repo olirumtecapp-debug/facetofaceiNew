@@ -340,7 +340,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }));
   };
 
-  const passTurn = () => {
+  const passTurn = useCallback(() => {
     if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
     if (gameState.phase !== "PLAYER_DISCARDING" && gameState.phase !== "PLAYER_TURN") return;
 
@@ -349,7 +349,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       history: [...prev.history, { type: "PLAYER", text: "Passou a vez." }],
     }));
     setTimeout(nextTurn, 400);
-  };
+  }, [gameState.currentTurn, gameState.isGameOver, gameState.phase, nextTurn]);
 
   const rematch = () => {
     setGameState((prev) => ({
@@ -457,7 +457,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
-          if (newRoomData['current_turn_player_id']) {
+          if (newRoomData['current_turn_player_id'] && newRoomData['status'] === "PLAYING") {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => {
               if (prev.isGameOver) return prev;
