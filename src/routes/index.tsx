@@ -517,25 +517,48 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
       {selectedCharId !== null && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-          <div className="w-full max-w-[320px] sm:max-w-md rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+          <div className="w-full max-w-[320px] sm:max-w-md h-[90dvh] sm:h-auto sm:min-h-[550px] rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
             {(() => {
               const c = CHARACTERS.find(char => char.id === selectedCharId)!;
               const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
               return (
-                <div className="flex flex-col items-center p-4 text-gray-900">
-                  <div className="w-24 sm:w-32 aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
+                <div className="flex flex-col items-center p-4 text-gray-900 h-full">
+                  <div className="w-24 sm:w-32 aspect-square mb-4 shrink-0 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
                     <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
-                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Profissão:</span> {details.profession}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Personalidade:</span> {details.personality}</p>
-                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Hobbies:</span> {details.hobbies.join(", ")}</p>
-                    <p className="flex flex-col gap-0.5"><span className="text-gray-500 uppercase text-[8px]">Sobre:</span> <span className="text-[11px] leading-tight text-gray-800 italic">{details.bio}</span></p>
+                  <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-4 shrink-0">{c.nome}</h3>
+                  
+                  <div className="flex flex-col w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-4 rounded-xl border border-black/5 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+                    {/* Linha: Profissão */}
+                    <div className="flex items-start gap-2 border-b border-black/5 pb-2 mb-2">
+                      <span className="text-gray-500 uppercase text-[8px] w-[85px] shrink-0 pt-0.5">Profissão:</span>
+                      <span className="text-gray-800 break-words leading-tight flex-1">{details.profession}</span>
+                    </div>
+
+                    {/* Linha: Personalidade */}
+                    <div className="flex items-start gap-2 border-b border-black/5 pb-2 mb-2">
+                      <span className="text-gray-500 uppercase text-[8px] w-[85px] shrink-0 pt-0.5">Personalidade:</span>
+                      <span className="text-gray-800 break-words leading-tight flex-1">{details.personality}</span>
+                    </div>
+
+                    {/* Linha: Hobbies */}
+                    <div className="flex items-start gap-2 border-b border-black/5 pb-2 mb-2">
+                      <span className="text-gray-500 uppercase text-[8px] w-[85px] shrink-0 pt-0.5">Hobbies:</span>
+                      <span className="text-gray-800 break-words leading-tight flex-1">{details.hobbies.join(", ")}</span>
+                    </div>
+
+                    {/* Linha: Sobre */}
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      <span className="text-gray-500 uppercase text-[8px] w-full">Sobre:</span>
+                      <span className="text-[11px] leading-snug text-gray-800 italic break-words">
+                        {details.bio}
+                      </span>
+                    </div>
                   </div>
+
                   <button
                     onClick={() => setSelectedCharId(null)}
-                    className="mt-6 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
+                    className="mt-6 w-full shrink-0 rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
                   >
                     VOLTAR
                   </button>
