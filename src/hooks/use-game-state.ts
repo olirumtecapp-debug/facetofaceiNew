@@ -407,25 +407,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             const didIWin = winnerId === gameState.guestId;
             const matchWinnerId = newRoomData['match_winner_id'];
             
-            console.log("[FTF GAME OVER SYNC]", { didIWin, winnerId, guestId: gameState.guestId });
+            console.log("[FTF GAME OVER SYNC] Triggered", { didIWin, winnerId, status });
 
-            setGameState(prev => {
-              // Even if already in game over, update to ensure winner/loser status is correct from DB
-              return {
-                ...prev,
-                isGameOver: true,
-                winner: didIWin ? "WINNER" : "LOSER",
-                matchWinnerId: matchWinnerId || prev.matchWinnerId,
-                // Scores are fetched from room_players below to ensure accuracy
-                rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-                rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-                phase: "PLAYER_TURN",
-                pendingQuestion: undefined,
-                lastActionTime: Date.now()
-              };
-            });
+            // Force immediate Game Over state
+            setGameState(prev => ({
+              ...prev,
+              isGameOver: true,
+              winner: didIWin ? "WINNER" : "LOSER",
+              matchWinnerId: matchWinnerId || prev.matchWinnerId,
+              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+              phase: "PLAYER_TURN",
+              pendingQuestion: undefined,
+              lastActionTime: Date.now()
+            }));
 
-            // Fetch opponent secret character and latest scores on game over
+            // Fetch opponent secret character and latest scores to ensure UI parity
             if (gameState.roomId) {
               supabase.from('room_players')
                 .select('guest_id, score, secret_character_id')
@@ -442,7 +439,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                           ...prev, 
                           aiSecret: secretChar,
                           playerScore: me?.score ?? prev.playerScore,
-                          aiScore: opponent?.score ?? prev.aiScore
+                          aiScore: opponent?.score ?? prev.aiScore,
+                          isGameOver: true, // Re-confirm
+                          winner: winnerId === gameState.guestId ? "WINNER" : "LOSER"
                         }));
                       }
                     }

@@ -50,6 +50,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
 
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-main-gradient text-white">
+      {/* Forçar exibição da tela de Game Over sobre qualquer outra fase no modo Online */}
       {/* Game Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect for game screen */}
@@ -238,7 +239,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
       </div>
 
       {/* Palpite modal */}
-      {isPalpitando && (
+      {isPalpitando && !gameState.isGameOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-6 lg:max-w-3xl">
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-3xl">
