@@ -47,6 +47,7 @@ export type GameState = {
   opponentId?: string | undefined;
   opponentName?: string | undefined;
   playerName?: string | undefined;
+  roomId?: string | undefined;
   guestId: string;
   lastActionTime?: number;
 };
