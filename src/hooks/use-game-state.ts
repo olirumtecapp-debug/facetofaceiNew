@@ -252,8 +252,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }
       if (roomData['rematch_status'] && status === "FINISHED") setGameState(prev => ({ ...prev, rematchStatus: roomData['rematch_status'], rematchRequestedBy: roomData['rematch_requested_by'] }));
       if (status === "PLAYING" && roomData['current_question_id'] === null && roomData['last_answer'] === null && roomData['winner_id'] === null) {
+          // Só resetamos se a sala estiver REALMENTE em status PLAYING e sem vencedor
+          // Isso evita que o vencedor "volte" para o tabuleiro se o status mudar rápido demais no banco
           setGameState(prev => {
             if (!prev.isGameOver) return prev;
+            
+            // Garantir que não estamos em um estado de "ABANDONED" ou algo fixo
+            if (prev.winner === "ABANDONED") return prev;
+
             if (gameState.roomId) {
               supabase.from('room_players').select('guest_id, score, secret_character_id').eq('room_id', gameState.roomId).then(({data}) => {
                 if (data) {
