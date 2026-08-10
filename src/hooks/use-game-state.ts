@@ -399,34 +399,24 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             rematch_status: newRoomData.rematch_status
           });
           
-          // Handle Round End
-          if (newRoomData['status'] === "FINISHED" || newRoomData['winner_id']) {
-            const winnerId = newRoomData['winner_id'];
+          // Handle Round End - AUTHORITATIVE SYNC
+          const winnerId = newRoomData['winner_id'];
+          const status = newRoomData['status'];
+
+          if (winnerId || status === "FINISHED") {
             const didIWin = winnerId === gameState.guestId;
             const matchWinnerId = newRoomData['match_winner_id'];
             
-            // Get secret character of the winner (which was the secret of the loser)
-            // But we need the SECRET of the OPPONENT to show to the player.
-            // If I am the winner, the secret I need to see is the loser's secret.
-            // If I am the loser, the secret I need to see is my own secret? 
-            // Actually, usually you want to see the secret you were trying to guess.
-            
+            console.log("[FTF GAME OVER SYNC]", { didIWin, winnerId, guestId: gameState.guestId });
+
             setGameState(prev => {
-              const winnerId = newRoomData['winner_id'];
-              const didIWin = winnerId === gameState.guestId;
-              
-              // Only update if not already set or if data changed to avoid loops
-              if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) {
-                return prev;
-              }
-              
+              // Even if already in game over, update to ensure winner/loser status is correct from DB
               return {
                 ...prev,
                 isGameOver: true,
                 winner: didIWin ? "WINNER" : "LOSER",
-                matchWinnerId,
-                playerScore: didIWin ? prev.playerScore + 1 : prev.playerScore, // Optimistic update for syncing
-                aiScore: !didIWin ? prev.aiScore + 1 : prev.aiScore,
+                matchWinnerId: matchWinnerId || prev.matchWinnerId,
+                // Scores are fetched from room_players below to ensure accuracy
                 rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
                 rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
                 phase: "PLAYER_TURN",
@@ -434,23 +424,31 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 lastActionTime: Date.now()
               };
             });
-          }
 
-          // Fetch opponent secret character on game over to ensure it's accurate
-          if (newRoomData['status'] === "FINISHED") {
-             supabase.from('room_players')
-              .select('secret_character_id')
-              .eq('room_id', gameState.roomId!)
-              .neq('guest_id', gameState.guestId)
-              .single()
-              .then(({data}) => {
-                if (data?.secret_character_id) {
-                  const secretChar = CHARACTERS.find(c => c.id === data.secret_character_id);
-                  if (secretChar) {
-                    setGameState(prev => ({ ...prev, aiSecret: secretChar }));
+            // Fetch opponent secret character and latest scores on game over
+            if (gameState.roomId) {
+              supabase.from('room_players')
+                .select('guest_id, score, secret_character_id')
+                .eq('room_id', gameState.roomId)
+                .then(({data}) => {
+                  if (data) {
+                    const opponent = data.find(p => p.guest_id !== gameState.guestId);
+                    const me = data.find(p => p.guest_id === gameState.guestId);
+                    
+                    if (opponent && opponent.secret_character_id) {
+                      const secretChar = CHARACTERS.find(c => c.id === opponent.secret_character_id);
+                      if (secretChar) {
+                        setGameState(prev => ({ 
+                          ...prev, 
+                          aiSecret: secretChar,
+                          playerScore: me?.score ?? prev.playerScore,
+                          aiScore: opponent?.score ?? prev.aiScore
+                        }));
+                      }
+                    }
                   }
-                }
-              });
+                });
+            }
           }
 
           // Handle Rematch State Changes
