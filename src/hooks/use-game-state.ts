@@ -89,6 +89,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       gameMode: isOnline ? "ONLINE" : "IA",
       roomCode: initialRoomCode || undefined,
       guestId,
+      playerName: localStorage.getItem("ftf_player_name") || undefined,
       lastActionTime: Date.now()
     };
   });
