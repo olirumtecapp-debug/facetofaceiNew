@@ -150,16 +150,17 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   const [showChars, setShowChars] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
   const guestId = (typeof window !== 'undefined') 
-    ? (localStorage.getItem("ftf_guest_id") || (() => {
-        const id = crypto.randomUUID();
-        localStorage.setItem("ftf_guest_id", id);
+    ? (window.localStorage.getItem("ftf_guest_id") || (() => {
+        const id = window.crypto.randomUUID();
+        window.localStorage.setItem("ftf_guest_id", id);
         return id;
       })())
-    : "";
+    : "ssr-id";
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [playerName, setPlayerName] = useState(() => {
-    return localStorage.getItem("ftf_player_name") || "";
+    if (typeof window === 'undefined') return "";
+    return window.localStorage.getItem("ftf_player_name") || "";
   });
   const [isConnecting, setIsConnecting] = useState(false);
   const [roomData, setRoomData] = useState<any>(null);
