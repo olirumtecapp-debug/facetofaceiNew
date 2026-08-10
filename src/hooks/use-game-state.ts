@@ -170,7 +170,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         setGameState(prev => ({ 
           ...prev, 
           isGameOver: true, 
-          winner: isCorrect ? "WINNER" : "LOSER"
+          winner: isCorrect ? "WINNER" : "LOSER",
+          phase: "PLAYER_TURN", // Travar fase
+          pendingQuestion: undefined
         }));
 
         await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
