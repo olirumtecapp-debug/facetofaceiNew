@@ -326,7 +326,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                         {gameState.opponentName} QUER UMA REVANCHE. VOCÊ ACEITA?
                       </p>
                       <div className="flex gap-4">
-                        button
+                        <button
                           onClick={async () => {
                             const { handleRematchResponse } = await import("@/lib/online.functions");
                             await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
