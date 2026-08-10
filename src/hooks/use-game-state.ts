@@ -330,7 +330,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   // Realtime Sync Effect
   useEffect(() => {
-    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
+    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
+      console.log("[FTF REALTIME] Disabling realtime for mode:", gameState.gameMode);
+      return;
+    }
 
     const channel = supabase
       .channel(`room:${gameState.roomCode}`)
