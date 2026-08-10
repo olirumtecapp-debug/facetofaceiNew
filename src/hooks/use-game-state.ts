@@ -54,10 +54,11 @@ export type GameState = {
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
   const guestId = useMemo(() => {
-    let id = localStorage.getItem("ftf_guest_id");
+    if (typeof window === 'undefined') return "ssr-id";
+    let id = window.localStorage.getItem("ftf_guest_id");
     if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("ftf_guest_id", id);
+      id = window.crypto.randomUUID();
+      window.localStorage.setItem("ftf_guest_id", id);
     }
     return id;
   }, []);
@@ -90,7 +91,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       gameMode: isOnline ? "ONLINE" : "IA",
       roomCode: initialRoomCode || undefined,
       guestId,
-      playerName: localStorage.getItem("ftf_player_name") || undefined,
+      playerName: typeof window !== 'undefined' ? (window.localStorage.getItem("ftf_player_name") || undefined) : undefined,
       lastActionTime: Date.now()
     };
   });
