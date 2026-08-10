@@ -461,7 +461,59 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       const syncRoom = async () => {
-        const { data: rooms } = await supabase.from("rooms").select("id").eq("code", gameState.roomCode!).single();
+        console.log("[FTF REALTIME] Syncing room on mount:", gameState.roomCode);
+        const { data: roomData, error } = await supabase
+          .from("rooms")
+          .select("*, room_players(*)")
+          .eq("code", gameState.roomCode!)
+          .single();
+        
+        if (error || !roomData) return;
+
+        const isMyTurn = roomData.current_turn_player_id === gameState.guestId;
+        const opponent = roomData.room_players?.find((p: any) => p.guest_id !== gameState.guestId);
+        
+        setGameState(prev => {
+          let newPhase = prev.phase;
+          let pendingQuestion = prev.pendingQuestion;
+
+          // Recupera pergunta se houver
+          if (roomData.current_question_id) {
+            const askerId = roomData.question_asked_by;
+            const question = QUESTIONS.find(q => q.id === roomData.current_question_id);
+            if (question) {
+              if (askerId === gameState.guestId) {
+                newPhase = "WAITING_ANSWER";
+                pendingQuestion = { question, type: "PLAYER" };
+              } else {
+                newPhase = "PLAYER_RESPONDING";
+                pendingQuestion = { question, type: "AI" };
+              }
+            }
+          } 
+          // Recupera resposta se houver e eu fui o autor
+          else if (roomData.last_answer && roomData.question_asked_by === gameState.guestId) {
+            const question = QUESTIONS.find(q => q.id === roomData.current_question_id); // Note: current_question_id is null here, need history or previous state
+            // Se já tínhamos a pergunta no estado local, atualizamos com a resposta
+            if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER") {
+              pendingQuestion = { ...prev.pendingQuestion, revealedAnswer: roomData.last_answer as "SIM" | "NÃO" };
+            }
+          }
+
+          return {
+            ...prev,
+            opponentId: opponent?.guest_id,
+            opponentName: opponent?.name,
+            currentTurn: isMyTurn ? "PLAYER" : "AI",
+            phase: newPhase,
+            pendingQuestion,
+            lastActionTime: Date.now()
+          };
+        });
+      };
+      syncRoom();
+    }
+  }, [gameState.roomCode, gameState.guestId]);
         if (!rooms) return;
 
         const { data: players } = await supabase
