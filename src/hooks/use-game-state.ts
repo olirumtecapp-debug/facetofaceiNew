@@ -187,6 +187,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && type !== "PLAYER") {
       try {
+        console.log("Multiplayer: Respondendo à pergunta com", answer);
+        // Primeiro envia a resposta e remove a pergunta do servidor
         const { error } = await supabase
           .from("rooms")
           .update({ 
@@ -200,6 +202,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           toast.error("Erro ao enviar resposta.");
           return;
         }
+
+        // A troca de turno será feita manualmente pelo jogador que respondeu ou via passar a vez.
+        // No fluxo solicitado pelo usuário: "B clica em um botão -> A recebe resposta -> Turno troca para B"
+        // Então, após B responder, o turno DEVE mudar para B.
       } catch (err) {
         toast.error("Erro de conexão ao enviar resposta.");
         return;
