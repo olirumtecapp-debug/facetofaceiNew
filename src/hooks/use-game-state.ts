@@ -344,16 +344,55 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (gameState.gameMode !== "ONLINE") return;
           const newRoomData = payload.new as any;
           
+          if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
+            const winnerId = newRoomData['winner_id'];
+            const matchWinnerId = newRoomData['match_winner_id'];
+            setGameState(prev => ({
+              ...prev,
+              isGameOver: true,
+              winner: winnerId === gameState.guestId ? "WINNER" : "LOSER",
+              matchWinnerId,
+              rematchStatus: newRoomData['rematch_status'],
+              rematchRequestedBy: newRoomData['rematch_requested_by'],
+              lastActionTime: Date.now()
+            }));
+          }
+
+          if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
+            setGameState(prev => ({
+              ...prev,
+              rematchStatus: newRoomData['rematch_status'],
+              rematchRequestedBy: newRoomData['rematch_requested_by']
+            }));
+          }
+
+          if (newRoomData['status'] === "PLAYING" && payload.old?.status === "FINISHED") {
+            // New round started
+            setGameState(prev => ({
+              ...prev,
+              isGameOver: false,
+              winner: undefined,
+              rematchStatus: 'idle',
+              rematchRequestedBy: null,
+              askedQuestions: new Set(),
+              myAskedQuestions: new Set(),
+              opponentAskedQuestions: new Set(),
+              turnCount: 1,
+              history: [],
+              pendingQuestion: undefined,
+              playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+              lastActionTime: Date.now()
+            }));
+          }
+
           if (newRoomData['current_turn_player_id']) {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => {
+              if (prev.isGameOver) return prev;
               let newPhase = prev.phase;
               if (isMyTurn) {
                 if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
                   newPhase = "PLAYER_TURN";
-                }
-                if (newRoomData['last_answer'] === null && prev.pendingQuestion?.revealedAnswer) {
-                   newPhase = "PLAYER_TURN";
                 }
               } else {
                 if (prev.phase !== "PLAYER_RESPONDING") {
@@ -422,8 +461,26 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }
           }
 
-          if (!newRoomData['current_question_id'] && !newRoomData['last_answer']) {
-            setGameState(prev => ({ ...prev, pendingQuestion: prev.pendingQuestion ? undefined : prev.pendingQuestion }));
+          if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "PLAYING") {
+            setGameState(prev => ({ ...prev, pendingQuestion: undefined }));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomCode}` },
+        (payload) => {
+          const updatedPlayer = payload.new as any;
+          if (updatedPlayer.guest_id === gameState.guestId) {
+             setGameState(prev => {
+               const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
+               return { ...prev, playerScore: updatedPlayer.score, playerSecret: char || prev.playerSecret };
+             });
+          } else {
+             setGameState(prev => {
+               const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
+               return { ...prev, aiScore: updatedPlayer.score, aiSecret: char || prev.aiSecret };
+             });
           }
         }
       )
