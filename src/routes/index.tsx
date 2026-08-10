@@ -419,14 +419,31 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
   return (
     <>
-      <Shell>
-        <div className="relative w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl">
-          {/* Imagem de Fundo da Interface */}
-          <img
-            src={homeImageAsset.url}
-            alt="FTF Face to Face Interface"
-            className="w-full h-auto block"
-          />
+      <Shell noPadding>
+        <div 
+          className="relative mx-auto overflow-hidden rounded-2xl shadow-2xl bg-[#0b0e14]"
+          style={{ 
+            aspectRatio: '1448 / 1086',
+            width: 'min(96vw, calc((96dvh) * 1448 / 1086))',
+            maxHeight: '96dvh'
+          }}
+        >
+          {/* Imagem Otimizada com srcset */}
+          <picture>
+            <source 
+              srcSet="/assets/home/home-480.webp 480w, /assets/home/home-768.webp 768w, /assets/home/home-1024.webp 1024w, /assets/home/home-1440.webp 1440w, /assets/home/home-1920.webp 1920w" 
+              type="image/webp" 
+              sizes="(max-width: 1448px) 100vw, 1448px" 
+            />
+            <img
+              src={homeImageAsset.url}
+              alt="FTF Face to Face Interface"
+              className="w-full h-full block object-contain"
+              // @ts-ignore - fetchPriority is supported in modern browsers
+              fetchPriority="high"
+              loading="eager"
+            />
+          </picture>
 
           {/* Hotspots Transparentes */}
           <Hotspot 
