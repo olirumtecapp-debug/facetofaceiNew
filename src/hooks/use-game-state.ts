@@ -350,12 +350,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
             const winnerId = newRoomData['winner_id'];
             const matchWinnerId = newRoomData['match_winner_id'];
+            
             setGameState(prev => ({
               ...prev,
               isGameOver: true,
-              winner: winnerId === gameState.guestId ? "WINNER" : "LOSER",
+              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner),
               matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'],
+              rematchStatus: newRoomData['rematch_status'] || 'idle',
               rematchRequestedBy: newRoomData['rematch_requested_by'],
               lastActionTime: Date.now()
             }));
