@@ -336,7 +336,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }
 
     const channel = supabase
-      .channel(`room:${gameState.roomCode}`)
+      .channel(`room_${gameState.roomCode}_${gameState.guestId}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
