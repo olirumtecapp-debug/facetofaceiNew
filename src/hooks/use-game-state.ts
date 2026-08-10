@@ -430,10 +430,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // Fetch opponent secret character on game over to ensure it's accurate
-          if (newRoomData['status'] === "FINISHED" && !gameState.isGameOver) {
+          if (newRoomData['status'] === "FINISHED") {
              supabase.from('room_players')
               .select('secret_character_id')
-              .eq('room_id', gameState.roomId)
+              .eq('room_id', gameState.roomId!)
               .neq('guest_id', gameState.guestId)
               .single()
               .then(({data}) => {
