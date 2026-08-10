@@ -127,9 +127,12 @@ export type Database = {
           id: string
           last_action_timestamp: string | null
           last_answer: string | null
+          match_winner_id: string | null
           player1_characters: Json | null
           player2_characters: Json | null
           question_asked_by: string | null
+          rematch_requested_by: string | null
+          rematch_status: string | null
           status: string
           updated_at: string | null
           winner_id: string | null
@@ -145,9 +148,12 @@ export type Database = {
           id?: string
           last_action_timestamp?: string | null
           last_answer?: string | null
+          match_winner_id?: string | null
           player1_characters?: Json | null
           player2_characters?: Json | null
           question_asked_by?: string | null
+          rematch_requested_by?: string | null
+          rematch_status?: string | null
           status: string
           updated_at?: string | null
           winner_id?: string | null
@@ -163,9 +169,12 @@ export type Database = {
           id?: string
           last_action_timestamp?: string | null
           last_answer?: string | null
+          match_winner_id?: string | null
           player1_characters?: Json | null
           player2_characters?: Json | null
           question_asked_by?: string | null
+          rematch_requested_by?: string | null
+          rematch_status?: string | null
           status?: string
           updated_at?: string | null
           winner_id?: string | null
