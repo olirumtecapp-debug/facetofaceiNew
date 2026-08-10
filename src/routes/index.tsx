@@ -419,14 +419,31 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
   return (
     <>
-      <Shell>
-        <div className="relative w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl">
-          {/* Imagem de Fundo da Interface */}
-          <img
-            src={homeImageAsset.url}
-            alt="FTF Face to Face Interface"
-            className="w-full h-auto block"
-          />
+      <Shell noPadding>
+        <div 
+          className="relative mx-auto overflow-hidden rounded-2xl shadow-2xl bg-[#0b0e14]"
+          style={{ 
+            aspectRatio: '1448 / 1086',
+            width: 'min(96vw, calc((96dvh) * 1448 / 1086))',
+            maxHeight: '96dvh'
+          }}
+        >
+          {/* Imagem Otimizada com srcset */}
+          <picture>
+            <source 
+              srcSet="/assets/home/home-480.webp 480w, /assets/home/home-768.webp 768w, /assets/home/home-1024.webp 1024w, /assets/home/home-1440.webp 1440w, /assets/home/home-1920.webp 1920w" 
+              type="image/webp" 
+              sizes="(max-width: 1448px) 100vw, 1448px" 
+            />
+            <img
+              src={homeImageAsset.url}
+              alt="FTF Face to Face Interface"
+              className="w-full h-full block object-contain"
+              // @ts-ignore - fetchPriority is supported in modern browsers
+              fetchPriority="high"
+              loading="eager"
+            />
+          </picture>
 
           {/* Hotspots Transparentes */}
           <Hotspot 
@@ -613,9 +630,9 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 }
 
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
   return (
-    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient p-4 text-center text-white sm:gap-10">
+    <main className={`relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient text-center text-white sm:gap-10 ${noPadding ? "p-0" : "p-4"}`}>
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect */}
@@ -629,7 +646,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 opacity-10 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
       
-      <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-10 w-full">
+      <div className={`relative z-10 flex flex-col items-center w-full ${noPadding ? "" : "gap-6 sm:gap-10"}`}>
         {children}
       </div>
     </main>
