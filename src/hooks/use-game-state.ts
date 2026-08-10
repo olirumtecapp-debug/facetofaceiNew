@@ -263,12 +263,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           return { ...prev, currentTurn: isMyTurn ? "PLAYER" : "AI", phase: newPhase, lastActionTime: Date.now() };
         });
       }
-      if (roomData['current_question_id']) {
+      if (roomData['current_question_id'] && status === "PLAYING") {
         const askerId = roomData['question_asked_by'], isFromOpponent = askerId && askerId !== gameState.guestId;
         const question = QUESTIONS.find(q => q.id === roomData['current_question_id']);
         if (question) {
-          if (isFromOpponent) setGameState(prev => { if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") return prev; return { ...prev, phase: "PLAYER_RESPONDING", pendingQuestion: { question, type: "AI" }, lastActionTime: Date.now() }; });
-          else setGameState(prev => { if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev; return { ...prev, phase: "WAITING_ANSWER", pendingQuestion: { question, type: "PLAYER" }, lastActionTime: Date.now() }; });
+          if (isFromOpponent) setGameState(prev => { 
+            if (prev.isGameOver) return prev; // Bloqueio
+            if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") return prev; 
+            return { ...prev, phase: "PLAYER_RESPONDING", pendingQuestion: { question, type: "AI" }, lastActionTime: Date.now() }; 
+          });
+          else setGameState(prev => { 
+            if (prev.isGameOver) return prev; // Bloqueio
+            if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev; 
+            return { ...prev, phase: "WAITING_ANSWER", pendingQuestion: { question, type: "PLAYER" }, lastActionTime: Date.now() }; 
+          });
         }
       }
       if (roomData['last_answer'] && !roomData['current_question_id']) {
