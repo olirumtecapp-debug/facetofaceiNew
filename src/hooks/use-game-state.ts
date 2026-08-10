@@ -293,16 +293,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       guessedCharacterId: character.id
     });
 
-    console.log("[FTF FINAL GUESS TARGET]", {
-      targetSecretCharacterId: gameState.aiSecret.id
-    });
-
-    console.log("[FTF FINAL GUESS RESULT]", {
-      guessedCharacterId: character.id,
-      targetSecretCharacterId: gameState.aiSecret.id,
-      isCorrect
-    });
-
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
         const { declareWinner } = await import("@/lib/online.functions");
@@ -314,16 +304,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           isCorrect
         });
 
-        const result = await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
-        console.log("[FTF FINAL GUESS SERVER RESPONSE]", result);
-        
-        // Em modo online, confiamos no Realtime para disparar isGameOver: true
-        // Mas vamos forçar uma atualização local se o servidor confirmou, para evitar lag visual
+        // Force local state update to avoid waiting for Realtime latency
         setGameState(prev => ({
           ...prev,
           isGameOver: true,
           winner: isCorrect ? "WINNER" : "LOSER"
         }));
+
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        console.log("[FTF FINAL GUESS SERVER RESPONSE SENT]");
       } catch (error) {
         console.error("Erro ao declarar vencedor no palpite final:", error);
         toast.error("Erro ao processar palpite final.");
