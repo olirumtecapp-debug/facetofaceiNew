@@ -456,15 +456,41 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
         }
 
-        // Fetch current room state to determine turn
+        // Fetch current room state to determine turn and pending question
         const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
         if (room) {
           const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
+          const currentQuestionId = room['current_question_id'];
+          const lastAnswer = room['last_answer'];
+          
           setGameState(prev => {
+            let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+            let pendingQuestion = undefined;
+
+            if (currentQuestionId) {
+              const question = QUESTIONS.find(q => q.id === currentQuestionId);
+              if (question) {
+                if (isMyTurn) {
+                  // I asked, but didn't get answer yet
+                  if (!lastAnswer) {
+                    newPhase = "WAITING_ANSWER";
+                    pendingQuestion = { question, type: "PLAYER" as const };
+                  }
+                } else {
+                  // Opponent asked, I must respond
+                  if (!lastAnswer) {
+                    newPhase = "PLAYER_RESPONDING";
+                    pendingQuestion = { question, type: "AI" as const };
+                  }
+                }
+              }
+            }
+
             return { 
               ...prev, 
               currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN",
+              phase: newPhase,
+              pendingQuestion,
               lastActionTime: Date.now()
             };
           });
