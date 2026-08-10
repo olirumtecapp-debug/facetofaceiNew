@@ -322,7 +322,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }
       }
     };
-    };
     const pollInterval = setInterval(async () => {
       if (!gameState.roomCode) return;
       const { data: room, error } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode).single();
