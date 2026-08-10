@@ -383,6 +383,94 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       playerId: gameState.guestId
     });
 
+    // Função de Sincronização Autoritativa (Reutilizável)
+    const syncGameState = async (roomData: any) => {
+      const winnerId = roomData['winner_id'];
+      const status = roomData['status'];
+
+      if (winnerId || status === "FINISHED") {
+        const didIWin = winnerId === gameState.guestId;
+        const matchWinnerId = roomData['match_winner_id'];
+        
+        // Se já sabemos o vencedor mas o estado local não reflete, forçamos.
+        setGameState(prev => {
+          if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) return prev;
+          
+          return {
+            ...prev,
+            isGameOver: true,
+            winner: didIWin ? "WINNER" : "LOSER",
+            matchWinnerId: matchWinnerId || prev.matchWinnerId,
+            rematchStatus: roomData['rematch_status'] || prev.rematchStatus,
+            rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
+            phase: "PLAYER_TURN",
+            pendingQuestion: undefined,
+            lastActionTime: Date.now()
+          };
+        });
+
+        // Buscar segredo do oponente e placares atualizados
+        if (gameState.roomId) {
+          const { data } = await supabase.from('room_players')
+            .select('guest_id, score, secret_character_id')
+            .eq('room_id', gameState.roomId);
+            
+          if (data) {
+            const opponent = data.find(p => p.guest_id !== gameState.guestId);
+            const me = data.find(p => p.guest_id === gameState.guestId);
+            
+            if (opponent && opponent.secret_character_id) {
+              const secretChar = CHARACTERS.find(c => c.id === opponent.secret_character_id);
+              if (secretChar) {
+                setGameState(prev => ({ 
+                  ...prev, 
+                  aiSecret: secretChar,
+                  playerScore: me?.score ?? prev.playerScore,
+                  aiScore: opponent?.score ?? prev.aiScore
+                }));
+              }
+            }
+          }
+        }
+      }
+
+      // Sincronizar status de revanche
+      if (roomData['rematch_status'] && status === "FINISHED") {
+        setGameState(prev => ({
+          ...prev,
+          rematchStatus: roomData['rematch_status'],
+          rematchRequestedBy: roomData['rematch_requested_by']
+        }));
+      }
+    };
+
+    // Polling de segurança (Fallback para quando o Realtime falha)
+    const pollInterval = setInterval(async () => {
+      if (gameState.isGameOver && gameState.winner !== "ABANDONED") {
+        // Se o jogo já acabou localmente, não precisamos pollar status de fim de jogo, 
+        // mas talvez status de revanche (rematch_status).
+        // Por enquanto vamos pollar enquanto estivermos no modo online e o ID da sala existir.
+      }
+      
+      const { data: room } = await supabase
+        .from("rooms")
+        .select("*")
+        .eq("code", gameState.roomCode)
+        .single();
+        
+      if (room) {
+        if (room.status === "ABANDONED") {
+          setGameState(prev => {
+            if (prev.winner === "ABANDONED") return prev;
+            toast.error("Ops, parece que alguém desistiu da luta 👻");
+            return { ...prev, isGameOver: true, winner: "ABANDONED" as any };
+          });
+        } else {
+          syncGameState(room);
+        }
+      }
+    }, 3000); // Polling a cada 3 segundos
+
     const channel = supabase
       .channel(`room_${gameState.roomCode}_${gameState.guestId}`)
       .on(
@@ -392,14 +480,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (gameState.gameMode !== "ONLINE") return;
 
           const newRoomData = payload.new as any;
-          const oldRoomData = payload.old as any;
           console.log("[FTF REALTIME EVENT]", {
             status: newRoomData.status,
             winner_id: newRoomData.winner_id,
             rematch_status: newRoomData.rematch_status
           });
           
-          // Handle Abandonment (VOLTAR MENU)
           if (newRoomData.status === "ABANDONED") {
             setGameState(prev => ({
               ...prev,
@@ -411,72 +497,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             return;
           }
 
-          // Handle Round End - AUTHORITATIVE SYNC
-          const winnerId = newRoomData['winner_id'];
-          const status = newRoomData['status'];
+          syncGameState(newRoomData);
 
-          if (winnerId || status === "FINISHED") {
-            const didIWin = winnerId === gameState.guestId;
-            const matchWinnerId = newRoomData['match_winner_id'];
-            
-            // Force immediate Game Over state
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: true,
-              winner: didIWin ? "WINNER" : "LOSER",
-              matchWinnerId: matchWinnerId || prev.matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-              phase: "PLAYER_TURN",
-              pendingQuestion: undefined,
-              lastActionTime: Date.now()
-            }));
-
-            // Fetch opponent secret character and latest scores
-            if (gameState.roomId) {
-              supabase.from('room_players')
-                .select('guest_id, score, secret_character_id')
-                .eq('room_id', gameState.roomId)
-                .then(({data}) => {
-                  if (data) {
-                    const opponent = data.find(p => p.guest_id !== gameState.guestId);
-                    const me = data.find(p => p.guest_id === gameState.guestId);
-                    
-                    if (opponent && opponent.secret_character_id) {
-                      const secretChar = CHARACTERS.find(c => c.id === opponent.secret_character_id);
-                      if (secretChar) {
-                        setGameState(prev => ({ 
-                          ...prev, 
-                          aiSecret: secretChar,
-                          playerScore: me?.score ?? prev.playerScore,
-                          aiScore: opponent?.score ?? prev.aiScore
-                        }));
-                      }
-                    }
-                  }
-                });
+          // Toasts de Revanche (Só no Realtime para não poluir com o polling)
+          const oldRoomData = payload.old as any;
+          if (newRoomData['rematch_status'] === 'requested' && oldRoomData?.rematch_status !== 'requested') {
+            if (newRoomData['rematch_requested_by'] !== gameState.guestId) {
+              toast.info("REVANCHE SOLICITADA!");
             }
+          } else if (newRoomData['rematch_status'] === 'declined' && oldRoomData?.rematch_status !== 'declined') {
+            toast.info("Ah, desistiu? Campeão precisa descansar mesmo 😏");
           }
+        }
+      )
 
-          // Handle Rematch State Changes
-          if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
-            const oldStatus = oldRoomData?.rematch_status;
-            const newStatus = newRoomData['rematch_status'];
-            
-            setGameState(prev => ({
-              ...prev,
-              rematchStatus: newStatus,
-              rematchRequestedBy: newRoomData['rematch_requested_by']
-            }));
-
-            if (newStatus === 'requested' && oldStatus !== 'requested') {
-              if (newRoomData['rematch_requested_by'] !== gameState.guestId) {
-                toast.info("REVANCHE SOLICITADA!");
-              }
-            } else if (newStatus === 'declined' && oldStatus !== 'declined') {
-              toast.info("Ah, desistiu? Campeão precisa descansar mesmo 😏");
-            }
-          }
 
           // Handle New Round Start (Reset)
           if (newRoomData['status'] === "PLAYING" && (payload.old as any)?.['status'] === "FINISHED") {
