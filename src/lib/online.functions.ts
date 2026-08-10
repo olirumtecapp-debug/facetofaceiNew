@@ -168,11 +168,12 @@ export const declareWinner = createServerFn({ method: "POST" })
       .from("rooms")
       .update({ 
         winner_id: data.winnerId as any,
-        match_winner_id: null as any,
         status: "FINISHED",
         current_question_id: null as any,
         last_answer: null as any,
         question_asked_by: null as any,
+        rematch_status: 'idle',
+        rematch_requested_by: null as any,
         last_action_timestamp: new Date().toISOString()
       })
       .eq("id", data.roomId);
