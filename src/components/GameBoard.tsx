@@ -95,10 +95,14 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
-          <span className="text-[#1e62ec]">{gameState.playerScore}</span>
+        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black shadow-inner">
+          <span className="text-[#1e62ec] drop-shadow-[0_0_8px_rgba(30,98,236,0.4)]">
+            {gameState.playerColor === "AZUL" ? gameState.playerScore : gameState.aiScore}
+          </span>
           <span className="text-gray-600">×</span>
-          <span className="text-[#e52e2e]">{gameState.aiScore}</span>
+          <span className="text-[#e52e2e] drop-shadow-[0_0_8px_rgba(229,46,46,0.4)]">
+            {gameState.playerColor === "VERMELHO" ? gameState.playerScore : gameState.aiScore}
+          </span>
         </div>
       </header>
 
