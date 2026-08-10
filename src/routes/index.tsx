@@ -392,77 +392,67 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
     );
   }
 
+  // Calibração dos hotspots em % (Baseado na imagem 1400x1050 aprox)
+  // Painel Azul (IA): L: 14%, T: 49%, W: 35%, H: 38%
+  // Painel Vermelho (Online): L: 51%, T: 49%, W: 35%, H: 38%
+  // Config (Engrenagem): L: 3%, T: 90%, W: 7%, H: 8%
+  // Personagens: L: 38%, T: 92%, W: 24%, H: 6%
+  // Info: L: 90%, T: 90%, W: 7%, H: 8%
+
+  const Hotspot = ({ 
+    onClick, 
+    label, 
+    style 
+  }: { 
+    onClick: () => void; 
+    label: string; 
+    style: React.CSSProperties 
+  }) => (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="absolute bg-transparent border-none cursor-pointer z-20 transition-all active:scale-[0.985] hover:bg-white/5"
+      style={style}
+    />
+  );
+
   return (
     <>
       <Shell>
-        <div className="relative group flex items-center justify-center">
+        <div className="relative w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl">
+          {/* Imagem de Fundo da Interface */}
           <img
-            src={logoAsset.url}
-            alt="FTF - Face to Face"
-            className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10"
+            src="/mnt/user-uploads/ChatGPT_Image_10_de_ago._de_2026_11_58_53.png"
+            alt="FTF Face to Face Interface"
+            className="w-full h-auto block"
           />
-        </div>
-        <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
-          {/* Botão Jogar vs IA */}
-          <div className="group relative">
-            {/* Brilho externo azul */}
-            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
-            <button
-              onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
-            >
-              <img 
-                src={playIaAsset.url} 
-                alt="Jogar vs IA" 
-                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
-              />
-            </button>
-          </div>
 
-          {/* Botão Jogar on-line */}
-          <div className="group relative">
-            {/* Brilho externo vermelho */}
-            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
-            <button
-              onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
-            >
-              <img 
-                src={playOnlineAsset.url} 
-                alt="Jogar on-line" 
-                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
-              />
-            </button>
-          </div>
-        </div>
-        <div className="flex w-full max-w-lg items-center justify-between px-4">
-          <button 
+          {/* Hotspots Transparentes */}
+          <Hotspot 
+            label="Jogar contra IA"
+            onClick={() => setScreen("CHOOSE_DIFFICULTY")}
+            style={{ left: '13.5%', top: '48.5%', width: '35.5%', height: '39%' }}
+          />
+          <Hotspot 
+            label="Jogar on-line"
+            onClick={() => setScreen("ONLINE")}
+            style={{ left: '51%', top: '48.5%', width: '35.5%', height: '39%' }}
+          />
+          <Hotspot 
+            label="Configurações"
             onClick={() => setShowSettings(true)}
-            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Configurações"
-          >
-            ⚙️
-          </button>
-
-          <button
+            style={{ left: '2%', top: '89.5%', width: '8.5%', height: '9%' }}
+          />
+          <Hotspot 
+            label="Personagens"
             onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-6 py-2.5 text-[10px] font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
-          >
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
-            👤 PERSONAGENS
-          </button>
-          <button 
+            style={{ left: '38%', top: '91.5%', width: '24%', height: '7%' }}
+          />
+          <Hotspot 
+            label="Apoiar Projeto"
             onClick={() => setShowDonate(true)}
-            className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Apoiar"
-          >
-            💗
-          </button>
-
+            style={{ left: '89.5%', top: '89.5%', width: '8.5%', height: '9%' }}
+          />
         </div>
       </Shell>
 
