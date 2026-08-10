@@ -308,15 +308,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         const { declareWinner } = await import("@/lib/online.functions");
         const winnerId = isCorrect ? gameState.guestId : gameState.opponentId!;
         
-        console.log("[FTF ROUND RESULT SAVED]", {
+        console.log("[FTF FINAL GUESS SUBMITTING]", {
           roomId: gameState.roomId,
-          roundWinnerId: winnerId
+          roundWinnerId: winnerId,
+          isCorrect
         });
 
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        const result = await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        console.log("[FTF FINAL GUESS SERVER RESPONSE]", result);
         
-        // Em modo online, não atualizamos o estado local aqui.
-        // O Realtime listener cuidará de setar isGameOver: true e winner quando o banco mudar.
+        // Em modo online, confiamos no Realtime para disparar isGameOver: true
+        // Mas vamos forçar uma atualização local se o servidor confirmou, para evitar lag visual
+        setGameState(prev => ({
+          ...prev,
+          isGameOver: true,
+          winner: isCorrect ? "WINNER" : "LOSER"
+        }));
       } catch (error) {
         console.error("Erro ao declarar vencedor no palpite final:", error);
         toast.error("Erro ao processar palpite final.");
@@ -398,7 +405,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             question: newRoomData.current_question_id
           });
           
-          if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
+          if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id'] || newRoomData['winner_id']) {
             const winnerId = newRoomData['winner_id'];
             const matchWinnerId = newRoomData['match_winner_id'];
             const didIWin = winnerId === gameState.guestId;
@@ -407,7 +414,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               roomId: gameState.roomId,
               roundWinnerId: winnerId,
               myPlayerId: gameState.guestId,
-              didIWin
+              didIWin,
+              status: newRoomData['status']
             });
             
             setGameState(prev => ({
@@ -417,6 +425,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               matchWinnerId,
               rematchStatus: newRoomData['rematch_status'] || 'idle',
               rematchRequestedBy: newRoomData['rematch_requested_by'],
+              phase: "PLAYER_TURN", // Reset phase to allow buttons to show
+              pendingQuestion: undefined, // Clear any blocking question
               lastActionTime: Date.now()
             }));
           }
