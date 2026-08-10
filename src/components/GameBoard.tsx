@@ -21,6 +21,26 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
   );
   const [isPalpitando, setIsPalpitando] = useState(false);
   const [cat, setCat] = useState(CATEGORIES[1]!);
+  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+
+  // Monitor connection timeout
+  useState(() => {
+    const checkTimeout = setInterval(() => {
+      if (gameState.gameMode === "ONLINE" && !gameState.isGameOver && gameState.lastActionTime) {
+        const secondsSinceLastAction = (Date.now() - gameState.lastActionTime) / 1000;
+        // If waiting for answer or turn for more than 20 seconds, show warning
+        const isWaiting = gameState.phase === "WAITING_ANSWER" || 
+                         (gameState.currentTurn === "AI" && gameState.phase === "AI_TURN");
+        
+        if (isWaiting && secondsSinceLastAction > 20) {
+          setShowTimeoutWarning(true);
+        } else {
+          setShowTimeoutWarning(false);
+        }
+      }
+    }, 5000);
+    return () => clearInterval(checkTimeout);
+  });
 
   const myTurn = gameState.currentTurn === "PLAYER" && !gameState.isGameOver;
   const canAsk = myTurn && gameState.phase === "PLAYER_TURN";
@@ -69,6 +89,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
             Rodada {gameState.turnCount} {gameState.gameMode === "IA" ? `· IA ${difficulty}` : "· MULTIPLAYER ONLINE"}
           </div>
+          {showTimeoutWarning && (
+            <div className="absolute top-full mt-2 w-max animate-bounce rounded bg-red-500/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-lg backdrop-blur-sm">
+              ⚠️ Conexão lenta? Aguardando resposta...
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
           <span className="text-[#1e62ec]">{gameState.playerScore}</span>
