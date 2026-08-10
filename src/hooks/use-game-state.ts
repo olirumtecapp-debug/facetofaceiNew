@@ -521,12 +521,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             // Aqui precisamos de cuidado. Se lastAnswer está lá, o autor original deve ver a resposta.
             newPhase = "WAITING_ANSWER"; // Mantém em espera para ver a resposta no modal
           }
-            // Se eu perguntei e já tem resposta, mas ainda é meu turno, 
-            // significa que estou na fase de descarte/aguardando ver a resposta.
-            // No entanto, como current_question_id é null, não temos a referência direta aqui
-            // a menos que o estado local já tenha. Se for um refresh, o histórico ajudaria.
-            // Para simplificar a correção do bug principal, focamos em perguntas pendentes.
-          }
+        }, [gameState.playerSecret, gameState.aiSecret]);
 
           return {
             ...prev,
