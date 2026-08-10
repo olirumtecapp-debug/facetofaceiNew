@@ -309,10 +309,16 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         setGameState(prev => ({
           ...prev,
           isGameOver: true,
-          winner: isCorrect ? "WINNER" : "LOSER"
+          winner: isCorrect ? "WINNER" : "LOSER",
+          phase: "PLAYER_TURN"
         }));
 
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        await declareWinner({ 
+          data: { 
+            roomId: gameState.roomId || "", 
+            winnerId 
+          } 
+        });
         console.log("[FTF FINAL GUESS SERVER RESPONSE SENT]");
       } catch (error) {
         console.error("Erro ao declarar vencedor no palpite final:", error);
@@ -397,17 +403,24 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             const didIWin = winnerId === gameState.guestId;
             const matchWinnerId = newRoomData['match_winner_id'];
             
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: true,
-              winner: didIWin ? "WINNER" : "LOSER",
-              matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-              phase: "PLAYER_TURN",
-              pendingQuestion: undefined,
-              lastActionTime: Date.now()
-            }));
+            setGameState(prev => {
+              // Only update if not already set or if data changed to avoid loops
+              if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) {
+                return prev;
+              }
+              
+              return {
+                ...prev,
+                isGameOver: true,
+                winner: didIWin ? "WINNER" : "LOSER",
+                matchWinnerId,
+                rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+                rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+                phase: "PLAYER_TURN",
+                pendingQuestion: undefined,
+                lastActionTime: Date.now()
+              };
+            });
           }
 
           // Handle Rematch State Changes
