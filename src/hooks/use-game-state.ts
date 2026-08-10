@@ -310,7 +310,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           ...prev,
           isGameOver: true,
           winner: isCorrect ? "WINNER" : "LOSER",
-          phase: "PLAYER_TURN"
+          phase: "PLAYER_TURN",
+          playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
+          aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
         }));
 
         await declareWinner({ 
@@ -410,6 +412,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             // Actually, usually you want to see the secret you were trying to guess.
             
             setGameState(prev => {
+              const winnerId = newRoomData['winner_id'];
+              const didIWin = winnerId === gameState.guestId;
+              
               // Only update if not already set or if data changed to avoid loops
               if (prev.isGameOver && prev.winner === (didIWin ? "WINNER" : "LOSER")) {
                 return prev;
@@ -420,6 +425,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 isGameOver: true,
                 winner: didIWin ? "WINNER" : "LOSER",
                 matchWinnerId,
+                playerScore: didIWin ? prev.playerScore + 1 : prev.playerScore, // Optimistic update for syncing
+                aiScore: !didIWin ? prev.aiScore + 1 : prev.aiScore,
                 rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
                 rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
                 phase: "PLAYER_TURN",
@@ -456,23 +463,42 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // Handle New Round Start (Reset)
-          if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
+          if (newRoomData['status'] === "PLAYING" && (payload.old as any)?.['status'] === "FINISHED") {
             console.log("[FTF NEW ROUND STARTING]");
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: false,
-              winner: undefined,
-              rematchStatus: 'idle',
-              rematchRequestedBy: null,
-              askedQuestions: new Set(),
-              myAskedQuestions: new Set(),
-              opponentAskedQuestions: new Set(),
-              turnCount: 1,
-              history: [],
-              pendingQuestion: undefined,
-              playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
-              lastActionTime: Date.now()
-            }));
+            
+            // Fetch fresh scores from database to ensure sync
+            supabase.from('room_players')
+              .select('guest_id, score, secret_character_id')
+              .eq('room_id', gameState.roomId!)
+              .then(({data}) => {
+                if (data) {
+                  const me = data.find(p => p.guest_id === gameState.guestId);
+                  const opponent = data.find(p => p.guest_id !== gameState.guestId);
+                  
+                  const secretChar = CHARACTERS.find(c => c.id === opponent?.secret_character_id);
+                  const mySecret = CHARACTERS.find(c => c.id === me?.secret_character_id);
+
+                  setGameState(prev => ({
+                    ...prev,
+                    isGameOver: false,
+                    winner: undefined,
+                    playerScore: me?.score || 0,
+                    aiScore: opponent?.score || 0,
+                    playerSecret: mySecret || prev.playerSecret,
+                    aiSecret: secretChar || prev.aiSecret,
+                    rematchStatus: 'idle',
+                    rematchRequestedBy: null,
+                    askedQuestions: new Set(),
+                    myAskedQuestions: new Set(),
+                    opponentAskedQuestions: new Set(),
+                    turnCount: 1,
+                    history: [],
+                    pendingQuestion: undefined,
+                    playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+                    lastActionTime: Date.now()
+                  }));
+                }
+              });
           }
 
           // Handle Turn Changes
