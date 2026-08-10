@@ -613,9 +613,9 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 }
 
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
   return (
-    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient p-4 text-center text-white sm:gap-10">
+    <main className={`relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient text-center text-white sm:gap-10 ${noPadding ? "p-0" : "p-4"}`}>
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect */}
