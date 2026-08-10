@@ -293,16 +293,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       guessedCharacterId: character.id
     });
 
-    console.log("[FTF FINAL GUESS TARGET]", {
-      targetSecretCharacterId: gameState.aiSecret.id
-    });
-
-    console.log("[FTF FINAL GUESS RESULT]", {
-      guessedCharacterId: character.id,
-      targetSecretCharacterId: gameState.aiSecret.id,
-      isCorrect
-    });
-
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
         const { declareWinner } = await import("@/lib/online.functions");
@@ -314,16 +304,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           isCorrect
         });
 
-        const result = await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
-        console.log("[FTF FINAL GUESS SERVER RESPONSE]", result);
-        
-        // Em modo online, confiamos no Realtime para disparar isGameOver: true
-        // Mas vamos forçar uma atualização local se o servidor confirmou, para evitar lag visual
+        // Force local state update to avoid waiting for Realtime latency
         setGameState(prev => ({
           ...prev,
           isGameOver: true,
           winner: isCorrect ? "WINNER" : "LOSER"
         }));
+
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        console.log("[FTF FINAL GUESS SERVER RESPONSE SENT]");
       } catch (error) {
         console.error("Erro ao declarar vencedor no palpite final:", error);
         toast.error("Erro ao processar palpite final.");
@@ -376,11 +365,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   useEffect(() => {
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
-      console.log("[FTF REALTIME] Realtime disabled for mode:", gameState.gameMode);
-      setGameState(prev => ({ 
-        ...prev, 
-        pendingQuestion: prev.gameMode === "IA" ? prev.pendingQuestion : undefined 
-      }));
       return;
     }
 
@@ -402,35 +386,30 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           console.log("[FTF REALTIME EVENT]", {
             eventType: payload.eventType,
             status: newRoomData.status,
-            question: newRoomData.current_question_id
+            winner_id: newRoomData.winner_id,
+            rematch_status: newRoomData.rematch_status
           });
           
-          if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id'] || newRoomData['winner_id']) {
+          // Handle Round End
+          if (newRoomData['status'] === "FINISHED" || newRoomData['winner_id']) {
             const winnerId = newRoomData['winner_id'];
-            const matchWinnerId = newRoomData['match_winner_id'];
             const didIWin = winnerId === gameState.guestId;
-            
-            console.log("[FTF ROUND RESULT RECEIVED]", {
-              roomId: gameState.roomId,
-              roundWinnerId: winnerId,
-              myPlayerId: gameState.guestId,
-              didIWin,
-              status: newRoomData['status']
-            });
+            const matchWinnerId = newRoomData['match_winner_id'];
             
             setGameState(prev => ({
               ...prev,
               isGameOver: true,
-              winner: didIWin ? "WINNER" : (winnerId ? "LOSER" : undefined),
+              winner: didIWin ? "WINNER" : "LOSER",
               matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'] || 'idle',
-              rematchRequestedBy: newRoomData['rematch_requested_by'],
-              phase: "PLAYER_TURN", // Reset phase to allow buttons to show
-              pendingQuestion: undefined, // Clear any blocking question
+              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+              phase: "PLAYER_TURN",
+              pendingQuestion: undefined,
               lastActionTime: Date.now()
             }));
           }
 
+          // Handle Rematch State Changes
           if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
             setGameState(prev => ({
               ...prev,
@@ -439,7 +418,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
+          // Handle New Round Start (Reset)
           if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
+            console.log("[FTF NEW ROUND STARTING]");
             setGameState(prev => ({
               ...prev,
               isGameOver: false,
@@ -457,6 +438,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
+          // Handle Turn Changes
           if (newRoomData['current_turn_player_id'] && newRoomData['status'] === "PLAYING") {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => {
