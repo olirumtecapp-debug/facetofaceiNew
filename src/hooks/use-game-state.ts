@@ -355,15 +355,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           // 2. Received Question (Opponent sent a question, so I must respond)
           if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
-            // Only set to RESPONDING if we don't already have this question pending 
-            // or if we are not already in RESPONDING phase for a different reason.
-            if (question && (!gameState.pendingQuestion || gameState.pendingQuestion.question.id !== question.id)) {
-              setGameState(prev => ({
-                ...prev,
-                phase: "PLAYER_RESPONDING",
-                pendingQuestion: { question, type: "AI" },
-                lastActionTime: Date.now()
-              }));
+            
+            if (question) {
+              console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
+              setGameState(prev => {
+                // Se já estivermos respondendo ESTA pergunta, não faz nada
+                if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+                  return prev;
+                }
+                
+                return {
+                  ...prev,
+                  phase: "PLAYER_RESPONDING",
+                  pendingQuestion: { question, type: "AI" },
+                  lastActionTime: Date.now()
+                };
+              });
             }
           }
 
