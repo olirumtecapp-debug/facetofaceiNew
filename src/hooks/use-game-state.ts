@@ -470,40 +470,57 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         
         if (error || !roomData) return;
 
+        const players = roomData.room_players || [];
+        const opponent = players.find((p: any) => p.guest_id !== gameState.guestId);
+        const me = players.find((p: any) => p.guest_id === gameState.guestId);
+
         const isMyTurn = roomData.current_turn_player_id === gameState.guestId;
-        const opponent = roomData.room_players?.find((p: any) => p.guest_id !== gameState.guestId);
+        const currentQuestionId = roomData.current_question_id;
+        const lastAnswer = roomData.last_answer;
+        const askerId = roomData.question_asked_by;
+
+        let mySecret = gameState.playerSecret;
+        let oppSecret = gameState.aiSecret;
+
+        if (me && me.secret_character_id) {
+          const char = CHARACTERS.find(c => c.id === me.secret_character_id);
+          if (char) mySecret = char;
+        }
+
+        if (opponent && opponent.secret_character_id) {
+          const char = CHARACTERS.find(c => c.id === opponent.secret_character_id);
+          if (char) oppSecret = char;
+        }
         
         setGameState(prev => {
-          let newPhase = prev.phase;
-          let pendingQuestion = prev.pendingQuestion;
+          let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+          let pendingQuestion = undefined;
 
-          // Recupera pergunta se houver
-          if (roomData.current_question_id) {
-            const askerId = roomData.question_asked_by;
-            const question = QUESTIONS.find(q => q.id === roomData.current_question_id);
+          if (currentQuestionId) {
+            const question = QUESTIONS.find(q => q.id === currentQuestionId);
             if (question) {
               if (askerId === gameState.guestId) {
                 newPhase = "WAITING_ANSWER";
-                pendingQuestion = { question, type: "PLAYER" };
+                pendingQuestion = { question, type: "PLAYER" as const };
               } else {
                 newPhase = "PLAYER_RESPONDING";
-                pendingQuestion = { question, type: "AI" };
+                pendingQuestion = { question, type: "AI" as const };
               }
             }
-          } 
-          // Recupera resposta se houver e eu fui o autor
-          else if (roomData.last_answer && roomData.question_asked_by === gameState.guestId) {
-            const question = QUESTIONS.find(q => q.id === roomData.current_question_id); // Note: current_question_id is null here, need history or previous state
-            // Se já tínhamos a pergunta no estado local, atualizamos com a resposta
-            if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER") {
-              pendingQuestion = { ...prev.pendingQuestion, revealedAnswer: roomData.last_answer as "SIM" | "NÃO" };
-            }
+          } else if (lastAnswer && askerId === gameState.guestId) {
+            // Se eu perguntei e já tem resposta, mas ainda é meu turno, 
+            // significa que estou na fase de descarte/aguardando ver a resposta.
+            // No entanto, como current_question_id é null, não temos a referência direta aqui
+            // a menos que o estado local já tenha. Se for um refresh, o histórico ajudaria.
+            // Para simplificar a correção do bug principal, focamos em perguntas pendentes.
           }
 
           return {
             ...prev,
+            playerSecret: mySecret,
+            aiSecret: oppSecret,
             opponentId: opponent?.guest_id,
-            opponentName: opponent?.name,
+            opponentName: opponent?.name || undefined,
             currentTurn: isMyTurn ? "PLAYER" : "AI",
             phase: newPhase,
             pendingQuestion,
@@ -514,76 +531,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       syncRoom();
     }
   }, [gameState.roomCode, gameState.guestId]);
-        if (!rooms) return;
-
-        const { data: players } = await supabase
-          .from("room_players")
-          .select("guest_id, secret_character_id, name")
-          .eq("room_id", rooms.id);
-        
-        const opponent = players?.find(p => p.guest_id !== gameState.guestId);
-        const me = players?.find(p => p.guest_id === gameState.guestId);
-
-        if (opponent) {
-          const oppSecret = opponent.secret_character_id ? CHARACTERS.find(c => c.id === opponent.secret_character_id) : undefined;
-          setGameState(prev => ({ 
-            ...prev, 
-            opponentId: opponent.guest_id,
-            opponentName: opponent.name || undefined,
-            aiSecret: oppSecret || prev.aiSecret 
-          }));
-        }
-
-        if (me && me.secret_character_id) {
-          const mySecret = CHARACTERS.find(c => c.id === me.secret_character_id);
-          if (mySecret) {
-            setGameState(prev => ({ ...prev, playerSecret: mySecret }));
-          }
-        }
-
-        // Fetch current room state to determine turn and pending question
-        const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
-        if (room) {
-          const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
-          const currentQuestionId = room['current_question_id'];
-          const lastAnswer = room['last_answer'];
-          
-          setGameState(prev => {
-            let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
-            let pendingQuestion = undefined;
-
-            if (currentQuestionId) {
-              const question = QUESTIONS.find(q => q.id === currentQuestionId);
-              if (question) {
-                if (isMyTurn) {
-                  // I asked, but didn't get answer yet
-                  if (!lastAnswer) {
-                    newPhase = "WAITING_ANSWER";
-                    pendingQuestion = { question, type: "PLAYER" as const };
-                  }
-                } else {
-                  // Opponent asked, I must respond
-                  if (!lastAnswer) {
-                    newPhase = "PLAYER_RESPONDING";
-                    pendingQuestion = { question, type: "AI" as const };
-                  }
-                }
-              }
-            }
-
-            return { 
-              ...prev, 
-              currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: newPhase,
-              pendingQuestion,
-              lastActionTime: Date.now()
-            };
-          });
-        }
-      };
-      syncRoom();
-    }
-  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
 
   // AI Logic Effect
   useEffect(() => {
