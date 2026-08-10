@@ -132,6 +132,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
+        console.log("Multiplayer: Enviando pergunta para a sala", gameState.roomCode);
         const { error } = await supabase
           .from("rooms")
           .update({ 
@@ -142,21 +143,31 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .eq("code", gameState.roomCode);
         
         if (error) {
+          console.error("Multiplayer Error:", error);
           toast.error("Erro ao enviar pergunta.");
           return;
         }
+
+        setGameState(prev => ({
+          ...prev,
+          phase: "WAITING_ANSWER",
+          pendingQuestion: { question, type: "PLAYER" },
+          lastActionTime: Date.now()
+        }));
       } catch (err) {
+        console.error("Multiplayer Catch Error:", err);
         toast.error("Erro de conexão ao enviar pergunta.");
         return;
       }
+    } else {
+      setGameState((prev) => ({
+        ...prev,
+        phase: "WAITING_ANSWER",
+        pendingQuestion: { question, type: "PLAYER" },
+        askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        lastActionTime: Date.now()
+      }));
     }
-
-    setGameState((prev) => ({
-      ...prev,
-      phase: "WAITING_ANSWER",
-      pendingQuestion: { question, type: "PLAYER" },
-      lastActionTime: Date.now()
-    }));
   };
 
   const revealAIAnswer = () => {
