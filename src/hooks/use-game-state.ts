@@ -392,13 +392,25 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (gameState.gameMode !== "ONLINE") return;
 
           const newRoomData = payload.new as any;
+          const oldRoomData = payload.old as any;
           console.log("[FTF REALTIME EVENT]", {
-            eventType: payload.eventType,
             status: newRoomData.status,
             winner_id: newRoomData.winner_id,
             rematch_status: newRoomData.rematch_status
           });
           
+          // Handle Abandonment (VOLTAR MENU)
+          if (newRoomData.status === "ABANDONED") {
+            setGameState(prev => ({
+              ...prev,
+              isGameOver: true,
+              winner: "ABANDONED" as any,
+              lastActionTime: Date.now()
+            }));
+            toast.error("Ops, parece que alguém desistiu da luta 👻");
+            return;
+          }
+
           // Handle Round End - AUTHORITATIVE SYNC
           const winnerId = newRoomData['winner_id'];
           const status = newRoomData['status'];
@@ -407,8 +419,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             const didIWin = winnerId === gameState.guestId;
             const matchWinnerId = newRoomData['match_winner_id'];
             
-            console.log("[FTF GAME OVER SYNC] Triggered", { didIWin, winnerId, status });
-
             // Force immediate Game Over state
             setGameState(prev => ({
               ...prev,
@@ -422,7 +432,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               lastActionTime: Date.now()
             }));
 
-            // Fetch opponent secret character and latest scores to ensure UI parity
+            // Fetch opponent secret character and latest scores
             if (gameState.roomId) {
               supabase.from('room_players')
                 .select('guest_id, score, secret_character_id')
@@ -439,9 +449,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                           ...prev, 
                           aiSecret: secretChar,
                           playerScore: me?.score ?? prev.playerScore,
-                          aiScore: opponent?.score ?? prev.aiScore,
-                          isGameOver: true, // Re-confirm
-                          winner: winnerId === gameState.guestId ? "WINNER" : "LOSER"
+                          aiScore: opponent?.score ?? prev.aiScore
                         }));
                       }
                     }
@@ -452,11 +460,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
           // Handle Rematch State Changes
           if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
+            const oldStatus = oldRoomData?.rematch_status;
+            const newStatus = newRoomData['rematch_status'];
+            
             setGameState(prev => ({
               ...prev,
-              rematchStatus: newRoomData['rematch_status'],
+              rematchStatus: newStatus,
               rematchRequestedBy: newRoomData['rematch_requested_by']
             }));
+
+            if (newStatus === 'requested' && oldStatus !== 'requested') {
+              if (newRoomData['rematch_requested_by'] !== gameState.guestId) {
+                toast.info("REVANCHE SOLICITADA!");
+              }
+            } else if (newStatus === 'declined' && oldStatus !== 'declined') {
+              toast.info("Ah, desistiu? Campeão precisa descansar mesmo 😏");
+            }
           }
 
           // Handle New Round Start (Reset)
