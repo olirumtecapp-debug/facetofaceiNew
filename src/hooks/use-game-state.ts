@@ -100,17 +100,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       
       // Sync turn to database if online
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
-        // Correct logic: if PLAYER turn ends, set turn to opponent.
-        // If opponent (represented as AI in state) turn ends, set turn to PLAYER.
+        // Se o turno do PLAYER acaba, o turno vai para o adversário (representado como AI no state).
+        // Se o turno do adversário (AI no state) acaba, o turno vai para o PLAYER.
         const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
         
-        console.log("Multiplayer: Trocando turno para", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
+        console.log("[FTF TURN] changing to:", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
 
         supabase
           .from("rooms")
           .update({ 
             current_turn_player_id: nextPlayerId as any,
-            last_answer: null as any, // Limpa a última resposta ao iniciar novo turno
+            last_answer: null as any,
+            current_question_id: null as any, // Garante limpeza total
+            question_asked_by: null as any,
             last_action_timestamp: new Date().toISOString()
           })
           .eq("code", prev.roomCode)
