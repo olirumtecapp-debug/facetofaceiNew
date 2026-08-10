@@ -423,7 +423,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
         <div className="relative w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl">
           {/* Imagem de Fundo da Interface */}
           <img
-            src="/mnt/user-uploads/ChatGPT_Image_10_de_ago._de_2026_11_58_53.png"
+            src={homeImageAsset.url}
             alt="FTF Face to Face Interface"
             className="w-full h-auto block"
           />
