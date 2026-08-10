@@ -344,6 +344,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
                   newPhase = "PLAYER_TURN";
                 }
+                
+                // Se eu recebi a resposta (last_answer) e o turno mudou para mim,
+                // significa que o adversário respondeu e passou a vez (ou o sistema passou).
+                if (newRoomData['last_answer'] === null && prev.pendingQuestion?.revealedAnswer) {
+                   newPhase = "PLAYER_TURN";
+                }
               } else {
                 // Se não for minha vez, e eu não tiver uma pergunta pendente para responder,
                 // estou no turno da "IA" (adversário).
