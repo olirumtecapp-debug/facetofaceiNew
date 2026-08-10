@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getPublicSupabase } from "./online.server";
+import { CHARACTERS } from "@/data/characters";
 
 export const createRoom = createServerFn({ method: "POST" })
   .inputValidator((data: { guestId: string; playerName: string }) => 
@@ -17,7 +18,8 @@ export const createRoom = createServerFn({ method: "POST" })
         code, 
         status: "WAITING",
         host_id: data.guestId,
-        current_turn_player_id: data.guestId
+        current_turn_player_id: data.guestId,
+        rematch_status: 'idle'
       })
       .select()
       .single();
@@ -31,7 +33,8 @@ export const createRoom = createServerFn({ method: "POST" })
         color: "AZUL", 
         is_ready: false,
         guest_id: data.guestId,
-        name: data.playerName
+        name: data.playerName,
+        score: 0
       });
 
     if (playerError) throw playerError;
@@ -71,7 +74,8 @@ export const joinRoom = createServerFn({ method: "POST" })
           color: "VERMELHO", 
           is_ready: false,
           guest_id: data.guestId,
-          name: data.playerName
+          name: data.playerName,
+          score: 0
         });
       if (playerError) throw playerError;
     } else {
@@ -131,10 +135,153 @@ export const startGame = createServerFn({ method: "POST" })
 
     const { error } = await supabase
       .from("rooms")
-      .update({ status: "PLAYING" })
+      .update({ 
+        status: "PLAYING",
+        winner_id: null as any,
+        rematch_status: 'idle',
+        rematch_requested_by: null as any,
+        current_question_id: null as any,
+        last_answer: null as any,
+        question_asked_by: null as any
+      })
       .eq("id", data.roomId)
       .eq("host_id", data.guestId);
       
     if (error) throw error;
+    return { success: true };
+  });
+
+export const declareWinner = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; winnerId: string }) => 
+    z.object({ roomId: z.string(), winnerId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const supabase = getPublicSupabase();
+
+    // 1. Update winner of the round in the room
+    const { error: roomUpdateError } = await supabase
+      .from("rooms")
+      .update({ 
+        winner_id: data.winnerId as any,
+        status: "FINISHED",
+        last_action_timestamp: new Date().toISOString()
+      })
+      .eq("id", data.roomId);
+    
+    if (roomUpdateError) throw roomUpdateError;
+
+    // 2. Increment score for the winner
+    const { data: player, error: playerError } = await supabase
+      .from("room_players")
+      .select("score")
+      .eq("room_id", data.roomId)
+      .eq("guest_id", data.winnerId)
+      .single();
+
+    if (playerError) throw playerError;
+
+    const newScore = (player.score || 0) + 1;
+    const { error: scoreError } = await supabase
+      .from("room_players")
+      .update({ score: newScore })
+      .eq("room_id", data.roomId)
+      .eq("guest_id", data.winnerId);
+    
+    if (scoreError) throw scoreError;
+
+    // 3. Check if overall match winner (Best of 5 -> 3 wins)
+    if (newScore >= 3) {
+      await supabase
+        .from("rooms")
+        .update({ match_winner_id: data.winnerId as any })
+        .eq("id", data.roomId);
+    }
+
+    return { success: true, newScore };
+  });
+
+export const requestRematch = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string }) => 
+    z.object({ roomId: z.string(), guestId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const supabase = getPublicSupabase();
+    const { error } = await supabase
+      .from("rooms")
+      .update({ 
+        rematch_requested_by: data.guestId as any,
+        rematch_status: 'requested'
+      })
+      .eq("id", data.roomId);
+    
+    if (error) throw error;
+    return { success: true };
+  });
+
+export const handleRematchResponse = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string; accept: boolean }) => 
+    z.object({ roomId: z.string(), guestId: z.string(), accept: z.boolean() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const supabase = getPublicSupabase();
+
+    if (data.accept) {
+      // Reset room for new round
+      const CHAR_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
+      
+      const { data: players } = await supabase
+        .from("room_players")
+        .select("guest_id, secret_character_id")
+        .eq("room_id", data.roomId);
+
+      if (players) {
+        for (const player of players) {
+          let randomId;
+          do {
+            randomId = CHAR_IDS[Math.floor(Math.random() * CHAR_IDS.length)]!;
+          } while (randomId === player.secret_character_id); // Avoid immediate repeat
+
+          await supabase
+            .from("room_players")
+            .update({ secret_character_id: randomId })
+            .eq("room_id", data.roomId)
+            .eq("guest_id", player.guest_id);
+        }
+      }
+
+      // Identify who lost the last round to start the next
+      const { data: room } = await supabase
+        .from("rooms")
+        .select("winner_id")
+        .eq("id", data.roomId)
+        .single();
+      
+      const lastWinnerId = room?.winner_id;
+      const nextStarter = players?.find(p => p.guest_id !== lastWinnerId)?.guest_id || data.guestId;
+
+      const { error } = await supabase
+        .from("rooms")
+        .update({ 
+          status: "PLAYING",
+          winner_id: null as any,
+          rematch_status: 'accepted',
+          rematch_requested_by: null as any,
+          current_question_id: null as any,
+          last_answer: null as any,
+          question_asked_by: null as any,
+          current_turn_player_id: nextStarter as any,
+          last_action_timestamp: new Date().toISOString()
+        })
+        .eq("id", data.roomId);
+      
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from("rooms")
+        .update({ rematch_status: 'declined' })
+        .eq("id", data.roomId);
+      if (error) throw error;
+    }
+
     return { success: true };
   });
