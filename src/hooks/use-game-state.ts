@@ -363,7 +363,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
         (payload) => {
-          // STRICT GUARD: If mode changed to IA, ignore all background room updates
           if (gameState.gameMode !== "ONLINE") return;
 
           const newRoomData = payload.new as any;
@@ -480,7 +479,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             const askerId = newRoomData['question_asked_by'];
-            // If the opponent answered MY question
             const isMyQuestionResponse = askerId && askerId !== gameState.guestId;
 
             if (isMyQuestionResponse) {
@@ -504,11 +502,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
         }
       )
-      .subscribe((status) => {
-        console.log("[FTF REALTIME STATUS]", status);
-      });
+      .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomCode}` },
+        { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomId}` },
         (payload) => {
           const updatedPlayer = payload.new as any;
           if (updatedPlayer.guest_id === gameState.guestId) {
@@ -524,10 +520,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[FTF REALTIME STATUS]", status);
+      });
 
     return () => { supabase.removeChannel(channel); };
-  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
+  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId]);
 
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
