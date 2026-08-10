@@ -254,7 +254,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       if (roomData['current_turn_player_id'] && status === "PLAYING") {
         const isMyTurn = roomData['current_turn_player_id'] === gameState.guestId;
         setGameState(prev => {
+          // SE O JOGO JÁ ACABOU LOCALMENTE, NÃO ATUALIZAR TURNO OU FASE PARA "PLAYING"
           if (prev.isGameOver) return prev;
+          
           let newPhase = prev.phase;
           if (isMyTurn) { if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") newPhase = "PLAYER_TURN"; }
           else if (prev.phase !== "PLAYER_RESPONDING") newPhase = "AI_TURN"; 
