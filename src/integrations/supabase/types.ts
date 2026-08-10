@@ -14,63 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      games: {
-        Row: {
-          createdAt: string | null
-          currentAnswer: string | null
-          currentQuestion: string | null
-          currentTurn: string | null
-          gameCode: string
-          gameHistory: Json | null
-          gameStatus: string | null
-          id: string
-          player1Characters: Json | null
-          player1Id: string | null
-          player1Name: string | null
-          player2Characters: Json | null
-          player2Id: string | null
-          player2Name: string | null
-          questionAskedBy: string | null
-          updatedAt: string | null
-        }
-        Insert: {
-          createdAt?: string | null
-          currentAnswer?: string | null
-          currentQuestion?: string | null
-          currentTurn?: string | null
-          gameCode: string
-          gameHistory?: Json | null
-          gameStatus?: string | null
-          id?: string
-          player1Characters?: Json | null
-          player1Id?: string | null
-          player1Name?: string | null
-          player2Characters?: Json | null
-          player2Id?: string | null
-          player2Name?: string | null
-          questionAskedBy?: string | null
-          updatedAt?: string | null
-        }
-        Update: {
-          createdAt?: string | null
-          currentAnswer?: string | null
-          currentQuestion?: string | null
-          currentTurn?: string | null
-          gameCode?: string
-          gameHistory?: Json | null
-          gameStatus?: string | null
-          id?: string
-          player1Characters?: Json | null
-          player1Id?: string | null
-          player1Name?: string | null
-          player2Characters?: Json | null
-          player2Id?: string | null
-          player2Name?: string | null
-          questionAskedBy?: string | null
-          updatedAt?: string | null
-        }
-        Relationships: []
-      }
       room_players: {
         Row: {
           color: string
@@ -119,55 +62,37 @@ export type Database = {
         Row: {
           code: string
           created_at: string | null
-          current_question: string | null
           current_question_id: string | null
           current_turn_player_id: string | null
-          game_history: Json | null
           host_id: string | null
           id: string
           last_action_timestamp: string | null
           last_answer: string | null
-          player1_characters: Json | null
-          player2_characters: Json | null
-          question_asked_by: string | null
           status: string
-          updated_at: string | null
           winner_id: string | null
         }
         Insert: {
           code: string
           created_at?: string | null
-          current_question?: string | null
           current_question_id?: string | null
           current_turn_player_id?: string | null
-          game_history?: Json | null
           host_id?: string | null
           id?: string
           last_action_timestamp?: string | null
           last_answer?: string | null
-          player1_characters?: Json | null
-          player2_characters?: Json | null
-          question_asked_by?: string | null
           status: string
-          updated_at?: string | null
           winner_id?: string | null
         }
         Update: {
           code?: string
           created_at?: string | null
-          current_question?: string | null
           current_question_id?: string | null
           current_turn_player_id?: string | null
-          game_history?: Json | null
           host_id?: string | null
           id?: string
           last_action_timestamp?: string | null
           last_answer?: string | null
-          player1_characters?: Json | null
-          player2_characters?: Json | null
-          question_asked_by?: string | null
           status?: string
-          updated_at?: string | null
           winner_id?: string | null
         }
         Relationships: []
