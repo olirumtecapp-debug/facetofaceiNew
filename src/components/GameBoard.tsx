@@ -352,13 +352,19 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       </div>
                     </div>
                   ) : (
-                    <p className="font-bold text-gray-400 italic">Aguardando solicitação de revanche de {gameState.opponentName}...</p>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 w-full">
+                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest animate-pulse">
+                        Aguardando pedido de revanche de {gameState.opponentName || "adversário"}...
+                      </p>
+                    </div>
                   )
                 )}
                 {gameState.rematchStatus === "declined" && (
-                  <p className="mt-4 font-bold text-red-400 uppercase tracking-widest animate-in fade-in zoom-in-95">
-                    {gameState.opponentName} RECUSOU A REVANCHE.
-                  </p>
+                  <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 p-4 w-full animate-in fade-in zoom-in-95">
+                    <p className="font-bold text-red-400 uppercase tracking-widest">
+                      {gameState.opponentName || "O adversário"} RECUSOU A REVANCHE.
+                    </p>
+                  </div>
                 )}
               </div>
             )}
