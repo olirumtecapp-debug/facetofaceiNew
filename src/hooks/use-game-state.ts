@@ -164,9 +164,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       try {
         const { declareWinner } = await import("@/lib/online.functions");
         const winnerId = isCorrect ? gameState.guestId : gameState.opponentId!;
-        setGameState(prev => ({ ...prev, isGameOver: true, winner: isCorrect ? "WINNER" : "LOSER", phase: "PLAYER_TURN", playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore, aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1 }));
+        
+        // No modo ONLINE, aguardamos a resposta do servidor para ter CERTEZA do placar e status
+        // mas setamos o winner local para feedback imediato
+        setGameState(prev => ({ 
+          ...prev, 
+          isGameOver: true, 
+          winner: isCorrect ? "WINNER" : "LOSER"
+        }));
+
         await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
-      } catch (error) { toast.error("Erro ao processar palpite final."); }
+        
+        // Após o declareWinner, o polling ou Realtime vai atualizar o restante (placar, aiSecret)
+      } catch (error) { 
+        toast.error("Erro ao processar palpite final."); 
+        setGameState(prev => ({ ...prev, isGameOver: false })); // Reverter se der erro
+      }
       return;
     }
     setGameState((prev) => ({ ...prev, isGameOver: true, winner: isCorrect ? "PLAYER" : "AI", playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore, aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1 }));
