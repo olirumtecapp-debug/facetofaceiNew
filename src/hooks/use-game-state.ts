@@ -285,17 +285,43 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   const playerPalpite = async (character: Character) => {
     const isCorrect = character.id === gameState.aiSecret.id;
     
+    console.log("[FTF FINAL GUESS CLICK]", {
+      gameMode: gameState.gameMode,
+      roomId: gameState.roomId,
+      playerId: gameState.guestId,
+      opponentId: gameState.opponentId,
+      guessedCharacterId: character.id
+    });
+
+    console.log("[FTF FINAL GUESS TARGET]", {
+      targetSecretCharacterId: gameState.aiSecret.id
+    });
+
+    console.log("[FTF FINAL GUESS RESULT]", {
+      guessedCharacterId: character.id,
+      targetSecretCharacterId: gameState.aiSecret.id,
+      isCorrect
+    });
+
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      if (isCorrect) {
-        // We only notify the server if WE win by guessing
+      try {
         const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.guestId } });
-      } else {
-        // If we guess wrong, the opponent wins
-        const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.opponentId! } });
+        const winnerId = isCorrect ? gameState.guestId : gameState.opponentId!;
+        
+        console.log("[FTF ROUND RESULT SAVED]", {
+          roomId: gameState.roomId,
+          roundWinnerId: winnerId
+        });
+
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
+        
+        // Em modo online, não atualizamos o estado local aqui.
+        // O Realtime listener cuidará de setar isGameOver: true e winner quando o banco mudar.
+      } catch (error) {
+        console.error("Erro ao declarar vencedor no palpite final:", error);
+        toast.error("Erro ao processar palpite final.");
       }
-      return; // Realtime will handle the state update
+      return;
     }
 
     setGameState((prev) => ({
@@ -375,11 +401,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
             const winnerId = newRoomData['winner_id'];
             const matchWinnerId = newRoomData['match_winner_id'];
+            const didIWin = winnerId === gameState.guestId;
+            
+            console.log("[FTF ROUND RESULT RECEIVED]", {
+              roomId: gameState.roomId,
+              roundWinnerId: winnerId,
+              myPlayerId: gameState.guestId,
+              didIWin
+            });
             
             setGameState(prev => ({
               ...prev,
               isGameOver: true,
-              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : undefined),
+              winner: didIWin ? "WINNER" : (winnerId ? "LOSER" : undefined),
               matchWinnerId,
               rematchStatus: newRoomData['rematch_status'] || 'idle',
               rematchRequestedBy: newRoomData['rematch_requested_by'],
