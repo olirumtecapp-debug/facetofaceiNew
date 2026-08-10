@@ -280,7 +280,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
       {/* Game over */}
       {gameState.isGameOver && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-6 backdrop-blur-xl">
-          <div className="text-center max-w-lg w-full">
+          <div className="text-center max-w-lg w-full animate-in fade-in zoom-in duration-300">
             {gameState.winner === ("ABANDONED" as any) ? (
               <div className="flex flex-col items-center">
                 <div className="mb-6 text-6xl">👻</div>
@@ -304,19 +304,31 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                 
                 <h2
                   className={`mb-4 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${
-                    gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
+                    gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
                   }`}
                 >
                   {gameState.matchWinnerId 
                     ? (gameState.matchWinnerId === gameState.guestId ? "VOCÊ VENCEU O CONFRONTO!" : "VOCÊ PERDEU O CONFRONTO")
-                    : (gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : `VOCÊ PERDEU! [${gameState.opponentName || "ADVERSÁRIO"}]`)
+                    : (gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!")
                   }
                 </h2>
 
+                {gameState.winner === "LOSER" && !gameState.matchWinnerId && (
+                  <p className="mb-6 text-sm font-bold text-gray-400 uppercase tracking-widest">
+                    O personagem era: <span className="text-white">{gameState.aiSecret.nome}</span>
+                  </p>
+                )}
+
                 <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black text-white">
-                  <span className="text-[#1e62ec] truncate max-w-[150px]">{gameState.playerColor === "AZUL" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.playerScore}</span>
-                  <span className="text-gray-500">×</span>
-                  <span className="text-[#e52e2e] truncate max-w-[150px]">{gameState.playerColor === "VERMELHO" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.aiScore}</span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase text-gray-500">{gameState.playerName || "VOCÊ"}</span>
+                    <span className="text-[#1e62ec] drop-shadow-[0_0_10px_rgba(30,98,236,0.3)]">{gameState.playerScore}</span>
+                  </div>
+                  <span className="text-gray-500 mt-4">×</span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] uppercase text-gray-500">{gameState.opponentName || "OPONENTE"}</span>
+                    <span className="text-[#e52e2e] drop-shadow-[0_0_10px_rgba(229,46,46,0.3)]">{gameState.aiScore}</span>
+                  </div>
                 </div>
 
                 <div className="mb-6 flex flex-col items-center gap-3">
