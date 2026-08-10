@@ -31,7 +31,10 @@ export type GameState = {
   turnCount: number;
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
-  winner?: "PLAYER" | "AI" | undefined;
+  winner?: "PLAYER" | "AI" | "WINNER" | "LOSER" | undefined;
+  matchWinnerId?: string | null;
+  rematchStatus?: 'idle' | 'requested' | 'accepted' | 'declined';
+  rematchRequestedBy?: string | null;
   pendingQuestion?: { question: Question; type: "PLAYER" | "AI" | "AI_PALPITE"; revealedAnswer?: "SIM" | "NÃO" } | undefined;
   askedQuestions: Set<string>;
   myAskedQuestions: Set<string>;
