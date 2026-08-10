@@ -275,22 +275,98 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
       {/* Game over */}
       {gameState.isGameOver && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md">
-          <div className="text-center">
+          <div className="text-center max-w-lg">
+            {gameState.matchWinnerId && (
+              <div className="mb-6 animate-bounce text-2xl font-black text-yellow-400 sm:text-4xl drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
+                🏆 CONFRONTO ENCERRADO! 🏆
+              </div>
+            )}
+            
             <h2
-              className={`mb-4 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${gameState.winner === "PLAYER" ? "text-green-500" : "text-[#e52e2e]"}`}
+              className={`mb-2 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${
+                gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
+              }`}
             >
-              {gameState.winner === "PLAYER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!"}
+              {gameState.matchWinnerId 
+                ? (gameState.matchWinnerId === gameState.guestId ? "VOCÊ VENCEU O CONFRONTO!" : "VOCÊ PERDEU O CONFRONTO")
+                : (gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!")
+              }
             </h2>
+
+            <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black">
+              <span className="text-[#1e62ec]">{gameState.playerColor === "AZUL" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.playerScore}</span>
+              <span className="text-gray-500">×</span>
+              <span className="text-[#e52e2e]">{gameState.playerColor === "VERMELHO" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.aiScore}</span>
+            </div>
+
             <p className="mb-8 text-lg text-gray-300">
               O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
             </p>
+
+            {gameState.gameMode === "ONLINE" && !gameState.matchWinnerId && (
+              <div className="mb-8">
+                {gameState.winner === "LOSER" ? (
+                  gameState.rematchStatus === "requested" ? (
+                    <p className="animate-pulse font-bold text-yellow-400">Aguardando resposta de {gameState.opponentName}...</p>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        const { requestRematch } = await import("@/lib/online.functions");
+                        await requestRematch({ data: { roomId: (gameState as any).roomId || "", guestId: gameState.guestId } });
+                      }}
+                      className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
+                    >
+                      PEDIR REVANCHE
+                    </button>
+                  )
+                ) : (
+                  gameState.rematchStatus === "requested" ? (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                      <p className="mb-4 text-lg font-black uppercase tracking-widest text-yellow-400">
+                        {gameState.opponentName} QUER UMA REVANCHE. VOCÊ ACEITA?
+                      </p>
+                      <div className="flex gap-4">
+                        <button
+                          onClick={async () => {
+                            const { handleRematchResponse } = await import("@/lib/online.functions");
+                            await handleRematchResponse({ data: { roomId: (gameState as any).roomId || "", guestId: gameState.guestId, accept: true } });
+                          }}
+                          className="flex-1 rounded-lg bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
+                        >
+                          ACEITAR
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const { handleRematchResponse } = await import("@/lib/online.functions");
+                            await handleRematchResponse({ data: { roomId: (gameState as any).roomId || "", guestId: gameState.guestId, accept: false } });
+                          }}
+                          className="flex-1 rounded-lg bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
+                        >
+                          RECUSAR
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="font-bold text-gray-400 italic">Aguardando solicitação de revanche de {gameState.opponentName}...</p>
+                  )
+                )}
+                {gameState.rematchStatus === "declined" && (
+                  <p className="mt-4 font-bold text-red-400 uppercase tracking-widest animate-in fade-in zoom-in-95">
+                    {gameState.opponentName} RECUSOU A REVANCHE.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
-              <button
-                onClick={rematch}
-                className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
-              >
-                REVANCHE
-              </button>
+              {gameState.gameMode !== "ONLINE" && (
+                <button
+                  onClick={rematch}
+                  className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
+                >
+                  REVANCHE
+                </button>
+              )}
               <button
                 onClick={onBack}
                 className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
