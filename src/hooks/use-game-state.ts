@@ -341,6 +341,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
         (payload) => {
+          if (gameState.gameMode !== "ONLINE") {
+            console.warn("[FTF REALTIME] Received update while not in ONLINE mode. Ignoring.");
+            return;
+          }
           const newRoomData = payload.new as any;
           
           // 1. Sync Turn
