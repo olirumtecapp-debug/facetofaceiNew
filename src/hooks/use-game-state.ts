@@ -515,7 +515,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
                 pendingQuestion = { question, type: "AI" as const };
               }
             }
-          } else if (lastAnswer && askerId === gameState.guestId) {
+          } else if (lastAnswer && askerId !== gameState.guestId) {
+            // Se o adversário respondeu (askerId é o guestId de quem respondeu, ou seja, NOT ME)
+            // e eu sou o autor da pergunta original (que no fluxo anterior estávamos invertendo)
+            // Aqui precisamos de cuidado. Se lastAnswer está lá, o autor original deve ver a resposta.
+            newPhase = "WAITING_ANSWER"; // Mantém em espera para ver a resposta no modal
+          }
             // Se eu perguntei e já tem resposta, mas ainda é meu turno, 
             // significa que estou na fase de descarte/aguardando ver a resposta.
             // No entanto, como current_question_id é null, não temos a referência direta aqui
