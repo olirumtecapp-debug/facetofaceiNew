@@ -132,6 +132,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
+        console.log("Multiplayer: Enviando pergunta para a sala", gameState.roomCode);
         const { error } = await supabase
           .from("rooms")
           .update({ 
@@ -142,21 +143,31 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           .eq("code", gameState.roomCode);
         
         if (error) {
+          console.error("Multiplayer Error:", error);
           toast.error("Erro ao enviar pergunta.");
           return;
         }
+
+        setGameState(prev => ({
+          ...prev,
+          phase: "WAITING_ANSWER",
+          pendingQuestion: { question, type: "PLAYER" },
+          lastActionTime: Date.now()
+        }));
       } catch (err) {
+        console.error("Multiplayer Catch Error:", err);
         toast.error("Erro de conexão ao enviar pergunta.");
         return;
       }
+    } else {
+      setGameState((prev) => ({
+        ...prev,
+        phase: "WAITING_ANSWER",
+        pendingQuestion: { question, type: "PLAYER" },
+        askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        lastActionTime: Date.now()
+      }));
     }
-
-    setGameState((prev) => ({
-      ...prev,
-      phase: "WAITING_ANSWER",
-      pendingQuestion: { question, type: "PLAYER" },
-      lastActionTime: Date.now()
-    }));
   };
 
   const revealAIAnswer = () => {
@@ -342,17 +353,38 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           // 2. Received Question (Opponent sent a question, so I must respond)
-          if (newRoomData['current_question_id'] && newRoomData['current_turn_player_id'] !== gameState.guestId) {
+          if (newRoomData['current_question_id']) {
+            const isFromOpponent = newRoomData['current_turn_player_id'] !== gameState.guestId;
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
-            // Only set to RESPONDING if we don't already have this question pending 
-            // or if we are not already in RESPONDING phase for a different reason.
-            if (question && (!gameState.pendingQuestion || gameState.pendingQuestion.question.id !== question.id)) {
-              setGameState(prev => ({
-                ...prev,
-                phase: "PLAYER_RESPONDING",
-                pendingQuestion: { question, type: "AI" },
-                lastActionTime: Date.now()
-              }));
+            
+            if (question) {
+              if (isFromOpponent) {
+                console.log("Multiplayer: Pergunta recebida do adversário:", question.text);
+                setGameState(prev => {
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+                    return prev;
+                  }
+                  return {
+                    ...prev,
+                    phase: "PLAYER_RESPONDING",
+                    pendingQuestion: { question, type: "AI" },
+                    lastActionTime: Date.now()
+                  };
+                });
+              } else {
+                // If the question is from me, ensure I am in WAITING_ANSWER
+                setGameState(prev => {
+                  if (prev.phase === "PLAYER_TURN") {
+                    return {
+                      ...prev,
+                      phase: "WAITING_ANSWER",
+                      pendingQuestion: { question, type: "PLAYER" },
+                      lastActionTime: Date.now()
+                    };
+                  }
+                  return prev;
+                });
+              }
             }
           }
 
@@ -424,15 +456,41 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
         }
 
-        // Fetch current room state to determine turn
+        // Fetch current room state to determine turn and pending question
         const { data: room } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode!).single();
         if (room) {
           const isMyTurn = room['current_turn_player_id'] === gameState.guestId;
+          const currentQuestionId = room['current_question_id'];
+          const lastAnswer = room['last_answer'];
+          
           setGameState(prev => {
+            let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+            let pendingQuestion = undefined;
+
+            if (currentQuestionId) {
+              const question = QUESTIONS.find(q => q.id === currentQuestionId);
+              if (question) {
+                if (isMyTurn) {
+                  // I asked, but didn't get answer yet
+                  if (!lastAnswer) {
+                    newPhase = "WAITING_ANSWER";
+                    pendingQuestion = { question, type: "PLAYER" as const };
+                  }
+                } else {
+                  // Opponent asked, I must respond
+                  if (!lastAnswer) {
+                    newPhase = "PLAYER_RESPONDING";
+                    pendingQuestion = { question, type: "AI" as const };
+                  }
+                }
+              }
+            }
+
             return { 
               ...prev, 
               currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN",
+              phase: newPhase,
+              pendingQuestion,
               lastActionTime: Date.now()
             };
           });
