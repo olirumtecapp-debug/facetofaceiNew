@@ -159,13 +159,13 @@ export const declareWinner = createServerFn({ method: "POST" })
     z.object({ roomId: z.string(), winnerId: z.string() }).parse(data)
   )
   .handler(async ({ data }) => {
-    // IMPORTANTE: Usamos o cliente admin para operações autoritativas de fim de jogo
-    // Isso evita falhas de RLS/Permissão em ambientes Worker e garante a sincronização.
+    // DIAGNÓSTICO: Registrar entrada na função
+    console.log("[SERVER] declareWinner called", data);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const supabase = supabaseAdmin;
 
-
-    // 1. Fetch current score first
+    // 1. Fetch current score
     const { data: player, error: playerError } = await supabase
       .from("room_players")
       .select("score, room_id, guest_id")
@@ -174,16 +174,18 @@ export const declareWinner = createServerFn({ method: "POST" })
       .maybeSingle();
 
     if (playerError) {
-      console.error("[SERVER] Error fetching player score:", playerError);
-      throw new Error(`DB_FETCH_SCORE_ERROR: ${playerError.message}`);
+      console.error("[SERVER] DB_FETCH_SCORE_ERROR", playerError);
+      throw playerError;
     }
 
     if (!player) {
-      console.error("[SERVER] Player not found in room:", { roomId: data.roomId, winnerId: data.winnerId });
-      throw new Error(`PLAYER_NOT_FOUND: Rid=${data.roomId}, Wid=${data.winnerId}`);
+      const errorMsg = `PLAYER_NOT_FOUND: roomId=${data.roomId}, winnerId=${data.winnerId}`;
+      console.error("[SERVER]", errorMsg);
+      throw new Error(errorMsg);
     }
 
-    const newScore = (player?.score || 0) + 1;
+    const newScore = (player.score || 0) + 1;
+    console.log("[SERVER] Updating score to:", newScore);
 
     // 2. Update player score
     const { error: scoreUpdateError } = await supabase
@@ -193,11 +195,11 @@ export const declareWinner = createServerFn({ method: "POST" })
       .eq("guest_id", data.winnerId);
       
     if (scoreUpdateError) {
-      console.error("[SERVER] Error updating score:", scoreUpdateError);
-      throw new Error(`DB_UPDATE_SCORE_ERROR: ${scoreUpdateError.message}`);
+      console.error("[SERVER] DB_UPDATE_SCORE_ERROR", scoreUpdateError);
+      throw scoreUpdateError;
     }
 
-    // 3. Update room status and winner_id
+    // 3. Update room status
     const { error: roomUpdateError } = await supabase
       .from("rooms")
       .update({ 
@@ -208,8 +210,8 @@ export const declareWinner = createServerFn({ method: "POST" })
       .eq("id", data.roomId);
     
     if (roomUpdateError) {
-      console.error("[SERVER] Error updating room status:", roomUpdateError);
-      throw new Error(`DB_UPDATE_ROOM_ERROR: ${roomUpdateError.message}`);
+      console.error("[SERVER] DB_UPDATE_ROOM_ERROR", roomUpdateError);
+      throw roomUpdateError;
     }
 
     // 3. Check if overall match winner (Best of 5 -> 3 wins)
