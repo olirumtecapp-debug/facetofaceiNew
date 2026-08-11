@@ -388,7 +388,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                 onClick={onBack}
                 className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
               >
-                VOLTAR AO MENU
+                <span translate="no">VOLTAR{" "}AO{" "}MENU</span>
               </button>
             </div>
           </div>
