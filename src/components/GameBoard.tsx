@@ -227,7 +227,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
             <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-24">
               {QUESTIONS.filter((q) => q.category === cat).map((q) => {
-                const isLocked = q.minTurn ? gameState.turnCount < q.minTurn : false;
+                const isLocked = q.category === "Gênero" ? gameState.myAskedQuestions.size < 2 : false;
                 const isAlreadyAsked = gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id);
                 return (
                   <button

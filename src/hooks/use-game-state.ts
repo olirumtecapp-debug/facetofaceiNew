@@ -54,6 +54,7 @@ export type GameState = {
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
   const guestId = useMemo(() => {
+    if (typeof window === 'undefined') return 'server';
     let id = localStorage.getItem("ftf_guest_id");
     if (!id) {
       id = crypto.randomUUID();
@@ -90,7 +91,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       gameMode: isOnline ? "ONLINE" : "IA",
       roomCode: initialRoomCode || undefined,
       guestId,
-      playerName: localStorage.getItem("ftf_player_name") || undefined,
+      playerName: typeof window !== 'undefined' ? (localStorage.getItem("ftf_player_name") || undefined) : undefined,
       lastActionTime: Date.now()
     };
   });
