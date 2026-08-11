@@ -300,16 +300,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE") {
       if (!gameState.roomId) {
+        console.error("[FTF PALPITE] Room ID missing during palpite");
         toast.error("Sala não sincronizada. Tente novamente.");
         return;
       }
       const winnerId = isCorrect ? gameState.guestId : gameState.opponentId;
       if (!winnerId) {
+        console.error("[FTF PALPITE] Opponent ID missing during palpite", { isCorrect, guestId: gameState.guestId, opponentId: gameState.opponentId });
         toast.error("Adversário não encontrado.");
         return;
       }
 
-      // Optimistic local end-of-round so this player sees the result instantly
+      console.log("[FTF PALPITE] Starting online palpite flow", { isCorrect, winnerId });
+
+      // Optimistic local end-of-round
       setGameState(prev => ({
         ...prev,
         isGameOver: true,
@@ -323,12 +327,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }));
 
       try {
-        const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: gameState.roomId, winnerId } });
+        const { declareWinner: declareWinnerFn } = await import("@/lib/online.functions");
+        console.log("[FTF PALPITE] Calling declareWinner server function", { roomId: gameState.roomId, winnerId });
+        const result = await declareWinnerFn({ data: { roomId: gameState.roomId, winnerId } });
+        console.log("[FTF PALPITE] declareWinner result:", result);
       } catch (e) {
+        console.error("[FTF PALPITE] Error calling declareWinner:", e);
         toast.error("Erro ao registrar o fim da rodada.");
       }
-      return; // Realtime keeps both clients in sync
+      return; 
     }
 
 
@@ -403,21 +410,24 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               status: newRoomData['status']
             });
 
-            setGameState(prev => {
-              const newWinner = winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner);
-              console.log("[FTF REALTIME] Setting winner state to:", newWinner);
-              return {
-                ...prev,
-                isGameOver: true,
-                winner: newWinner,
-                matchWinnerId,
-                rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-                rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-                phase: "PLAYER_TURN", // Reset phase to stop any waiting UI
-                pendingQuestion: undefined,
-                lastActionTime: Date.now()
-              };
-            });
+            // If we have a winner_id, the game is definitely over
+            if (winnerId) {
+              setGameState(prev => {
+                const newWinner = winnerId === gameState.guestId ? "WINNER" : "LOSER";
+                console.log("[FTF REALTIME] Setting winner state to:", newWinner);
+                return {
+                  ...prev,
+                  isGameOver: true,
+                  winner: newWinner,
+                  matchWinnerId: matchWinnerId || prev.matchWinnerId,
+                  rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+                  rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+                  phase: "PLAYER_TURN",
+                  pendingQuestion: undefined,
+                  lastActionTime: Date.now()
+                };
+              });
+            }
           }
 
           if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
@@ -619,9 +629,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         setGameState(prev => {
           let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
           let pendingQuestion = undefined;
-          const isGameOver = roomData.status === "FINISHED" || !!roomData.winner_id;
+          const winnerId = roomData.winner_id;
+          const isGameOver = roomData.status === "FINISHED" || !!winnerId;
 
-          if (isGameOver) {
+          if (isGameOver && winnerId) {
             newPhase = "PLAYER_TURN";
           } else if (currentQuestionId) {
             const question = QUESTIONS.find(q => q.id === currentQuestionId);
@@ -643,7 +654,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             playerSecret: mySecret,
             aiSecret: oppSecret,
             opponentId: opponent?.guest_id,
-            opponentName: opponent?.name || undefined,
+            opponentName: opponent?.name || prev.opponentName,
             playerName: me?.name || prev.playerName,
             roomId: roomData.id,
             playerScore: me?.score || 0,
@@ -652,10 +663,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             phase: newPhase,
             pendingQuestion,
             isGameOver,
-            winner: roomData.winner_id === gameState.guestId ? "WINNER" : (roomData.winner_id ? "LOSER" : undefined),
-            matchWinnerId: roomData.match_winner_id,
+            winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
+            matchWinnerId: roomData.match_winner_id || null,
+            rematchStatus: (roomData.rematch_status as any) || prev.rematchStatus,
+            rematchRequestedBy: roomData.rematch_requested_by ?? prev.rematchRequestedBy ?? null,
             lastActionTime: Date.now()
-          };
+          } as GameState;
         });
       };
       syncRoom();

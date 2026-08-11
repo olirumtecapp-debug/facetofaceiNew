@@ -164,20 +164,28 @@ export const declareWinner = createServerFn({ method: "POST" })
       .select("score")
       .eq("room_id", data.roomId)
       .eq("guest_id", data.winnerId)
-      .single();
+      .maybeSingle();
 
-    if (playerError) throw playerError;
+    if (playerError) {
+      console.error("Error fetching player score:", playerError);
+      throw playerError;
+    }
 
-    const newScore = (player.score || 0) + 1;
+    const newScore = (player?.score || 0) + 1;
 
     // 2. Update player score
-    await supabase
+    const { error: scoreUpdateError } = await supabase
       .from("room_players")
       .update({ score: newScore })
       .eq("room_id", data.roomId)
       .eq("guest_id", data.winnerId);
+      
+    if (scoreUpdateError) {
+      console.error("Error updating score:", scoreUpdateError);
+      throw scoreUpdateError;
+    }
 
-    // 3. Update room status and winner_id (this triggers the game over UI in Realtime)
+    // 3. Update room status and winner_id
     const { error: roomUpdateError } = await supabase
       .from("rooms")
       .update({ 
@@ -187,7 +195,10 @@ export const declareWinner = createServerFn({ method: "POST" })
       })
       .eq("id", data.roomId);
     
-    if (roomUpdateError) throw roomUpdateError;
+    if (roomUpdateError) {
+      console.error("Error updating room status:", roomUpdateError);
+      throw roomUpdateError;
+    }
 
     // 3. Check if overall match winner (Best of 5 -> 3 wins)
     if (newScore >= 3) {
