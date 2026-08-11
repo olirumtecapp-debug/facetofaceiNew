@@ -300,16 +300,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE") {
       if (!gameState.roomId) {
+        console.error("[FTF PALPITE] Room ID missing during palpite");
         toast.error("Sala não sincronizada. Tente novamente.");
         return;
       }
       const winnerId = isCorrect ? gameState.guestId : gameState.opponentId;
       if (!winnerId) {
+        console.error("[FTF PALPITE] Opponent ID missing during palpite", { isCorrect, guestId: gameState.guestId, opponentId: gameState.opponentId });
         toast.error("Adversário não encontrado.");
         return;
       }
 
-      // Optimistic local end-of-round so this player sees the result instantly
+      console.log("[FTF PALPITE] Starting online palpite flow", { isCorrect, winnerId });
+
+      // Optimistic local end-of-round
       setGameState(prev => ({
         ...prev,
         isGameOver: true,
@@ -323,12 +327,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }));
 
       try {
-        const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: gameState.roomId, winnerId } });
+        const { declareWinner: declareWinnerFn } = await import("@/lib/online.functions");
+        console.log("[FTF PALPITE] Calling declareWinner server function", { roomId: gameState.roomId, winnerId });
+        const result = await declareWinnerFn({ data: { roomId: gameState.roomId, winnerId } });
+        console.log("[FTF PALPITE] declareWinner result:", result);
       } catch (e) {
+        console.error("[FTF PALPITE] Error calling declareWinner:", e);
         toast.error("Erro ao registrar o fim da rodada.");
       }
-      return; // Realtime keeps both clients in sync
+      return; 
     }
 
 
