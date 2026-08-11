@@ -359,25 +359,44 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     };
     const pollInterval = setInterval(async () => {
       if (!gameState.roomCode) return;
+      
+      // Se o jogo já acabou localmente, só permitimos o polling se não houver rematch_status pendente
+      // ou se o status for ABANDONED para fechar a modal se necessário.
+      // Mas para simplificar e seguir a instrução: bloqueio se finished.
       const { data: room, error } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode).single();
-      if (error) {
-        console.error("Polling error:", error);
+      if (error || !room) return;
+
+      if (room.status === "ABANDONED") {
+        setGameState(prev => { 
+          if (prev.winner === "ABANDONED") return prev; 
+          toast.error("Ops, parece que alguém desistiu da luta 👻"); 
+          return { ...prev, isGameOver: true, winner: "ABANDONED" }; 
+        });
         return;
       }
-      if (room) {
-        if (room.status === "ABANDONED") setGameState(prev => { if (prev.winner === "ABANDONED") return prev; toast.error("Ops, parece que alguém desistiu da luta 👻"); return { ...prev, isGameOver: true, winner: "ABANDONED" }; });
-        else await syncGameState(room);
-      }
+
+      await syncGameState(room);
     }, 2000);
+
     const channel = supabase.channel(`room_${gameState.roomCode}_${gameState.guestId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` }, async (payload) => {
         if (gameState.gameMode !== "ONLINE") return;
         const newRoomData = payload.new as any;
-        if (newRoomData.status === "ABANDONED") { setGameState(prev => ({ ...prev, isGameOver: true, winner: "ABANDONED", lastActionTime: Date.now() })); toast.error("Ops, parece que alguém desistiu da luta 👻"); return; }
+
+        if (newRoomData.status === "ABANDONED") { 
+          setGameState(prev => ({ ...prev, isGameOver: true, winner: "ABANDONED", lastActionTime: Date.now() })); 
+          toast.error("Ops, parece que alguém desistiu da luta 👻"); 
+          return; 
+        }
+
         await syncGameState(newRoomData);
+
         const oldRoomData = payload.old as any;
-        if (newRoomData['rematch_status'] === 'requested' && oldRoomData?.rematch_status !== 'requested' && newRoomData['rematch_requested_by'] !== gameState.guestId) toast.info("REVANCHE SOLICITADA!");
-        else if (newRoomData['rematch_status'] === 'declined' && oldRoomData?.rematch_status !== 'declined') toast.info("Ah, desistiu? Campeão precisa descansar mesmo 😏");
+        if (newRoomData['rematch_status'] === 'requested' && oldRoomData?.rematch_status !== 'requested' && newRoomData['rematch_requested_by'] !== gameState.guestId) {
+          toast.info("REVANCHE SOLICITADA!");
+        } else if (newRoomData['rematch_status'] === 'declined' && oldRoomData?.rematch_status !== 'declined') {
+          toast.info("Ah, desistiu? Campeão precisa descansar mesmo 😏");
+        }
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomId}` }, (payload) => {
         const updatedPlayer = payload.new as any;
