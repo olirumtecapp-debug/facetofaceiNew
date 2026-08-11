@@ -390,7 +390,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                         </div>
                       ) : (
                         <div className="flex flex-col gap-3">
-                          {gameState.winner === "LOSER" && (
+                          {gameState.winner === "LOSER" ? (
                             <button
                               onClick={async () => {
                                 const { requestRematch } = await import("@/lib/online.functions");
@@ -400,6 +400,10 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                             >
                               PEDIR REVANCHE
                             </button>
+                          ) : (
+                            <div className="rounded-xl bg-green-500/20 py-4 font-bold text-green-400 border border-green-500/30">
+                              AGUARDANDO O PERDEDOR...
+                            </div>
                           )}
                           <button
                             onClick={async () => {
