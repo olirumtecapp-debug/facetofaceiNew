@@ -448,24 +448,28 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
-          if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
-            // New round started
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: false,
-              winner: undefined,
-              rematchStatus: 'idle',
-              rematchRequestedBy: null,
-              askedQuestions: new Set(),
-              myAskedQuestions: new Set(),
-              opponentAskedQuestions: new Set(),
-              turnCount: 1,
-              history: [],
-              pendingQuestion: undefined,
-              playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
-              lastActionTime: Date.now()
-            }));
+          if (newRoomData['status'] === "PLAYING") {
+            // New round started (server reset the room)
+            setGameState(prev => {
+              if (!prev.isGameOver && prev.rematchStatus !== 'accepted') return prev;
+              return {
+                ...prev,
+                isGameOver: false,
+                winner: undefined,
+                rematchStatus: 'idle',
+                rematchRequestedBy: null,
+                askedQuestions: new Set(),
+                myAskedQuestions: new Set(),
+                opponentAskedQuestions: new Set(),
+                turnCount: 1,
+                history: [],
+                pendingQuestion: undefined,
+                playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+                lastActionTime: Date.now()
+              };
+            });
           }
+
 
           if (newRoomData['current_turn_player_id'] && gameState.gameMode === "ONLINE") {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
