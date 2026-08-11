@@ -665,7 +665,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             isGameOver,
             winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
             matchWinnerId: roomData.match_winner_id,
-            rematchStatus: roomData.rematch_status || prev.rematchStatus,
+            rematchStatus: (roomData.rematch_status as any) || prev.rematchStatus,
             rematchRequestedBy: roomData.rematch_requested_by || prev.rematchRequestedBy,
             lastActionTime: Date.now()
           };
