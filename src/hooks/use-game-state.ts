@@ -393,17 +393,25 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           const newRoomData = payload.new as any;
           console.log("[FTF REALTIME] Update received:", newRoomData);
           
-          if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
+          if (newRoomData['status'] === "FINISHED" || newRoomData['winner_id']) {
             const winnerId = newRoomData['winner_id'];
             const matchWinnerId = newRoomData['match_winner_id'];
-            console.log("[FTF REALTIME] Game over detected. Winner:", winnerId, "My ID:", gameState.guestId);
+            
+            console.log("[FTF REALTIME] Game over detected.", {
+              winnerId,
+              myId: gameState.guestId,
+              status: newRoomData['status']
+            });
+
             setGameState(prev => ({
               ...prev,
               isGameOver: true,
-              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : undefined),
+              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner),
               matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'],
-              rematchRequestedBy: newRoomData['rematch_requested_by'],
+              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+              phase: "PLAYER_TURN", // Reset phase to stop any waiting UI
+              pendingQuestion: undefined,
               lastActionTime: Date.now()
             }));
           }
@@ -539,8 +547,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           ? { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomId}` }
           : { event: "UPDATE", schema: "public", table: "room_players" },
         (payload) => {
+          if (gameState.gameMode !== "ONLINE") return;
           const updatedPlayer = payload.new as any;
           if (gameState.roomId && updatedPlayer.room_id !== gameState.roomId) return;
+          console.log("[FTF REALTIME] Player updated:", updatedPlayer.guest_id, "Score:", updatedPlayer.score);
+          
           if (updatedPlayer.guest_id === gameState.guestId) {
              setGameState(prev => {
                const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
@@ -549,7 +560,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           } else {
              setGameState(prev => {
                const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
-               return { ...prev, aiScore: updatedPlayer.score ?? prev.aiScore, aiSecret: char || prev.aiSecret };
+               return { 
+                 ...prev, 
+                 aiScore: updatedPlayer.score ?? prev.aiScore, 
+                 aiSecret: char || prev.aiSecret,
+                 opponentName: updatedPlayer.name || prev.opponentName
+               };
              });
           }
         }
@@ -595,8 +611,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         setGameState(prev => {
           let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
           let pendingQuestion = undefined;
+          const isGameOver = roomData.status === "FINISHED" || !!roomData.winner_id;
 
-          if (currentQuestionId) {
+          if (isGameOver) {
+            newPhase = "PLAYER_TURN";
+          } else if (currentQuestionId) {
             const question = QUESTIONS.find(q => q.id === currentQuestionId);
             if (question) {
               if (askerId === gameState.guestId) {
@@ -618,12 +637,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             opponentId: opponent?.guest_id,
             opponentName: opponent?.name || undefined,
             playerName: me?.name || prev.playerName,
-            roomId: roomData.id, // Ensure roomId is stored
+            roomId: roomData.id,
             playerScore: me?.score || 0,
             aiScore: opponent?.score || 0,
             currentTurn: isMyTurn ? "PLAYER" : "AI",
             phase: newPhase,
             pendingQuestion,
+            isGameOver,
+            winner: roomData.winner_id === gameState.guestId ? "WINNER" : (roomData.winner_id ? "LOSER" : undefined),
+            matchWinnerId: roomData.match_winner_id,
             lastActionTime: Date.now()
           };
         });
