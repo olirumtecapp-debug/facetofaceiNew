@@ -227,8 +227,25 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
 
   if (screen === "GAME") {
-    return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} initialRoomCode={roomCode || joinCode} />;
+    const activeRoomCode = launchMode === "ONLINE" ? (roomCode || joinCode) : "";
+    return (
+      <GameBoard
+        key={`${launchMode}-${activeRoomCode}`}
+        playerColor={playerColor}
+        difficulty={difficulty}
+        onBack={() => {
+          setScreen("MENU");
+          setRoomData(null);
+          setPlayers([]);
+          setRoomCode("");
+          setJoinCode("");
+          setLaunchMode("IA");
+        }}
+        {...(activeRoomCode ? { initialRoomCode: activeRoomCode } : {})}
+      />
+    );
   }
+
 
   if (screen === "CHOOSE_DIFFICULTY") {
     return (
