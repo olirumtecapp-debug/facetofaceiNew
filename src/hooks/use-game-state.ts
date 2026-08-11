@@ -377,14 +377,35 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       history: [],
       isGameOver: false,
       winner: undefined,
+      matchWinnerId: null,
       askedQuestions: new Set<string>(),
       myAskedQuestions: new Set<string>(),
       opponentAskedQuestions: new Set<string>(),
       aiAskedQuestions: new Set<string>(),
       playerKnowledge: {},
       aiKnowledge: {},
-      pendingQuestion: undefined
+      pendingQuestion: undefined,
+      rematchStatus: 'idle',
+      rematchRequestedBy: null
     }));
+  };
+
+  const abandon = async () => {
+    if (gameState.gameMode === "ONLINE" && gameState.roomId) {
+      try {
+        const { abandonMatch: abandonMatchFn } = await import("@/lib/online.functions");
+        await abandonMatchFn({ data: { roomId: gameState.roomId, guestId: gameState.guestId } });
+      } catch (e) {
+        console.error("Erro ao abandonar partida:", e);
+      }
+    } else {
+      setGameState(prev => ({
+        ...prev,
+        isGameOver: true,
+        winner: "LOSER",
+        matchWinnerId: "AI"
+      }));
+    }
   };
 
   useEffect(() => {
@@ -735,5 +756,5 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     return undefined;
   }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn, gameState.gameMode]);
 
-  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId };
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId, abandon };
 };

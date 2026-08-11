@@ -125,7 +125,7 @@ function Lobby({ room, players, guestId, onLeave, onToggleReady, onStart }: any)
             onClick={onLeave}
             className="w-full rounded-lg bg-gray-800 py-3 font-black uppercase tracking-widest border-2 border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95"
           >
-            SAIR DA SALA
+            SAIR PARA O MENU
           </button>
         </div>
       </div>
@@ -344,7 +344,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                 disabled={isConnecting}
                 className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-50"
               >
-                {isConnecting ? "Criando..." : "Gerar código"}
+                {isConnecting ? "Criando..." : "CRIAR NOVA SALA"}
               </button>
             </div>
 
@@ -377,7 +377,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                 disabled={isConnecting || !joinCode}
                 className="w-full rounded-lg bg-[#e52e2e] py-3 font-black uppercase tracking-widest border-2 border-[#ff4444]/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-50"
               >
-                {isConnecting ? "Entrando..." : "Entrar"}
+                {isConnecting ? "Entrando..." : "ENTRAR NA SALA"}
               </button>
             </div>
             <BackButton onClick={() => setScreen("MENU")} className="mt-4 w-full justify-center" />

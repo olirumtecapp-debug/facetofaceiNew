@@ -125,13 +125,22 @@ export const startGame = createServerFn({ method: "POST" })
       throw new Error("Ambos os jogadores precisam estar prontos");
     }
 
-    // Assign secret characters for both players on start
+    // 1. Assign secret characters for both players on start (WITHOUT REPETITION)
     const CHAR_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
-    for (const player of players) {
-      const randomId = CHAR_IDS[Math.floor(Math.random() * CHAR_IDS.length)]!;
+    
+    // Fisher-Yates shuffle
+    for (let i = CHAR_IDS.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [CHAR_IDS[i], CHAR_IDS[j]] = [CHAR_IDS[j]!, CHAR_IDS[i]!];
+    }
+
+    // Assign unique characters
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i]!;
+      const characterId = CHAR_IDS[i]!;
       await supabase
         .from("room_players")
-        .update({ secret_character_id: randomId })
+        .update({ secret_character_id: characterId })
         .eq("room_id", data.roomId)
         .eq("guest_id", player.guest_id);
     }
@@ -141,11 +150,13 @@ export const startGame = createServerFn({ method: "POST" })
       .update({ 
         status: "PLAYING",
         winner_id: null as any,
+        match_winner_id: null as any, // Reset match winner if starting fresh (though usually starts at WAITING)
         rematch_status: 'idle',
         rematch_requested_by: null as any,
         current_question_id: null as any,
         last_answer: null as any,
-        question_asked_by: null as any
+        question_asked_by: null as any,
+        last_action_timestamp: new Date().toISOString()
       })
       .eq("id", data.roomId)
       .eq("host_id", data.guestId);
@@ -253,24 +264,27 @@ export const handleRematchResponse = createServerFn({ method: "POST" })
 
 
     if (data.accept) {
-      // Reset room for new round
+      // 1. Assign secret characters for both players (WITHOUT REPETITION)
       const CHAR_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
       
+      // Fisher-Yates shuffle
+      for (let i = CHAR_IDS.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [CHAR_IDS[i], CHAR_IDS[j]] = [CHAR_IDS[j]!, CHAR_IDS[i]!];
+      }
+
       const { data: players } = await supabase
         .from("room_players")
-        .select("guest_id, secret_character_id")
+        .select("guest_id")
         .eq("room_id", data.roomId);
 
-      if (players) {
-        for (const player of players) {
-          let randomId;
-          do {
-            randomId = CHAR_IDS[Math.floor(Math.random() * CHAR_IDS.length)]!;
-          } while (randomId === player.secret_character_id); // Avoid immediate repeat
-
+      if (players && players.length >= 2) {
+        for (let i = 0; i < players.length; i++) {
+          const player = players[i]!;
+          const characterId = CHAR_IDS[i]!;
           await supabase
             .from("room_players")
-            .update({ secret_character_id: randomId })
+            .update({ secret_character_id: characterId })
             .eq("room_id", data.roomId)
             .eq("guest_id", player.guest_id);
         }
@@ -310,5 +324,40 @@ export const handleRematchResponse = createServerFn({ method: "POST" })
       if (error) throw error;
     }
 
+    return { success: true };
+  });
+
+export const abandonMatch = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string }) => 
+    z.object({ roomId: z.string(), guestId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+
+    // 1. Get room players to find the winner
+    const { data: players } = await supabase
+      .from("room_players")
+      .select("guest_id")
+      .eq("room_id", data.roomId);
+
+    if (!players || players.length === 0) throw new Error("Sala não encontrada");
+
+    const winner = players.find(p => p.guest_id !== data.guestId);
+    if (!winner) throw new Error("Adversário não encontrado");
+
+    // 2. Authoritative match end
+    const { error } = await supabase
+      .from("rooms")
+      .update({ 
+        status: "FINISHED",
+        match_winner_id: winner.guest_id as any,
+        winner_id: winner.guest_id as any,
+        last_action_timestamp: new Date().toISOString(),
+        rematch_status: 'declined' // No rematch possible if abandoned
+      })
+      .eq("id", data.roomId);
+
+    if (error) throw error;
     return { success: true };
   });

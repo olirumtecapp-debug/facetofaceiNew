@@ -14,7 +14,7 @@ interface GameBoardProps {
 const CATEGORIES = ["Gênero", "Cabelo", "Olhos & Rosto", "Acessórios", "Barba e Bigode", "Pele & Detalhes"];
 
 export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: GameBoardProps & { initialRoomCode?: string }) => {
-  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId } = useGameState(
+  const { gameState, handlePlayerQuestion, toggleCard, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId, abandon } = useGameState(
     playerColor,
     difficulty,
     initialRoomCode
@@ -22,6 +22,8 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
   const [isPalpitando, setIsPalpitando] = useState(false);
   const [cat, setCat] = useState(CATEGORIES[1]!);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isAbandoning, setIsAbandoning] = useState(false);
 
   // Monitor connection timeout
   useState(() => {
@@ -65,10 +67,16 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
       {/* Header */}
       <header className="relative z-20 grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-white/10 bg-[#0b0e14]/80 backdrop-blur-md px-3 py-2">
         <button
-          onClick={onBack}
+          onClick={() => {
+            if (!gameState.isGameOver) {
+              setShowExitConfirm(true);
+            } else {
+              onBack();
+            }
+          }}
           className="group flex items-center gap-1.5 rounded-lg border-2 border-gray-400/30 bg-gray-800/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:border-yellow-400/50 hover:text-yellow-400 hover:scale-105 active:scale-95"
         >
-          <span className="text-sm">{"<"}</span> Voltar
+          <span className="text-sm">{"<"}</span> Voltar ao Menu
         </button>
         <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
           <div className={`text-[10px] font-black uppercase tracking-[0.15em] drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs px-3 py-0.5 rounded-full ${
@@ -347,19 +355,28 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       </div>
                     </div>
                   ) : (
-                    <p className="font-bold text-gray-400 italic">Aguardando solicitação de revanche de {gameState.opponentName}...</p>
+                    gameState.rematchStatus !== "declined" && (
+                      <p className="font-bold text-gray-400 italic">Aguardando solicitação de revanche de {gameState.opponentName}...</p>
+                    )
                   )
                 )}
+                
                 {gameState.rematchStatus === "declined" && (
-                  <p className="mt-4 font-bold text-red-400 uppercase tracking-widest animate-in fade-in zoom-in-95">
-                    {gameState.opponentName} RECUSOU A REVANCHE.
-                  </p>
+                  <div className="mt-4 animate-in fade-in zoom-in-95">
+                    <p className="font-bold text-red-400 uppercase tracking-widest">
+                      REVANCHE RECUSADA.
+                    </p>
+                    <p className="mt-2 text-sm italic text-gray-400">
+                      "Seu adversário decidiu parar por aqui. Parece que a revanche ficou para a próxima! 😏"
+                    </p>
+                    <p className="mt-4 font-black text-white uppercase tracking-tighter">Partida encerrada.</p>
+                  </div>
                 )}
               </div>
             )}
 
             <div className="flex flex-col justify-center gap-3 sm:flex-row">
-              {gameState.gameMode !== "ONLINE" && (
+              {gameState.gameMode !== "ONLINE" && !gameState.matchWinnerId && (
                 <button
                   onClick={rematch}
                   className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
@@ -371,7 +388,40 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                 onClick={onBack}
                 className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
               >
-                MENU
+                VOLTAR AO MENU
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Exit Confirmation Modal */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-6 backdrop-blur-lg">
+          <div className="w-full max-w-sm rounded-2xl border-2 border-white/10 bg-[#0b0e14] p-8 text-center shadow-[0_0_50px_rgba(229,46,46,0.2)]">
+            <h3 className="mb-4 text-2xl font-black text-[#e52e2e] uppercase italic">ABANDONAR PARTIDA?</h3>
+            <p className="mb-8 text-gray-400 font-bold leading-tight">
+              Tem certeza que deseja sair?<br/>
+              <span className="text-red-500">Abandonar a partida fará você perder o jogo.</span>
+            </p>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="w-full rounded-xl bg-gray-700 py-4 font-black text-white transition-all hover:bg-gray-600 active:scale-95"
+              >
+                CONTINUAR JOGANDO
+              </button>
+              <button
+                disabled={isAbandoning}
+                onClick={async () => {
+                  setIsAbandoning(true);
+                  await abandon();
+                  setShowExitConfirm(false);
+                  setIsAbandoning(false);
+                }}
+                className="w-full rounded-xl bg-[#e52e2e] py-4 font-black text-white transition-all hover:bg-red-700 active:scale-95 disabled:opacity-50"
+              >
+                {isAbandoning ? "SAINDO..." : "ABANDONAR E PERDER"}
               </button>
             </div>
           </div>
