@@ -158,19 +158,7 @@ export const declareWinner = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = getPublicSupabase();
 
-    // 1. Update winner of the round in the room
-    const { error: roomUpdateError } = await supabase
-      .from("rooms")
-      .update({ 
-        winner_id: data.winnerId as any,
-        status: "FINISHED",
-        last_action_timestamp: new Date().toISOString()
-      })
-      .eq("id", data.roomId);
-    
-    if (roomUpdateError) throw roomUpdateError;
-
-    // 2. Increment score for the winner
+    // 1. Fetch current score first
     const { data: player, error: playerError } = await supabase
       .from("room_players")
       .select("score")
@@ -181,13 +169,25 @@ export const declareWinner = createServerFn({ method: "POST" })
     if (playerError) throw playerError;
 
     const newScore = (player.score || 0) + 1;
-    const { error: scoreError } = await supabase
+
+    // 2. Update player score
+    await supabase
       .from("room_players")
       .update({ score: newScore })
       .eq("room_id", data.roomId)
       .eq("guest_id", data.winnerId);
+
+    // 3. Update room status and winner_id (this triggers the game over UI in Realtime)
+    const { error: roomUpdateError } = await supabase
+      .from("rooms")
+      .update({ 
+        winner_id: data.winnerId as any,
+        status: "FINISHED",
+        last_action_timestamp: new Date().toISOString()
+      })
+      .eq("id", data.roomId);
     
-    if (scoreError) throw scoreError;
+    if (roomUpdateError) throw roomUpdateError;
 
     // 3. Check if overall match winner (Best of 5 -> 3 wins)
     if (newScore >= 3) {
