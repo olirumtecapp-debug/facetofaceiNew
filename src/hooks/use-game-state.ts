@@ -629,9 +629,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         setGameState(prev => {
           let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
           let pendingQuestion = undefined;
-          const isGameOver = roomData.status === "FINISHED" || !!roomData.winner_id;
+          const winnerId = roomData.winner_id;
+          const isGameOver = roomData.status === "FINISHED" || !!winnerId;
 
-          if (isGameOver) {
+          if (isGameOver && winnerId) {
             newPhase = "PLAYER_TURN";
           } else if (currentQuestionId) {
             const question = QUESTIONS.find(q => q.id === currentQuestionId);
