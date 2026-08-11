@@ -332,18 +332,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         const result = await declareWinnerFn({ data: { roomId: gameState.roomId, winnerId } });
         console.log("[FTF PALPITE] declareWinner result success:", result);
       } catch (e: any) {
-        // DIAGNÓSTICO OBRIGATÓRIO: Capturar e exibir erro real
         console.error("FINAL_ROUND_ERROR_FULL", {
           message: e?.message,
           stack: e?.stack,
-          details: e?.details,
-          hint: e?.hint,
-          code: e?.code,
-          payload: { roomId: gameState.roomId, winnerId: (isCorrect ? gameState.guestId : gameState.opponentId) }
+          payload: { roomId: gameState.roomId, winnerId }
         });
         
-        const errorDetails = e?.message || "Erro desconhecido";
-        toast.error(`Erro ao registrar o fim da rodada: ${errorDetails}`);
+        toast.error("Erro ao registrar o fim da rodada. Tente novamente.");
       }
       return; 
     }
