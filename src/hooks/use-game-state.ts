@@ -354,6 +354,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           phase: "PLAYER_TURN",
           isGameOver: false,
           winner: undefined,
+          matchWinnerId: null,
+          rematchStatus: 'idle',
+          rematchRequestedBy: null,
           roomId: undefined,
           roomCode: undefined,
           opponentId: undefined,
@@ -366,11 +369,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     // Explicitly reset AI questions if switching TO online
     if (gameState.gameMode === "ONLINE") {
       setGameState(prev => {
-        if (prev.aiAskedQuestions.size === 0 && prev.askedQuestions.size === 0) return prev;
+        if (prev.aiAskedQuestions.size === 0 && prev.askedQuestions.size === 0 && prev.history.length === 0) return prev;
         return {
           ...prev,
+          history: [],
           askedQuestions: new Set(),
           aiAskedQuestions: new Set(),
+          myAskedQuestions: new Set(),
+          opponentAskedQuestions: new Set(),
+          turnCount: 1,
+          isGameOver: false,
+          winner: undefined,
+          matchWinnerId: null,
+          rematchStatus: 'idle',
+          rematchRequestedBy: null,
+          pendingQuestion: undefined,
+          playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
         };
       });
     }
@@ -393,10 +407,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
             const winnerId = newRoomData['winner_id'];
             const matchWinnerId = newRoomData['match_winner_id'];
+            console.log("[FTF REALTIME] Game over detected. Winner:", winnerId, "My ID:", gameState.guestId);
             setGameState(prev => ({
               ...prev,
               isGameOver: true,
-              winner: winnerId === gameState.guestId ? "WINNER" : "LOSER",
+              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : undefined),
               matchWinnerId,
               rematchStatus: newRoomData['rematch_status'],
               rematchRequestedBy: newRoomData['rematch_requested_by'],
@@ -437,11 +452,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               if (prev.isGameOver) return prev;
               let newPhase = prev.phase;
               if (isMyTurn) {
+                // Se é minha vez e não estou respondendo nem aguardando resposta, é fase de perguntar
                 if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
                   newPhase = "PLAYER_TURN";
                 }
               } else {
-                if (prev.phase !== "PLAYER_RESPONDING") {
+                // Se não é minha vez e não estou respondendo (o que seria o caso se recebi uma pergunta), é turno da IA/Oponente
+                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
                   newPhase = "AI_TURN"; 
                 }
               }
