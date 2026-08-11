@@ -434,7 +434,11 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
           {/* ONLINE Hotspot */}
           <button
-            onClick={() => setScreen("ONLINE")}
+            onClick={() => {
+              setLaunchMode("ONLINE");
+              setScreen("ONLINE");
+            }}
+
             className="absolute left-[52%] top-[45%] w-[40%] h-[35%] opacity-0 cursor-pointer active:scale-95 transition-transform"
             aria-label="Jogar On-line"
           />
