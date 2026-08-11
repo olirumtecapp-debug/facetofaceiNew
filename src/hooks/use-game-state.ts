@@ -125,6 +125,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         currentTurn: newTurn,
         phase: isAITurnEnding ? "PLAYER_TURN" : "AI_TURN",
         turnCount: isAITurnEnding ? prev.turnCount + 1 : prev.turnCount,
+        pendingQuestion: undefined,
       };
     });
   }, []);
@@ -333,6 +334,32 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   useEffect(() => {
+    // Reset state when switching between IA and ONLINE to prevent leakage
+    if (gameState.gameMode === "IA") {
+      setGameState(prev => {
+        // Only reset if we actually have room-specific data to avoid infinite loop
+        if (!prev.roomCode && !prev.pendingQuestion && prev.history.length === 0) return prev;
+        
+        return {
+          ...prev,
+          pendingQuestion: undefined,
+          history: [],
+          askedQuestions: new Set(),
+          myAskedQuestions: new Set(),
+          opponentAskedQuestions: new Set(),
+          turnCount: 1,
+          currentTurn: "PLAYER",
+          phase: "PLAYER_TURN",
+          isGameOver: false,
+          winner: undefined,
+          roomId: undefined,
+          roomCode: undefined,
+          opponentId: undefined,
+          opponentName: undefined
+        };
+      });
+    }
+
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
       console.log("[FTF REALTIME] Disabling realtime for mode:", gameState.gameMode);
       return;
@@ -465,7 +492,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
           if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "PLAYING") {
-            setGameState(prev => ({ ...prev, pendingQuestion: undefined }));
+            setGameState(prev => {
+              if (prev.phase === "WAITING_ANSWER" || prev.phase === "PLAYER_RESPONDING") {
+                return { ...prev, pendingQuestion: undefined };
+              }
+              return prev;
+            });
           }
         }
       )
