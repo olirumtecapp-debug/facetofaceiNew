@@ -375,6 +375,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         (payload) => {
           if (gameState.gameMode !== "ONLINE") return;
           const newRoomData = payload.new as any;
+          console.log("[FTF REALTIME] Update received:", newRoomData);
           
           if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
             const winnerId = newRoomData['winner_id'];
