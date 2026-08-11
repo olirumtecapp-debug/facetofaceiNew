@@ -153,6 +153,8 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
     : "";
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [launchMode, setLaunchMode] = useState<"IA" | "ONLINE">("IA");
+
   const [playerName, setPlayerName] = useState(() => {
     return localStorage.getItem("ftf_player_name") || "";
   });
@@ -225,8 +227,25 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
 
   if (screen === "GAME") {
-    return <GameBoard playerColor={playerColor} difficulty={difficulty} onBack={() => setScreen("MENU")} initialRoomCode={roomCode || joinCode} />;
+    const activeRoomCode = launchMode === "ONLINE" ? (roomCode || joinCode) : "";
+    return (
+      <GameBoard
+        key={`${launchMode}-${activeRoomCode}`}
+        playerColor={playerColor}
+        difficulty={difficulty}
+        onBack={() => {
+          setScreen("MENU");
+          setRoomData(null);
+          setPlayers([]);
+          setRoomCode("");
+          setJoinCode("");
+          setLaunchMode("IA");
+        }}
+        {...(activeRoomCode ? { initialRoomCode: activeRoomCode } : {})}
+      />
+    );
   }
+
 
   if (screen === "CHOOSE_DIFFICULTY") {
     return (
@@ -400,14 +419,26 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
           
           {/* VS IA Hotspot */}
           <button
-            onClick={() => setScreen("CHOOSE_DIFFICULTY")}
+            onClick={() => {
+              setLaunchMode("IA");
+              setRoomCode("");
+              setJoinCode("");
+              setRoomData(null);
+              setPlayers([]);
+              setScreen("CHOOSE_DIFFICULTY");
+            }}
+
             className="absolute left-[8%] top-[45%] w-[40%] h-[35%] opacity-0 cursor-pointer active:scale-95 transition-transform"
             aria-label="Jogar VS IA"
           />
 
           {/* ONLINE Hotspot */}
           <button
-            onClick={() => setScreen("ONLINE")}
+            onClick={() => {
+              setLaunchMode("ONLINE");
+              setScreen("ONLINE");
+            }}
+
             className="absolute left-[52%] top-[45%] w-[40%] h-[35%] opacity-0 cursor-pointer active:scale-95 transition-transform"
             aria-label="Jogar On-line"
           />
