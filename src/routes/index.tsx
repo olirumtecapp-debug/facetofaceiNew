@@ -425,7 +425,8 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
               setJoinCode("");
               setRoomData(null);
               setPlayers([]);
-              setScreen("CHOOSE_DIFFICULTY");
+              setDifficulty("Médio");
+              setScreen("CHOOSE_COLOR");
             }}
 
             className="absolute left-[8%] top-[45%] w-[40%] h-[35%] opacity-0 cursor-pointer active:scale-95 transition-transform"

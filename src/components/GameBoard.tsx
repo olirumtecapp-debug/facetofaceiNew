@@ -95,7 +95,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
              "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
-            Rodada {gameState.turnCount} {gameState.gameMode === "IA" ? `· IA ${difficulty}` : "· MULTIPLAYER ONLINE"}
+            Rodada {gameState.turnCount} {gameState.gameMode === "IA" ? `· IA` : "· MULTIPLAYER ONLINE"}
           </div>
           {showTimeoutWarning && (
             <div className="absolute top-full mt-2 w-max animate-bounce rounded bg-red-500/90 px-2 py-0.5 text-[9px] font-bold text-white shadow-lg backdrop-blur-sm">
