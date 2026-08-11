@@ -15,7 +15,7 @@ export type GamePhase =
   | "AI_DISCARDING"      // IA descarta seus personagens
   | "AI_PASS_TURN";      // IA encerra seu turno
 
-export type GameMode = "IA" | "ONLINE";
+export type GameMode = "IA" | "ONLINE" | "LOADING";
 
 export type GameState = {
   playerColor: "AZUL" | "VERMELHO";
@@ -140,6 +140,16 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
         console.log("Multiplayer: Enviando pergunta para a sala", gameState.roomCode);
+        
+        // 1. Update local state immediately for responsiveness
+        setGameState(prev => ({
+          ...prev,
+          phase: "WAITING_ANSWER",
+          pendingQuestion: { question, type: "PLAYER" },
+          lastActionTime: Date.now()
+        }));
+
+        // 2. Synchronize with server
         const { error } = await supabase
           .from("rooms")
           .update({ 
@@ -156,12 +166,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           return;
         }
 
-        setGameState(prev => ({
-          ...prev,
-          phase: "WAITING_ANSWER",
-          pendingQuestion: { question, type: "PLAYER" },
-          lastActionTime: Date.now()
-        }));
+        // Local state already updated above
       } catch (err) {
         console.error("Multiplayer Catch Error:", err);
         toast.error("Erro de conexão ao enviar pergunta.");
@@ -197,6 +202,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       try {
         console.log("[FTF ANSWER] sending:", answer);
         
+        // 1. Update local state immediately
+        if (type === "AI" || type === "AI_PALPITE") {
+          setGameState(prev => ({
+            ...prev,
+            history: [...prev.history, { 
+              type: type === "AI" ? "AI" : "AI", 
+              text: type === "AI_PALPITE" ? `Tentativa de palpite: ${question.text}` : question.text, 
+              answer 
+            }],
+            pendingQuestion: undefined,
+            phase: type === "AI_PALPITE" ? prev.phase : "AI_DISCARDING", // Winner logic will handle game over
+            lastActionTime: Date.now()
+          }));
+        }
+
+        // 2. Send to server
         const { error } = await supabase
           .from("rooms")
           .update({ 
@@ -395,7 +416,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }
 
     const channel = supabase
-      .channel(`room_${gameState.roomCode}_${gameState.guestId}`)
+      .channel(`room_${gameState.roomCode}_${gameState.guestId}_${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
