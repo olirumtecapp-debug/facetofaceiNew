@@ -666,7 +666,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
             matchWinnerId: roomData.match_winner_id,
             rematchStatus: (roomData.rematch_status as any) || prev.rematchStatus,
-            rematchRequestedBy: roomData.rematch_requested_by || prev.rematchRequestedBy,
+            rematchRequestedBy: roomData.rematch_requested_by ?? prev.rematchRequestedBy,
             lastActionTime: Date.now()
           };
         });
