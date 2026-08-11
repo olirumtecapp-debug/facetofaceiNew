@@ -125,7 +125,7 @@ function Lobby({ room, players, guestId, onLeave, onToggleReady, onStart }: any)
             onClick={onLeave}
             className="w-full rounded-lg bg-gray-800 py-3 font-black uppercase tracking-widest border-2 border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95"
           >
-            SAIR DA SALA
+            SAIR PARA O MENU
           </button>
         </div>
       </div>
