@@ -335,7 +335,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         console.error("[FTF PALPITE] Error calling declareWinner:", e);
         // Expor erro detalhado no toast para diagnóstico se houver falha
         const errorMessage = e?.message || "Erro desconhecido";
-        toast.error(`Erro ao registrar: ${errorMessage}. Payload: RID=${gameState.roomId?.slice(0,8)}, WID=${winnerId?.slice(0,8)}`);
+        toast.error("Erro ao registrar o fim da rodada.");
       }
       return; 
     }
