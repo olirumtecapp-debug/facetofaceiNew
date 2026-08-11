@@ -376,65 +376,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   useEffect(() => {
-    // Reset state when switching between IA and ONLINE to prevent leakage
-    if (gameState.gameMode === "IA") {
-      setGameState(prev => {
-        // Only reset if we actually have room-specific data to avoid infinite loop
-        if (!prev.roomCode && !prev.pendingQuestion && prev.history.length === 0 && prev.askedQuestions.size === 0) return prev;
-        
-        console.log("[FTF RESET] Clearing online state to enter IA mode");
-        return {
-          ...prev,
-          pendingQuestion: undefined,
-          history: [],
-          askedQuestions: new Set(),
-          myAskedQuestions: new Set(),
-          opponentAskedQuestions: new Set(),
-          aiAskedQuestions: new Set(),
-          turnCount: 1,
-          currentTurn: "PLAYER",
-          phase: "PLAYER_TURN",
-          isGameOver: false,
-          winner: undefined,
-          matchWinnerId: null,
-          rematchStatus: 'idle',
-          rematchRequestedBy: null,
-          roomId: undefined,
-          roomCode: undefined,
-          opponentId: undefined,
-          opponentName: undefined,
-          playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
-        };
-      });
-    }
-    
-    // Explicitly reset AI questions if switching TO online
-    if (gameState.gameMode === "ONLINE") {
-      setGameState(prev => {
-        if (prev.aiAskedQuestions.size === 0 && prev.askedQuestions.size === 0 && prev.history.length === 0) return prev;
-        return {
-          ...prev,
-          history: [],
-          askedQuestions: new Set(),
-          aiAskedQuestions: new Set(),
-          myAskedQuestions: new Set(),
-          opponentAskedQuestions: new Set(),
-          turnCount: 1,
-          isGameOver: false,
-          winner: undefined,
-          matchWinnerId: null,
-          rematchStatus: 'idle',
-          rematchRequestedBy: null,
-          pendingQuestion: undefined,
-          playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
-        };
-      });
-    }
-
+    // Realtime only exists for ONLINE rooms. State isolation between modes is
+    // guaranteed by the caller remounting this hook (keyed by mode + room code).
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
-      console.log("[FTF REALTIME] Disabling realtime for mode:", gameState.gameMode);
       return;
     }
+
 
     const channel = supabase
       .channel(`room_${gameState.roomCode}_${gameState.guestId}_${Date.now()}`)
