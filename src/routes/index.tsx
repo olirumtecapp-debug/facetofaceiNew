@@ -434,14 +434,11 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
             />
           </div>
 
-          {/* Debug Layer (Only if you want to see the areas during development) */}
-          {/* 
           <div className="absolute left-[8%] top-[45%] w-[40%] h-[35%] bg-red-500/20 pointer-events-none border border-red-500" />
           <div className="absolute left-[52%] top-[45%] w-[40%] h-[35%] bg-blue-500/20 pointer-events-none border border-blue-500" />
           <div className="absolute bottom-[2%] left-[5%] w-[15%] h-[15%] bg-yellow-500/20 pointer-events-none border border-yellow-500" />
           <div className="absolute bottom-[2%] left-[30%] w-[40%] h-[15%] bg-green-500/20 pointer-events-none border border-green-500" />
           <div className="absolute bottom-[2%] right-[5%] w-[15%] h-[15%] bg-pink-500/20 pointer-events-none border border-pink-500" />
-          */}
         </div>
       </Shell>
 
