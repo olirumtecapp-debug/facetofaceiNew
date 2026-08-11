@@ -535,7 +535,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                     onClick={() => setSelectedCharId(null)}
                     className="mt-6 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
                   >
-                    MENU
+                    <span translate="no">MENU</span>
                   </button>
                 </div>
               );
