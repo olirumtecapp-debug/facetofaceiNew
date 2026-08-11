@@ -240,15 +240,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }
 
     if (type === "PLAYER") {
-      setGameState((prev) => ({
-        ...prev,
-        history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
-        pendingQuestion: undefined,
-        askedQuestions: new Set(prev.askedQuestions).add(question.id),
-        myAskedQuestions: new Set(prev.myAskedQuestions).add(question.id),
-        playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
-        phase: "PLAYER_DISCARDING"
-      }));
+      setGameState((prev) => {
+        const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(question.id);
+        console.log("[FTF DEBUG] Player question answered. New count:", newMyAskedQuestions.size);
+        return {
+          ...prev,
+          history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
+          pendingQuestion: undefined,
+          askedQuestions: new Set(prev.askedQuestions).add(question.id),
+          myAskedQuestions: newMyAskedQuestions,
+          playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
+          phase: "PLAYER_DISCARDING"
+        };
+      });
     } else if (type === "AI_PALPITE") {
       const guessedCharId = question.id.replace('palpite-', '');
       const isCorrect = Number(guessedCharId) === gameState.playerSecret.id;
@@ -559,15 +563,17 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             const askerId = newRoomData['question_asked_by'];
-            const isMyQuestion = askerId && askerId !== gameState.guestId;
+            const isMyQuestion = askerId && askerId === gameState.guestId;
 
             if (isMyQuestion) {
               setGameState(prev => {
                 if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
+                  const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id);
+                  console.log("[FTF DEBUG] Online answer received. New count:", newMyAskedQuestions.size);
                   return {
                     ...prev,
                     pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                    myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
+                    myAskedQuestions: newMyAskedQuestions,
                     lastActionTime: Date.now()
                   };
                 }

@@ -212,7 +212,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
 
           {/* Questions */}
           <div className="shrink-0 rounded-xl border border-white/10 bg-[#0b0e14] p-1.5">
-            <div className="mb-1 flex flex-wrap gap-1">
+            <div key={`cat-selector-${gameState.myAskedQuestions.size}`} className="mb-1 flex flex-wrap gap-1">
               {CATEGORIES.map((c) => (
                 <button
                   key={c}
@@ -227,7 +227,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
             <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-24">
               {QUESTIONS.filter((q) => q.category === cat).map((q) => {
-                const isLocked = q.category === "Gênero" ? gameState.myAskedQuestions.size < 2 : false;
+                const isLocked = q.category === "Gênero" ? (gameState.myAskedQuestions.size < 2) : false;
                 const isAlreadyAsked = gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id);
                 return (
                   <button
