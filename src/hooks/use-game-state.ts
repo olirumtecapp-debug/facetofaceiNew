@@ -297,19 +297,40 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   const playerPalpite = async (character: Character) => {
     const isCorrect = character.id === gameState.aiSecret.id;
-    
-    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      if (isCorrect) {
-        // We only notify the server if WE win by guessing
-        const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.guestId } });
-      } else {
-        // If we guess wrong, the opponent wins
-        const { declareWinner } = await import("@/lib/online.functions");
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.opponentId! } });
+
+    if (gameState.gameMode === "ONLINE") {
+      if (!gameState.roomId) {
+        toast.error("Sala não sincronizada. Tente novamente.");
+        return;
       }
-      return; // Realtime will handle the state update
+      const winnerId = isCorrect ? gameState.guestId : gameState.opponentId;
+      if (!winnerId) {
+        toast.error("Adversário não encontrado.");
+        return;
+      }
+
+      // Optimistic local end-of-round so this player sees the result instantly
+      setGameState(prev => ({
+        ...prev,
+        isGameOver: true,
+        winner: isCorrect ? "WINNER" : "LOSER",
+        playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
+        aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
+        pendingQuestion: undefined,
+        rematchStatus: 'idle',
+        rematchRequestedBy: null,
+        lastActionTime: Date.now()
+      }));
+
+      try {
+        const { declareWinner } = await import("@/lib/online.functions");
+        await declareWinner({ data: { roomId: gameState.roomId, winnerId } });
+      } catch (e) {
+        toast.error("Erro ao registrar o fim da rodada.");
+      }
+      return; // Realtime keeps both clients in sync
     }
+
 
     setGameState((prev) => ({
       ...prev,
