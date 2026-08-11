@@ -621,7 +621,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
               onClick={() => setShowDonate(false)}
               className="mt-8 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 active:scale-95"
             >
-              MENU
+              <span translate="no">MENU</span>
             </button>
           </div>
         </div>
