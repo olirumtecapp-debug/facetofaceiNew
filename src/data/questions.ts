@@ -10,8 +10,8 @@ export type Question = {
 
 export const QUESTIONS: Question[] = [
   // Gênero (Mantendo IDs para compatibilidade, mas a IA priorizará outras categorias se minTurn não for atingido)
-  { id: "g_homem", text: "O seu personagem é homem?", category: "Gênero", minTurn: 2, check: (c) => c.genero === "Masculino" },
-  { id: "g_mulher", text: "O seu personagem é mulher?", category: "Gênero", minTurn: 2, check: (c) => c.genero === "Feminino" },
+  { id: "g_homem", text: "O seu personagem é homem?", category: "Gênero", minTurn: 0, check: (c) => c.genero === "Masculino" },
+  { id: "g_mulher", text: "O seu personagem é mulher?", category: "Gênero", minTurn: 0, check: (c) => c.genero === "Feminino" },
   
   // Cabelo Cor
   { id: "c_loiro", text: "Tem cabelo loiro?", category: "Cabelo", check: (c) => c.corCabelo === "Loiro" },
