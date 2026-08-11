@@ -226,16 +226,22 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               ))}
             </div>
             <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-24">
-              {QUESTIONS.filter((q) => q.category === cat).map((q) => (
-                <button
-                  key={q.id}
-                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || (gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id))}
-                  onClick={() => handlePlayerQuestion(q)}
-                  className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
-                >
-                  {q.text}
-                </button>
-              ))}
+              {QUESTIONS.filter((q) => q.category === cat).map((q) => {
+                const isLocked = q.minTurn ? gameState.turnCount < q.minTurn : false;
+                const isAlreadyAsked = gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id);
+                return (
+                  <button
+                    key={q.id}
+                    disabled={!canAsk || isLocked || isAlreadyAsked}
+                    onClick={() => handlePlayerQuestion(q)}
+                    className={`rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors sm:px-2 sm:py-1 sm:text-[10px] ${
+                      isLocked ? "opacity-20 cursor-not-allowed grayscale" : "hover:bg-gray-700"
+                    } ${isAlreadyAsked ? "opacity-30" : ""}`}
+                  >
+                    {isLocked ? "🔒 " : ""}{q.text}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
