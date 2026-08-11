@@ -414,7 +414,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
           <img
             src={homeAsset.url}
             alt="FTF - Face to Face"
-            className="w-full h-auto block drop-shadow-2xl"
+            className="w-full h-auto block drop-shadow-2xl rounded-2xl"
           />
           
           {/* VS IA Hotspot */}
