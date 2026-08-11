@@ -340,6 +340,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         // Only reset if we actually have room-specific data to avoid infinite loop
         if (!prev.roomCode && !prev.pendingQuestion && prev.history.length === 0) return prev;
         
+        console.log("[FTF RESET] Clearing online state to enter IA mode");
         return {
           ...prev,
           pendingQuestion: undefined,
@@ -355,7 +356,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           roomId: undefined,
           roomCode: undefined,
           opponentId: undefined,
-          opponentName: undefined
+          opponentName: undefined,
+          playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
         };
       });
     }
@@ -373,6 +375,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         (payload) => {
           if (gameState.gameMode !== "ONLINE") return;
           const newRoomData = payload.new as any;
+          console.log("[FTF REALTIME] Update received:", newRoomData);
           
           if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
             const winnerId = newRoomData['winner_id'];
@@ -441,7 +444,13 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
           if (newRoomData['current_question_id']) {
             const askerId = newRoomData['question_asked_by'];
-            const isFromOpponent = askerId && askerId !== gameState.guestId;
+          const isFromOpponent = askerId && askerId !== gameState.guestId;
+          console.log("[FTF REALTIME] Question detected:", { 
+            id: newRoomData['current_question_id'], 
+            askerId, 
+            isFromOpponent,
+            myId: gameState.guestId 
+          });
             const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
             
             if (question) {
