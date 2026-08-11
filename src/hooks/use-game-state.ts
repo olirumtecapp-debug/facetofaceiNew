@@ -654,7 +654,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             playerSecret: mySecret,
             aiSecret: oppSecret,
             opponentId: opponent?.guest_id,
-            opponentName: opponent?.name || undefined,
+            opponentName: opponent?.name || prev.opponentName,
             playerName: me?.name || prev.playerName,
             roomId: roomData.id,
             playerScore: me?.score || 0,
@@ -663,8 +663,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             phase: newPhase,
             pendingQuestion,
             isGameOver,
-            winner: roomData.winner_id === gameState.guestId ? "WINNER" : (roomData.winner_id ? "LOSER" : undefined),
+            winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
             matchWinnerId: roomData.match_winner_id,
+            rematchStatus: roomData.rematch_status || prev.rematchStatus,
+            rematchRequestedBy: roomData.rematch_requested_by || prev.rematchRequestedBy,
             lastActionTime: Date.now()
           };
         });
