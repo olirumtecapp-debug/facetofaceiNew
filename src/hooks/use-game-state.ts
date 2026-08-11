@@ -331,9 +331,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         console.log("[FTF PALPITE] Calling declareWinner server function", { roomId: gameState.roomId, winnerId });
         const result = await declareWinnerFn({ data: { roomId: gameState.roomId, winnerId } });
         console.log("[FTF PALPITE] declareWinner result:", result);
-      } catch (e) {
+      } catch (e: any) {
         console.error("[FTF PALPITE] Error calling declareWinner:", e);
-        toast.error("Erro ao registrar o fim da rodada.");
+        // Expor erro detalhado no toast para diagnóstico se houver falha
+        const errorMessage = e?.message || "Erro desconhecido";
+        toast.error(`Erro ao registrar: ${errorMessage}. Payload: RID=${gameState.roomId?.slice(0,8)}, WID=${winnerId?.slice(0,8)}`);
       }
       return; 
     }
