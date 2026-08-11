@@ -664,11 +664,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             pendingQuestion,
             isGameOver,
             winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
-            matchWinnerId: roomData.match_winner_id,
+            matchWinnerId: roomData.match_winner_id || null,
             rematchStatus: (roomData.rematch_status as any) || prev.rematchStatus,
-            rematchRequestedBy: roomData.rematch_requested_by ?? prev.rematchRequestedBy,
+            rematchRequestedBy: roomData.rematch_requested_by ?? prev.rematchRequestedBy ?? null,
             lastActionTime: Date.now()
-          };
+          } as GameState;
         });
       };
       syncRoom();
