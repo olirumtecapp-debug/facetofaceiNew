@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import logoAsset from "@/assets/Logo_FTF_transparente.png.asset.json";
-import playIaAsset from "@/assets/play-ia.png.asset.json";
-import playOnlineAsset from "@/assets/play-online.png.asset.json";
-import boardAzulAsset from "@/assets/CardsAzul.png.asset.json";
-import boardVermelhoAsset from "@/assets/CardsVermelho.png.asset.json";
+import homeAsset from "@/assets/home-interface.png.asset.json";
 import { CARD_IMAGES } from "@/assets/chars";
 import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
@@ -395,74 +391,56 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   return (
     <>
       <Shell>
-        <div className="relative group flex items-center justify-center">
+        <div className="relative w-full max-w-[600px] mx-auto select-none">
           <img
-            src={logoAsset.url}
+            src={homeAsset.url}
             alt="FTF - Face to Face"
-            className="h-32 w-auto object-contain sm:h-48 md:h-56 relative z-10"
+            className="w-full h-auto block drop-shadow-2xl"
           />
-        </div>
-        <div className="flex w-full flex-col items-center justify-center gap-10 sm:flex-row sm:gap-16">
-          {/* Botão Jogar vs IA */}
-          <div className="group relative">
-            {/* Brilho externo azul */}
-            <div className="absolute inset-0 -z-10 rounded-full bg-blue-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
-            <button
-              onClick={() => setScreen("CHOOSE_DIFFICULTY")}
-              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#1e62ec] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
-            >
-              <img 
-                src={playIaAsset.url} 
-                alt="Jogar vs IA" 
-                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
-              />
-            </button>
-          </div>
-
-          {/* Botão Jogar on-line */}
-          <div className="group relative">
-            {/* Brilho externo vermelho */}
-            <div className="absolute inset-0 -z-10 rounded-full bg-red-500/40 blur-3xl opacity-60 transition-opacity group-hover:opacity-100 animate-pulse-glow" style={{ animationDelay: '-2s' }} />
-            
-            {/* Moldura branca para mascarar recorte - ajustada às imagens */}
-            <button
-              onClick={() => setScreen("ONLINE")}
-              className="relative flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl border-4 border-[#e52e2e] bg-gray-200 p-1 transition-all hover:scale-105 active:scale-95 sm:h-28 sm:w-40 md:h-32 md:w-48"
-            >
-              <img 
-                src={playOnlineAsset.url} 
-                alt="Jogar on-line" 
-                className="h-[85%] w-auto object-contain contrast-125 brightness-110" 
-              />
-            </button>
-          </div>
-        </div>
-        <div className="flex w-full max-w-lg items-center justify-between px-4">
-          <button 
-            onClick={() => setShowSettings(true)}
-            className="text-2xl transition-all hover:scale-125 hover:rotate-90 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Configurações"
-          >
-            ⚙️
-          </button>
-
+          
+          {/* VS IA Hotspot */}
           <button
-            onClick={() => setShowChars(true)}
-            className="group relative overflow-hidden rounded-full border-2 border-yellow-400/50 bg-gray-800/80 px-6 py-2.5 text-[10px] font-black tracking-[0.2em] transition-all hover:scale-105 hover:bg-gray-700 hover:shadow-[0_0_20px_rgba(250,204,21,0.2)] active:scale-95"
-          >
-            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-yellow-400/0 via-yellow-400/20 to-yellow-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
-            👤 PERSONAGENS
-          </button>
-          <button 
-            onClick={() => setShowDonate(true)}
-            className="text-2xl transition-all hover:scale-125 active:scale-90 p-2 rounded-lg border border-white/20 bg-gray-800/40" 
-            aria-label="Apoiar"
-          >
-            💗
-          </button>
+            onClick={() => setScreen("CHOOSE_DIFFICULTY")}
+            className="absolute left-[8%] top-[45%] w-[40%] h-[35%] opacity-0 cursor-pointer active:scale-95 transition-transform"
+            aria-label="Jogar VS IA"
+          />
 
+          {/* ONLINE Hotspot */}
+          <button
+            onClick={() => setScreen("ONLINE")}
+            className="absolute left-[52%] top-[45%] w-[40%] h-[35%] opacity-0 cursor-pointer active:scale-95 transition-transform"
+            aria-label="Jogar On-line"
+          />
+
+          {/* Bottom Icons Row */}
+          <div className="absolute bottom-[2%] left-0 w-full h-[15%] flex justify-between px-[5%]">
+            {/* CONFIGURAÇÕES */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-[15%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              aria-label="Configurações"
+            />
+            {/* PERSONAGENS */}
+            <button
+              onClick={() => setShowChars(true)}
+              className="w-[40%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              aria-label="Personagens"
+            />
+            {/* APOIAR */}
+            <button
+              onClick={() => setShowDonate(true)}
+              className="w-[15%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              aria-label="Apoiar"
+            />
+          </div>
+
+          {/* 
+          <div className="absolute left-[8%] top-[45%] w-[40%] h-[35%] bg-red-500/20 pointer-events-none border border-red-500" />
+          <div className="absolute left-[52%] top-[45%] w-[40%] h-[35%] bg-blue-500/20 pointer-events-none border border-blue-500" />
+          <div className="absolute bottom-[2%] left-[5%] w-[15%] h-[15%] bg-yellow-500/20 pointer-events-none border border-yellow-500" />
+          <div className="absolute bottom-[2%] left-[30%] w-[40%] h-[15%] bg-green-500/20 pointer-events-none border border-green-500" />
+          <div className="absolute bottom-[2%] right-[5%] w-[15%] h-[15%] bg-pink-500/20 pointer-events-none border border-pink-500" />
+          */}
         </div>
       </Shell>
 
