@@ -369,7 +369,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                     <p className="mt-2 text-sm italic text-gray-400">
                       "Seu adversário decidiu parar por aqui. Parece que a revanche ficou para a próxima! 😏"
                     </p>
-                    <p className="mt-4 font-black text-white uppercase tracking-tighter">Partida encerrada.</p>
+                    <p className="mt-4 font-black text-white uppercase tracking-tighter">Menu encerrado.</p>
                   </div>
                 )}
               </div>

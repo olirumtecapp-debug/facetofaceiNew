@@ -359,7 +359,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     setGameState((prev) => ({
       ...prev,
-      history: [...prev.history, { type: "PLAYER", text: "Passou a vez." }],
+      history: [...prev.history, { type: "PLAYER", text: "Voltou ao Menu." }],
     }));
     setTimeout(nextTurn, 400);
   };
