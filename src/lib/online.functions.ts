@@ -326,3 +326,38 @@ export const handleRematchResponse = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const abandonMatch = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string }) => 
+    z.object({ roomId: z.string(), guestId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+
+    // 1. Get room players to find the winner
+    const { data: players } = await supabase
+      .from("room_players")
+      .select("guest_id")
+      .eq("room_id", data.roomId);
+
+    if (!players || players.length === 0) throw new Error("Sala não encontrada");
+
+    const winner = players.find(p => p.guest_id !== data.guestId);
+    if (!winner) throw new Error("Adversário não encontrado");
+
+    // 2. Authoritative match end
+    const { error } = await supabase
+      .from("rooms")
+      .update({ 
+        status: "FINISHED",
+        match_winner_id: winner.guest_id as any,
+        winner_id: winner.guest_id as any,
+        last_action_timestamp: new Date().toISOString(),
+        rematch_status: 'declined' // No rematch possible if abandoned
+      })
+      .eq("id", data.roomId);
+
+    if (error) throw error;
+    return { success: true };
+  });
