@@ -330,12 +330,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         const { declareWinner: declareWinnerFn } = await import("@/lib/online.functions");
         console.log("[FTF PALPITE] Calling declareWinner server function", { roomId: gameState.roomId, winnerId });
         const result = await declareWinnerFn({ data: { roomId: gameState.roomId, winnerId } });
-        console.log("[FTF PALPITE] declareWinner result:", result);
+        console.log("[FTF PALPITE] declareWinner result success:", result);
       } catch (e: any) {
-        console.error("[FTF PALPITE] Error calling declareWinner:", e);
-        // Expor erro detalhado no toast para diagnóstico se houver falha
-        const errorMessage = e?.message || "Erro desconhecido";
-        toast.error("Erro ao registrar o fim da rodada.");
+        // DIAGNÓSTICO OBRIGATÓRIO: Capturar e exibir erro real
+        console.error("FINAL_ROUND_ERROR_FULL", {
+          message: e?.message,
+          stack: e?.stack,
+          details: e?.details,
+          hint: e?.hint,
+          code: e?.code,
+          payload: { roomId: gameState.roomId, winnerId: (isCorrect ? gameState.guestId : gameState.opponentId) }
+        });
+        
+        const errorDetails = e?.message || "Erro desconhecido";
+        toast.error(`Erro ao registrar o fim da rodada: ${errorDetails}`);
       }
       return; 
     }
