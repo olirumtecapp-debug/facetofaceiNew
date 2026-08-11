@@ -81,9 +81,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
              gameState.phase === "PLAYER_TURN" ? "🟢 SUA VEZ: Faça uma pergunta" :
              gameState.phase === "WAITING_ANSWER" ? (gameState.gameMode === "ONLINE" ? `🟠 Aguardando ${gameState.opponentName || "adversário"} responder...` : "Aguardando resposta da IA...") :
              gameState.phase === "PLAYER_DISCARDING" ? "🟢 SUA VEZ: Descarte e passe a vez" :
-             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? `🔴 VEZ DE ${gameState.opponentName || "ADVERSÁRIO"}` : "Turno da IA: Pensando...") :
+             gameState.phase === "AI_TURN" ? (gameState.gameMode === "ONLINE" ? `🟠 VEZ DE ${gameState.opponentName || "ADVERSÁRIO"}...` : "Turno da IA: Pensando...") :
              gameState.phase === "PLAYER_RESPONDING" ? (gameState.gameMode === "ONLINE" ? `🔵 RESPONDA A ${gameState.opponentName || "ADVERSÁRIO"}` : "🔵 RESPONDA À IA") :
-             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? `🔴 ${gameState.opponentName || "Adversário"} está descartando...` : "IA está analisando a resposta...") :
+             gameState.phase === "AI_DISCARDING" ? (gameState.gameMode === "ONLINE" ? `${gameState.opponentName || "Adversário"} está descartando...` : "IA está analisando a resposta...") :
              "Aguarde o adversário"}
           </div>
           <div className="text-[9px] font-bold text-gray-500 sm:text-[10px]">
@@ -139,7 +139,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         </section>
 
         {/* Side panel */}
-        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[35vh] lg:max-h-none">
+        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[45vh] lg:max-h-none">
           {/* Secret cards + actions */}
           <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
             <div className="w-12 shrink-0 sm:w-20">
@@ -179,7 +179,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             <div className="border-b border-white/10 p-1.5 text-[10px] font-black uppercase tracking-tight text-gray-500">
               Histórico
             </div>
-            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar max-h-[100px] sm:max-h-none">
+            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar max-h-[120px] sm:max-h-none">
               {gameState.history.length === 0 && (
                 <p className="text-center text-[10px] text-gray-600">Faça sua primeira pergunta.</p>
               )}
