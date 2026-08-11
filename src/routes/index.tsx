@@ -153,6 +153,8 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
     : "";
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [launchMode, setLaunchMode] = useState<"IA" | "ONLINE">("IA");
+
   const [playerName, setPlayerName] = useState(() => {
     return localStorage.getItem("ftf_player_name") || "";
   });
