@@ -403,17 +403,21 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               status: newRoomData['status']
             });
 
-            setGameState(prev => ({
-              ...prev,
-              isGameOver: true,
-              winner: winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner),
-              matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-              phase: "PLAYER_TURN", // Reset phase to stop any waiting UI
-              pendingQuestion: undefined,
-              lastActionTime: Date.now()
-            }));
+            setGameState(prev => {
+              const newWinner = winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner);
+              console.log("[FTF REALTIME] Setting winner state to:", newWinner);
+              return {
+                ...prev,
+                isGameOver: true,
+                winner: newWinner,
+                matchWinnerId,
+                rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+                rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+                phase: "PLAYER_TURN", // Reset phase to stop any waiting UI
+                pendingQuestion: undefined,
+                lastActionTime: Date.now()
+              };
+            });
           }
 
           if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
@@ -427,11 +431,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['status'] === "PLAYING") {
             // New round started (server reset the room)
             setGameState(prev => {
+              // Trigger reset if it's currently game over OR if the rematch was accepted
               if (!prev.isGameOver && prev.rematchStatus !== 'accepted') return prev;
+              
+              console.log("[FTF REALTIME] Resetting game for new round");
               return {
                 ...prev,
                 isGameOver: false,
                 winner: undefined,
+                matchWinnerId: null,
                 rematchStatus: 'idle',
                 rematchRequestedBy: null,
                 askedQuestions: new Set(),
