@@ -660,7 +660,7 @@ function BackButton({ onClick, className }: { onClick: () => void; className?: s
       onClick={onClick}
       className={`group flex items-center gap-2 px-6 py-2 rounded-xl border-2 border-gray-400/30 bg-gray-800/50 font-black uppercase tracking-widest text-gray-400 transition-all hover:text-yellow-400 hover:border-yellow-400/50 hover:scale-105 active:scale-95 ${className}`}
     >
-      <span className="text-xl">{"<"}</span> MENU
+      <span className="text-xl">{"<"}</span> <span translate="no">MENU</span>
     </button>
   );
 }
