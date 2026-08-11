@@ -344,7 +344,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                 disabled={isConnecting}
                 className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-50"
               >
-                {isConnecting ? "Criando..." : "Gerar código"}
+                {isConnecting ? "Criando..." : "CRIAR NOVA SALA"}
               </button>
             </div>
 
