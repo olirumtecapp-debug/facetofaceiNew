@@ -413,18 +413,39 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       const syncRoom = async () => {
+        // Se já acabou, não precisamos do sync inicial de estado de jogo (fases/turnos)
+        if (gameState.isGameOver) return;
+
         const { data: roomData, error } = await supabase.from("rooms").select("*, room_players(*)").eq("code", gameState.roomCode!).single();
         if (error || !roomData) return;
+
+        if (roomData.winner_id || roomData.status === "FINISHED") {
+          // Se o banco diz que acabou, o syncGameState vai cuidar disso
+          return;
+        }
+
         const players = roomData.room_players || [], opponent = players.find((p: any) => p.guest_id !== gameState.guestId), me = players.find((p: any) => p.guest_id === gameState.guestId), isMyTurn = roomData.current_turn_player_id === gameState.guestId;
         let mySecret = gameState.playerSecret, oppSecret = gameState.aiSecret;
         if (me?.secret_character_id) { const char = CHARACTERS.find(c => c.id === me.secret_character_id); if (char) mySecret = char; }
         if (opponent?.secret_character_id) { const char = CHARACTERS.find(c => c.id === opponent.secret_character_id); if (char) oppSecret = char; }
+        
         setGameState(prev => {
+          if (prev.isGameOver) return prev;
+          
           let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN", pendingQuestion = undefined;
           if (roomData.current_question_id) {
             const question = QUESTIONS.find(q => q.id === roomData.current_question_id);
-            if (question) { if (roomData.question_asked_by === gameState.guestId) { newPhase = "WAITING_ANSWER"; pendingQuestion = { question, type: "PLAYER" as const }; } else { newPhase = "PLAYER_RESPONDING"; pendingQuestion = { question, type: "AI" as const }; } }
+            if (question) { 
+              if (roomData.question_asked_by === gameState.guestId) { 
+                newPhase = "WAITING_ANSWER"; 
+                pendingQuestion = { question, type: "PLAYER" as const }; 
+              } else { 
+                newPhase = "PLAYER_RESPONDING"; 
+                pendingQuestion = { question, type: "AI" as const }; 
+              } 
+            }
           } else if (roomData.last_answer && roomData.question_asked_by !== gameState.guestId) newPhase = "WAITING_ANSWER";
+          
           return { ...prev, playerSecret: mySecret, aiSecret: oppSecret, opponentId: opponent?.guest_id, opponentName: opponent?.name || undefined, playerName: me?.name || prev.playerName, roomId: roomData.id, playerScore: me?.score || 0, aiScore: opponent?.score || 0, currentTurn: isMyTurn ? "PLAYER" : "AI", phase: newPhase, pendingQuestion, lastActionTime: Date.now() };
         });
       };
