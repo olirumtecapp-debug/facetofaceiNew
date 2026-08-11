@@ -535,7 +535,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
                     onClick={() => setSelectedCharId(null)}
                     className="mt-6 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
                   >
-                    MENU
+                    <span translate="no">MENU</span>
                   </button>
                 </div>
               );
@@ -621,7 +621,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
               onClick={() => setShowDonate(false)}
               className="mt-8 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-3 font-black tracking-widest text-white transition-all hover:bg-gray-700 active:scale-95"
             >
-              MENU
+              <span translate="no">MENU</span>
             </button>
           </div>
         </div>
@@ -660,7 +660,7 @@ function BackButton({ onClick, className }: { onClick: () => void; className?: s
       onClick={onClick}
       className={`group flex items-center gap-2 px-6 py-2 rounded-xl border-2 border-gray-400/30 bg-gray-800/50 font-black uppercase tracking-widest text-gray-400 transition-all hover:text-yellow-400 hover:border-yellow-400/50 hover:scale-105 active:scale-95 ${className}`}
     >
-      <span className="text-xl">{"<"}</span> MENU
+      <span className="text-xl">{"<"}</span> <span translate="no">MENU</span>
     </button>
   );
 }

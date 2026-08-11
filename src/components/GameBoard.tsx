@@ -76,7 +76,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           }}
           className="group flex items-center gap-1.5 rounded-lg border-2 border-gray-400/30 bg-gray-800/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:border-yellow-400/50 hover:text-yellow-400 hover:scale-105 active:scale-95"
         >
-          <span className="text-sm">{"<"}</span> VOLTAR AO MENU
+          <span className="text-sm">{"<"}</span> <span translate="no">VOLTAR{" "}AO{" "}MENU</span>
         </button>
         <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
           <div className={`text-[10px] font-black uppercase tracking-[0.15em] drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs px-3 py-0.5 rounded-full ${
@@ -388,7 +388,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                 onClick={onBack}
                 className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
               >
-                VOLTAR AO MENU
+                <span translate="no">VOLTAR{" "}AO{" "}MENU</span>
               </button>
             </div>
           </div>
