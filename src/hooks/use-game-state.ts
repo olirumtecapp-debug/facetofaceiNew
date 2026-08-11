@@ -410,21 +410,24 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
               status: newRoomData['status']
             });
 
-            setGameState(prev => {
-              const newWinner = winnerId === gameState.guestId ? "WINNER" : (winnerId ? "LOSER" : prev.winner);
-              console.log("[FTF REALTIME] Setting winner state to:", newWinner);
-              return {
-                ...prev,
-                isGameOver: true,
-                winner: newWinner,
-                matchWinnerId,
-                rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-                rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-                phase: "PLAYER_TURN", // Reset phase to stop any waiting UI
-                pendingQuestion: undefined,
-                lastActionTime: Date.now()
-              };
-            });
+            // If we have a winner_id, the game is definitely over
+            if (winnerId) {
+              setGameState(prev => {
+                const newWinner = winnerId === gameState.guestId ? "WINNER" : "LOSER";
+                console.log("[FTF REALTIME] Setting winner state to:", newWinner);
+                return {
+                  ...prev,
+                  isGameOver: true,
+                  winner: newWinner,
+                  matchWinnerId: matchWinnerId || prev.matchWinnerId,
+                  rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+                  rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+                  phase: "PLAYER_TURN",
+                  pendingQuestion: undefined,
+                  lastActionTime: Date.now()
+                };
+              });
+            }
           }
 
           if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
