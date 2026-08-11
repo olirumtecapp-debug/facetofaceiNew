@@ -447,7 +447,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
             const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
             const askerId = newRoomData['question_asked_by'];
-            const isMyQuestion = askerId && askerId !== gameState.guestId;
+            const isMyQuestion = askerId && askerId === gameState.guestId;
 
             if (isMyQuestion) {
               setGameState(prev => {
