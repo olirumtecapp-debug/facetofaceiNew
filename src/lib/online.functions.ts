@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getPublicSupabase } from "./online.server";
 import { CHARACTERS } from "@/data/characters";
 
+
 export const createRoom = createServerFn({ method: "POST" })
   .inputValidator((data: { guestId: string; playerName: string }) => 
     z.object({ guestId: z.string(), playerName: z.string() }).parse(data)
@@ -110,7 +111,9 @@ export const startGame = createServerFn({ method: "POST" })
     z.object({ roomId: z.string(), guestId: z.string() }).parse(data)
   )
   .handler(async ({ data }) => {
-    const supabase = getPublicSupabase();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+
     
     // Check if both ready
     const { data: players } = await supabase
@@ -156,7 +159,11 @@ export const declareWinner = createServerFn({ method: "POST" })
     z.object({ roomId: z.string(), winnerId: z.string() }).parse(data)
   )
   .handler(async ({ data }) => {
-    const supabase = getPublicSupabase();
+    // IMPORTANTE: Usamos o cliente admin para operações autoritativas de fim de jogo
+    // Isso evita falhas de RLS/Permissão em ambientes Worker e garante a sincronização.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+
 
     // 1. Fetch current score first
     const { data: player, error: playerError } = await supabase
@@ -239,7 +246,9 @@ export const handleRematchResponse = createServerFn({ method: "POST" })
     z.object({ roomId: z.string(), guestId: z.string(), accept: z.boolean() }).parse(data)
   )
   .handler(async ({ data }) => {
-    const supabase = getPublicSupabase();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+
 
     if (data.accept) {
       // Reset room for new round
