@@ -165,22 +165,19 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         const { declareWinner } = await import("@/lib/online.functions");
         const winnerId = isCorrect ? gameState.guestId : gameState.opponentId!;
         
-        // No modo ONLINE, aguardamos a resposta do servidor para ter CERTEZA do placar e status
-        // mas setamos o winner local para feedback imediato
+        // Bloqueio local imediato para o Vendedor/Perdedor
         setGameState(prev => ({ 
           ...prev, 
           isGameOver: true, 
           winner: isCorrect ? "WINNER" : "LOSER",
-          phase: "PLAYER_TURN", // Travar fase
+          phase: "PLAYER_TURN", 
           pendingQuestion: undefined
         }));
 
         await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
-        
-        // Após o declareWinner, o polling ou Realtime vai atualizar o restante (placar, aiSecret)
       } catch (error) { 
+        console.error("Erro ao declarar vencedor:", error);
         toast.error("Erro ao processar palpite final."); 
-        setGameState(prev => ({ ...prev, isGameOver: false })); // Reverter se der erro
       }
       return;
     }
@@ -203,66 +200,40 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     // Use a ref to store the latest gameState to avoid stale closure issues in syncGameState
     const syncGameState = async (roomData: any) => {
-      const winnerId = roomData['winner_id'], status = roomData['status'];
+      const winnerId = roomData['winner_id'];
+      const status = roomData['status'];
       
-      // Se houver um vencedor definido no banco, FORÇAR o estado de Game Over
+      // 1. Prioridade Absoluta: Fim de Jogo
       if (winnerId || status === "FINISHED") {
         const didIWin = winnerId === gameState.guestId;
         const matchWinnerId = roomData['match_winner_id'];
         
-        // Revelar personagens secretos IMEDIATAMENTE ao detectar fim de jogo
         if (gameState.roomId) {
-          const { data, error: playersError } = await supabase.from('room_players').select('guest_id, score, secret_character_id').eq('room_id', gameState.roomId);
+          const { data } = await supabase.from('room_players').select('guest_id, score, secret_character_id').eq('room_id', gameState.roomId);
           if (data) {
             const opponent = data.find(p => p.guest_id !== gameState.guestId);
             const me = data.find(p => p.guest_id === gameState.guestId);
+            const secretChar = CHARACTERS.find(c => c.id === opponent?.secret_character_id);
             
-            if (opponent && opponent.secret_character_id) {
-              const secretChar = CHARACTERS.find(c => c.id === opponent.secret_character_id);
-              
-              setGameState(prev => {
-                // Se já estivermos em Game Over, garantir que não vamos "retroceder"
-                // Mas atualizamos os dados de revanche e placar que podem mudar
-                return { 
-                  ...prev, 
-                  isGameOver: true, 
-                  winner: didIWin ? "WINNER" : "LOSER",
-                  aiSecret: secretChar || prev.aiSecret,
-                  playerScore: me?.score ?? prev.playerScore,
-                  aiScore: opponent?.score ?? prev.aiScore,
-                  matchWinnerId: matchWinnerId || prev.matchWinnerId,
-                  rematchStatus: roomData['rematch_status'] || prev.rematchStatus,
-                  rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
-                  // Travar fase e turno para evitar que o board reapareça
-                  phase: "PLAYER_TURN",
-                  currentTurn: didIWin ? "PLAYER" : "AI",
-                  pendingQuestion: undefined,
-                  lastActionTime: Date.now()
-                };
-              });
-              return;
-            }
+            setGameState(prev => ({ 
+              ...prev, 
+              isGameOver: true, 
+              winner: didIWin ? "WINNER" : "LOSER",
+              aiSecret: secretChar || prev.aiSecret,
+              playerScore: me?.score ?? prev.playerScore,
+              aiScore: opponent?.score ?? prev.aiScore,
+              matchWinnerId: matchWinnerId || prev.matchWinnerId,
+              rematchStatus: roomData['rematch_status'] || prev.rematchStatus,
+              rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
+              phase: "PLAYER_TURN",
+              pendingQuestion: undefined
+            }));
           }
         }
-        
-        // Fallback básico
-        setGameState(prev => ({
-          ...prev,
-          isGameOver: true,
-          winner: didIWin ? "WINNER" : "LOSER",
-          matchWinnerId: matchWinnerId || prev.matchWinnerId,
-          rematchStatus: roomData['rematch_status'] || prev.rematchStatus,
-          rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
-          phase: "PLAYER_TURN",
-          pendingQuestion: undefined,
-          lastActionTime: Date.now()
-        }));
-        return;
+        return; // IMPORTANTE: Sair para não processar turnos/perguntas após o fim
       }
 
-      // Se o jogo NÃO acabou no banco, mas acabou localmente, BLOQUEAR sincronização de turnos/perguntas
-      // Isso evita o "pisca" (rollback) quando o servidor ainda não processou o declareWinner
-      // ou quando o Realtime manda um estado antigo
+      // Se o jogo acabou localmente, ignorar atualizações de turno enquanto o banco processa
       if (gameState.isGameOver) return;
 
       if (roomData['rematch_status'] && status === "FINISHED") setGameState(prev => ({ ...prev, rematchStatus: roomData['rematch_status'], rematchRequestedBy: roomData['rematch_requested_by'] }));
