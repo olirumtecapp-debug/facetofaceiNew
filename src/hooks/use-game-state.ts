@@ -167,7 +167,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         toast.error("Erro de conexão ao enviar pergunta.");
         return;
       }
-    } else {
+    } else if (gameState.gameMode === "IA") {
       setGameState((prev) => ({
         ...prev,
         phase: "WAITING_ANSWER",
@@ -338,7 +338,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (gameState.gameMode === "IA") {
       setGameState(prev => {
         // Only reset if we actually have room-specific data to avoid infinite loop
-        if (!prev.roomCode && !prev.pendingQuestion && prev.history.length === 0) return prev;
+        if (!prev.roomCode && !prev.pendingQuestion && prev.history.length === 0 && prev.askedQuestions.size === 0) return prev;
         
         console.log("[FTF RESET] Clearing online state to enter IA mode");
         return {
@@ -348,6 +348,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           askedQuestions: new Set(),
           myAskedQuestions: new Set(),
           opponentAskedQuestions: new Set(),
+          aiAskedQuestions: new Set(),
           turnCount: 1,
           currentTurn: "PLAYER",
           phase: "PLAYER_TURN",
@@ -358,6 +359,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           opponentId: undefined,
           opponentName: undefined,
           playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
+        };
+      });
+    }
+    
+    // Explicitly reset AI questions if switching TO online
+    if (gameState.gameMode === "ONLINE") {
+      setGameState(prev => {
+        if (prev.aiAskedQuestions.size === 0 && prev.askedQuestions.size === 0) return prev;
+        return {
+          ...prev,
+          askedQuestions: new Set(),
+          aiAskedQuestions: new Set(),
         };
       });
     }
@@ -418,7 +431,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
-          if (newRoomData['current_turn_player_id']) {
+          if (newRoomData['current_turn_player_id'] && gameState.gameMode === "ONLINE") {
             const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => {
               if (prev.isGameOver) return prev;
