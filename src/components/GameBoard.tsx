@@ -50,7 +50,6 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
 
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-main-gradient text-white">
-      {/* Forçar exibição da tela de Game Over sobre qualquer outra fase no modo Online */}
       {/* Game Background Effects */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect for game screen */}
@@ -96,161 +95,146 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black shadow-inner">
-          <span className="text-[#1e62ec] drop-shadow-[0_0_8px_rgba(30,98,236,0.4)]">
-            {gameState.playerColor === "AZUL" ? gameState.playerScore : gameState.aiScore}
-          </span>
+        <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
+          <span className="text-[#1e62ec]">{gameState.playerScore}</span>
           <span className="text-gray-600">×</span>
-          <span className="text-[#e52e2e] drop-shadow-[0_0_8px_rgba(229,46,46,0.4)]">
-            {gameState.playerColor === "VERMELHO" ? gameState.playerScore : gameState.aiScore}
-          </span>
+          <span className="text-[#e52e2e]">{gameState.aiScore}</span>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden p-1 lg:flex-row lg:gap-2 lg:p-2">
-        {gameState.isGameOver ? (
-          // TRAVA ABSOLUTA: Se o jogo acabou, não renderizamos o tabuleiro nem o painel lateral
-          // para evitar race conditions e updates de hooks secundários.
-          <div className="flex-1 flex items-center justify-center">
-            {/* O Game Over será renderizado pelo bloco fixed abaixo, mantemos este espaço limpo */}
-            <div className="text-gray-500 italic animate-pulse">Partida Encerrada. Carregando resultados...</div>
+        {/* Board */}
+        <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-start justify-center">
+          <div className="w-full h-full flex items-start justify-center overflow-auto custom-scrollbar">
+            <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full max-w-4xl">
+              <tbody className="h-full">
+                {Array.from({ length: 4 }).map((_, rowIndex) => (
+                  <tr key={rowIndex} className="h-1/4">
+                    {Array.from({ length: 6 }).map((_, colIndex) => {
+                      const charIndex = rowIndex * 6 + colIndex;
+                      const item = gameState.playerBoard[charIndex];
+                      return (
+                        <td key={colIndex} className="p-0 align-middle text-center w-1/6 h-full">
+                          {item && (
+                            <div className="flex flex-col items-center">
+                              <GameCard
+                                character={item.character}
+                                isDown={item.isDown}
+                                color={playerColor}
+                                onClick={() => toggleCard(item.character.id)}
+                              />
+                              <span className={`mt-0.5 text-[8px] font-black uppercase italic tracking-tighter sm:text-[9px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] ${item.isDown ? 'text-gray-500' : 'text-white'}`}>
+                                {item.character.nome}
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <>
-            {/* Board */}
-            <section className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/5 bg-black/20 p-1 flex items-start justify-center">
-              <div className="w-full h-full flex items-start justify-center overflow-auto custom-scrollbar">
-                <table className="border-separate border-spacing-[1px] sm:border-spacing-1 w-full max-w-4xl">
-                  <tbody className="h-full">
-                    {Array.from({ length: 4 }).map((_, rowIndex) => (
-                      <tr key={rowIndex} className="h-1/4">
-                        {Array.from({ length: 6 }).map((_, colIndex) => {
-                          const charIndex = rowIndex * 6 + colIndex;
-                          const item = gameState.playerBoard[charIndex];
-                          return (
-                            <td key={colIndex} className="p-0 align-middle text-center w-1/6 h-full">
-                              {item && (
-                                <div className="flex flex-col items-center">
-                                  <GameCard
-                                    character={item.character}
-                                    isDown={item.isDown}
-                                    color={playerColor}
-                                    onClick={() => toggleCard(item.character.id)}
-                                  />
-                                  <span className={`mt-0.5 text-[8px] font-black uppercase italic tracking-tighter sm:text-[9px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] ${item.isDown ? 'text-gray-500' : 'text-white'}`}>
-                                    {item.character.nome}
-                                  </span>
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+        </section>
 
-            {/* Side panel */}
-            <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[45vh] lg:max-h-none">
-              {/* Secret cards + actions */}
-              <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
-                <div className="w-12 shrink-0 sm:w-20">
-                  <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
-                    Sua carta
-                  </div>
-                  <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
-                </div>
-                <div className="w-12 shrink-0 sm:w-20">
-                  <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
-                    {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "Adversário") : "IA"}
-                  </div>
-                  <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
-                    ❓
-                  </div>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 sm:gap-1.5">
-                  <button
-                    onClick={() => setIsPalpitando(true)}
-                    disabled={!canPalpite}
-                    className="flex items-center justify-center rounded-lg bg-[#e52e2e] px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
-                  >
-                    Palpite final
-                  </button>
-                  <button
-                    onClick={passTurn}
-                    disabled={!canPass}
-                    className="flex items-center justify-center rounded-lg bg-gray-700 px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
-                  >
-                    Passar a vez
-                  </button>
-                </div>
+        {/* Side panel */}
+        <aside className="flex min-h-0 shrink-0 flex-col gap-1 lg:w-[320px] max-h-[45vh] lg:max-h-none">
+          {/* Secret cards + actions */}
+          <div className="flex shrink-0 gap-2 rounded-xl border border-white/10 bg-[#0b0e14] p-2 sm:gap-3">
+            <div className="w-12 shrink-0 sm:w-20">
+              <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
+                Sua carta
               </div>
+              <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
+            </div>
+            <div className="w-12 shrink-0 sm:w-20">
+              <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
+                {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "Adversário") : "IA"}
+              </div>
+              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-white/15 bg-black/40 text-xl sm:text-2xl">
+                ❓
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 sm:gap-1.5">
+              <button
+                onClick={() => setIsPalpitando(true)}
+                disabled={!canPalpite}
+                className="flex items-center justify-center rounded-lg bg-[#e52e2e] px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-[#ff4444]/50 shadow-[0_0_10px_rgba(229,46,46,0.3)] transition-all hover:bg-red-700 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
+              >
+                Palpite final
+              </button>
+              <button
+                onClick={passTurn}
+                disabled={!canPass}
+                className="flex items-center justify-center rounded-lg bg-gray-700 px-2 py-2.5 text-[10px] font-black uppercase tracking-wider border-2 border-gray-500/50 transition-all hover:bg-gray-600 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:scale-100 sm:text-[11px]"
+              >
+                Passar a vez
+              </button>
+            </div>
+          </div>
 
-              {/* History */}
-              <div className="flex min-h-[60px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
-                <div className="border-b border-white/10 p-1.5 text-[10px] font-black uppercase tracking-tight text-gray-500">
-                  Histórico
-                </div>
-                <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar max-h-[120px] sm:max-h-none">
-                  {gameState.history.length === 0 && (
-                    <p className="text-center text-[10px] text-gray-600">Faça sua primeira pergunta.</p>
-                  )}
-                  {gameState.history.map((h, i) => (
-                    <div key={i} className={`flex flex-col ${h.type === "PLAYER" ? "items-end" : "items-start"}`}>
-                      <div
-                        className={`max-w-[90%] rounded-lg px-2 py-1 ${h.type === "PLAYER" ? "bg-[#1e62ec]/80" : "bg-gray-700/80"}`}
-                      >
-                        {h.text}
-                      </div>
-                      {h.answer && (
-                        <div
-                          className={`mt-0.5 px-1 text-[10px] font-black ${h.answer === "SIM" ? "text-green-400" : "text-red-400"}`}
-                        >
-                          {h.answer}
-                        </div>
-                      )}
+          {/* History */}
+          <div className="flex min-h-[60px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
+            <div className="border-b border-white/10 p-1.5 text-[10px] font-black uppercase tracking-tight text-gray-500">
+              Histórico
+            </div>
+            <div className="flex-1 space-y-2 overflow-y-auto p-2 text-[11px] custom-scrollbar max-h-[120px] sm:max-h-none">
+              {gameState.history.length === 0 && (
+                <p className="text-center text-[10px] text-gray-600">Faça sua primeira pergunta.</p>
+              )}
+              {gameState.history.map((h, i) => (
+                <div key={i} className={`flex flex-col ${h.type === "PLAYER" ? "items-end" : "items-start"}`}>
+                  <div
+                    className={`max-w-[90%] rounded-lg px-2 py-1 ${h.type === "PLAYER" ? "bg-[#1e62ec]/80" : "bg-gray-700/80"}`}
+                  >
+                    {h.text}
+                  </div>
+                  {h.answer && (
+                    <div
+                      className={`mt-0.5 px-1 text-[10px] font-black ${h.answer === "SIM" ? "text-green-400" : "text-red-400"}`}
+                    >
+                      {h.answer}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              {/* Questions */}
-              <div className="shrink-0 rounded-xl border border-white/10 bg-[#0b0e14] p-1.5">
-                <div className="mb-1 flex flex-wrap gap-1">
-                  {CATEGORIES.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCat(c)}
-                      className={`rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase transition-colors sm:px-2 sm:py-1 sm:text-[9px] ${
-                        cat === c ? "bg-yellow-400 text-black" : "bg-white/5 text-gray-400 hover:bg-white/10"
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-24">
-                  {QUESTIONS.filter((q) => q.category === cat).map((q) => (
-                    <button
-                      key={q.id}
-                      disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || (gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id))}
-                      onClick={() => handlePlayerQuestion(q)}
-                      className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
-                    >
-                      {q.text}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </>
-        )}
+          {/* Questions */}
+          <div className="shrink-0 rounded-xl border border-white/10 bg-[#0b0e14] p-1.5">
+            <div className="mb-1 flex flex-wrap gap-1">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCat(c)}
+                  className={`rounded-full px-1.5 py-0.5 text-[8px] font-black uppercase transition-colors sm:px-2 sm:py-1 sm:text-[9px] ${
+                    cat === c ? "bg-yellow-400 text-black" : "bg-white/5 text-gray-400 hover:bg-white/10"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            <div className="flex max-h-16 flex-wrap gap-1 overflow-y-auto custom-scrollbar sm:max-h-24">
+              {QUESTIONS.filter((q) => q.category === cat).map((q) => (
+                <button
+                  key={q.id}
+                  disabled={!canAsk || (q.minTurn ? gameState.turnCount < q.minTurn : false) || (gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(q.id) : gameState.askedQuestions.has(q.id))}
+                  onClick={() => handlePlayerQuestion(q)}
+                  className="rounded border border-white/5 bg-gray-800/60 px-1.5 py-0.5 text-[9px] font-medium transition-colors hover:bg-gray-700 disabled:opacity-30 sm:px-2 sm:py-1 sm:text-[10px]"
+                >
+                  {q.text}
+                </button>
+              ))}
+            </div>
+          </div>
+        </aside>
       </div>
 
       {/* Palpite modal */}
-      {isPalpitando && !gameState.isGameOver && (
+      {isPalpitando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0b0e14] p-4 sm:p-6 lg:max-w-3xl">
             <h2 className="mb-4 text-center text-2xl font-black italic text-[#e52e2e] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-3xl">
@@ -288,173 +272,113 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
         </div>
       )}
 
-      {/* Game over - Forçado a z-100 para cobrir o tabuleiro */}
+      {/* Game over */}
       {gameState.isGameOver && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 p-6 backdrop-blur-xl">
-          <div className="text-center max-w-lg w-full animate-in fade-in zoom-in duration-300">
-            {gameState.winner === ("ABANDONED" as any) ? (
-              <div className="flex flex-col items-center">
-                <div className="mb-6 text-6xl">👻</div>
-                <h2 className="mb-8 text-3xl font-black text-white uppercase italic">
-                  Alguém fugiu da luta...
-                </h2>
-                <button
-                  onClick={onBack}
-                  className="w-full max-w-xs rounded-xl border-2 border-yellow-400/50 bg-yellow-400 py-4 font-black text-black transition-all hover:bg-yellow-300 hover:scale-[1.05]"
-                >
-                  VOLTAR AO MENU
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md">
+          <div className="text-center max-w-lg">
+            {gameState.matchWinnerId && (
+              <div className="mb-6 animate-bounce text-2xl font-black text-yellow-400 sm:text-4xl drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
+                🏆 CONFRONTO ENCERRADO! 🏆
               </div>
-            ) : (
-              <>
-                {gameState.matchWinnerId && (
-                  <div className="mb-6 animate-bounce text-2xl font-black text-yellow-400 sm:text-4xl drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">
-                    🏆 CONFRONTO ENCERRADO! 🏆
-                  </div>
-                )}
-                
-                <h2
-                  className={`mb-4 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${
-                    gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
-                  }`}
-                >
-                  {gameState.matchWinnerId 
-                    ? (gameState.matchWinnerId === gameState.guestId ? "VOCÊ VENCEU O CONFRONTO!" : "VOCÊ PERDEU O CONFRONTO")
-                    : (gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!")
-                  }
-                </h2>
-
-                {gameState.winner === "LOSER" && !gameState.matchWinnerId && (
-                  <p className="mb-6 text-sm font-bold text-gray-400 uppercase tracking-widest">
-                    O personagem era: <span className="text-white">{gameState.aiSecret.nome}</span>
-                  </p>
-                )}
-
-                <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black text-white">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] uppercase text-gray-500">{gameState.playerName || "VOCÊ"}</span>
-                    <span className="text-[#1e62ec] drop-shadow-[0_0_10px_rgba(30,98,236,0.3)]">{gameState.playerScore}</span>
-                  </div>
-                  <span className="text-gray-500 mt-4">×</span>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] uppercase text-gray-500">{gameState.opponentName || "OPONENTE"}</span>
-                    <span className="text-[#e52e2e] drop-shadow-[0_0_10px_rgba(229,46,46,0.3)]">{gameState.aiScore}</span>
-                  </div>
-                </div>
-
-                <div className="mb-6 flex flex-col items-center gap-3">
-                  <div className="w-24 sm:w-32">
-                    <GameCard 
-                      character={gameState.aiSecret} 
-                      isDown={false} 
-                      color={oppColor} 
-                      onClick={() => {}} 
-                    />
-                  </div>
-                  <p className="text-lg text-gray-300">
-                    O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white uppercase">{gameState.aiSecret.nome}</span>
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {gameState.gameMode === "ONLINE" ? (
-                    <>
-                      {gameState.rematchStatus === 'requested' ? (
-                        gameState.rematchRequestedBy === gameState.guestId ? (
-                          <div className="rounded-xl bg-blue-500/20 py-4 font-bold text-blue-400 border border-blue-500/30">
-                            AGUARDANDO ADVERSÁRIO...
-                          </div>
-                        ) : (
-                          <div className="flex flex-col gap-3">
-                            <div className="animate-pulse text-yellow-400 font-black mb-1 text-lg">REVANCHE SOLICITADA!</div>
-                            <div className="flex gap-4">
-                              <button
-                                onClick={async () => {
-                                  const { handleRematchResponse } = await import("@/lib/online.functions");
-                                  await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
-                                }}
-                                className="flex-1 rounded-xl bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
-                              >
-                                ACEITAR
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  const { handleRematchResponse } = await import("@/lib/online.functions");
-                                  await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: false } });
-                                }}
-                                className="flex-1 rounded-xl bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
-                              >
-                                RECUSAR
-                              </button>
-                            </div>
-                          </div>
-                        )
-                      ) : gameState.rematchStatus === 'declined' ? (
-                        <div className="flex flex-col gap-3">
-                          <div className="text-red-400 font-bold mb-2 italic">Ah, desistiu? Campeão precisa descansar mesmo 😏</div>
-                          <button
-                            onClick={onBack}
-                            className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-700 py-3 font-black text-white"
-                          >
-                            VOLTAR AO MENU
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-3">
-                          {gameState.winner === "LOSER" ? (
-                            <button
-                              onClick={async () => {
-                                const { requestRematch } = await import("@/lib/online.functions");
-                                await requestRematch({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId } });
-                              }}
-                              className="w-full rounded-xl border-2 border-yellow-400/50 bg-yellow-400 py-3 font-black text-black hover:bg-yellow-300"
-                            >
-                              PEDIR REVANCHE
-                            </button>
-                          ) : (
-                            <div className="rounded-xl bg-green-500/20 py-4 font-bold text-green-400 border border-green-500/30">
-                              AGUARDANDO O PERDEDOR...
-                            </div>
-                          )}
-                          <button
-                            onClick={async () => {
-                              if (gameState.roomId) {
-                                const { supabase } = await import("@/integrations/supabase/client");
-                                await supabase.from("rooms").update({ status: "ABANDONED" as any }).eq("id", gameState.roomId);
-                              }
-                              onBack();
-                            }}
-                            className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-700 py-3 font-black text-white hover:bg-gray-600"
-                          >
-                            VOLTAR AO MENU
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={rematch}
-                        className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 active:scale-95"
-                      >
-                        REVANCHE
-                      </button>
-                      <button
-                        onClick={onBack}
-                        className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
-                      >
-                        MENU
-                      </button>
-                    </>
-                  )}
-                </div>
-              </>
             )}
+            
+            <h2
+              className={`mb-2 text-4xl font-black italic drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] sm:text-6xl ${
+                gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "text-green-500" : "text-[#e52e2e]"
+              }`}
+            >
+              {gameState.matchWinnerId 
+                ? (gameState.matchWinnerId === gameState.guestId ? "VOCÊ VENCEU O CONFRONTO!" : "VOCÊ PERDEU O CONFRONTO")
+                : (gameState.winner === "PLAYER" || gameState.winner === "WINNER" ? "VOCÊ VENCEU!" : "VOCÊ PERDEU!")
+              }
+            </h2>
+
+            <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black">
+              <span className="text-[#1e62ec]">{gameState.playerColor === "AZUL" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.playerScore}</span>
+              <span className="text-gray-500">×</span>
+              <span className="text-[#e52e2e]">{gameState.playerColor === "VERMELHO" ? gameState.playerName || "VOCÊ" : gameState.opponentName || "OPONENTE"} {gameState.aiScore}</span>
+            </div>
+
+            <p className="mb-8 text-lg text-gray-300">
+              O personagem do {gameState.gameMode === "ONLINE" ? (gameState.opponentName || "adversário") : "IA"} era <span className="font-bold text-white">{gameState.aiSecret.nome}</span>
+            </p>
+
+            {gameState.gameMode === "ONLINE" && !gameState.matchWinnerId && (
+              <div className="mb-8">
+                {gameState.winner === "LOSER" ? (
+                  gameState.rematchStatus === "requested" ? (
+                    <p className="animate-pulse font-bold text-yellow-400">Aguardando resposta de {gameState.opponentName}...</p>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        const { requestRematch } = await import("@/lib/online.functions");
+                        await requestRematch({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId } });
+                      }}
+                      className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
+                    >
+                      PEDIR REVANCHE
+                    </button>
+                  )
+                ) : (
+                  gameState.rematchStatus === "requested" ? (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                      <p className="mb-4 text-lg font-black uppercase tracking-widest text-yellow-400">
+                        {gameState.opponentName} QUER UMA REVANCHE. VOCÊ ACEITA?
+                      </p>
+                      <div className="flex gap-4">
+                        <button
+                          onClick={async () => {
+                            const { handleRematchResponse } = await import("@/lib/online.functions");
+                            await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
+                          }}
+                          className="flex-1 rounded-lg bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
+                        >
+                          ACEITAR
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const { handleRematchResponse } = await import("@/lib/online.functions");
+                            await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: false } });
+                          }}
+                          className="flex-1 rounded-lg bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
+                        >
+                          RECUSAR
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="font-bold text-gray-400 italic">Aguardando solicitação de revanche de {gameState.opponentName}...</p>
+                  )
+                )}
+                {gameState.rematchStatus === "declined" && (
+                  <p className="mt-4 font-bold text-red-400 uppercase tracking-widest animate-in fade-in zoom-in-95">
+                    {gameState.opponentName} RECUSOU A REVANCHE.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
+              {gameState.gameMode !== "ONLINE" && (
+                <button
+                  onClick={rematch}
+                  className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
+                >
+                  REVANCHE
+                </button>
+              )}
+              <button
+                onClick={onBack}
+                className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
+              >
+                MENU
+              </button>
+            </div>
           </div>
         </div>
       )}
       {/* Interativo Modal de Pergunta */}
-      {gameState.pendingQuestion && !gameState.isGameOver && (
+      {gameState.pendingQuestion && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
           <div className="w-full max-w-[90%] sm:max-w-md overflow-hidden rounded-2xl border-2 border-white/10 bg-[#0b0e14] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <div className={`p-1 text-center text-[10px] font-black uppercase tracking-[0.2em] ${gameState.pendingQuestion.type === "PLAYER" ? "bg-[#1e62ec] text-white" : "bg-[#e52e2e] text-white"}`}>

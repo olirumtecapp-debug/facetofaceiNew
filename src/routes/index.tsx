@@ -31,9 +31,7 @@ export const Route = createFileRoute("/")({
         content: "Duelo de dedução com 24 personagens: faça perguntas, elimine cartas e acerte o palpite final.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: "https://facetofacei.lovable.app/assets/home/home-1024.webp" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: "https://facetofacei.lovable.app/assets/home/home-1024.webp" },
     ],
   }),
   component: Index,
@@ -152,17 +150,16 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
   const [showChars, setShowChars] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
   const guestId = (typeof window !== 'undefined') 
-    ? (window.localStorage.getItem("ftf_guest_id") || (() => {
-        const id = window.crypto.randomUUID();
-        window.localStorage.setItem("ftf_guest_id", id);
+    ? (localStorage.getItem("ftf_guest_id") || (() => {
+        const id = crypto.randomUUID();
+        localStorage.setItem("ftf_guest_id", id);
         return id;
       })())
-    : "ssr-id";
+    : "";
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [playerName, setPlayerName] = useState(() => {
-    if (typeof window === 'undefined') return "";
-    return window.localStorage.getItem("ftf_player_name") || "";
+    return localStorage.getItem("ftf_player_name") || "";
   });
   const [isConnecting, setIsConnecting] = useState(false);
   const [roomData, setRoomData] = useState<any>(null);
@@ -422,31 +419,14 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
   return (
     <>
-      <Shell noPadding>
-        <div 
-          className="relative mx-auto overflow-hidden rounded-2xl shadow-2xl bg-[#0b0e14]"
-          style={{ 
-            aspectRatio: '1448 / 1086',
-            width: 'min(96vw, calc((96dvh) * 1448 / 1086))',
-            maxHeight: '96dvh'
-          }}
-        >
-          {/* Imagem Otimizada com srcset */}
-          <picture>
-            <source 
-              srcSet="/assets/home/home-480.webp 480w, /assets/home/home-768.webp 768w, /assets/home/home-1024.webp 1024w, /assets/home/home-1440.webp 1440w, /assets/home/home-1920.webp 1920w" 
-              type="image/webp" 
-              sizes="(max-width: 1448px) 100vw, 1448px" 
-            />
-            <img
-              src={homeImageAsset.url}
-              alt="FTF Face to Face Interface"
-              className="w-full h-full block object-contain"
-              // @ts-ignore - fetchPriority is supported in modern browsers
-              fetchPriority="high"
-              loading="eager"
-            />
-          </picture>
+      <Shell>
+        <div className="relative w-full max-w-[1000px] mx-auto overflow-hidden rounded-2xl shadow-2xl">
+          {/* Imagem de Fundo da Interface */}
+          <img
+            src={homeImageAsset.url}
+            alt="FTF Face to Face Interface"
+            className="w-full h-auto block"
+          />
 
           {/* Hotspots Transparentes */}
           <Hotspot 
@@ -517,63 +497,25 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 
       {selectedCharId !== null && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md">
-          <div className="w-full max-w-[320px] sm:max-w-md h-[90dvh] sm:h-auto sm:min-h-[550px] rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+          <div className="w-full max-w-[320px] sm:max-w-md rounded-2xl border-4 border-[#d4af37] bg-[#e0e0e0] p-1 shadow-[0_0_50px_rgba(212,175,55,0.3)]">
             {(() => {
               const c = CHARACTERS.find(char => char.id === selectedCharId)!;
-              const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase());
-              
-              if (!details) {
-                return (
-                  <div className="flex flex-col items-center justify-center p-8 text-gray-900 h-full">
-                    <p className="text-center font-bold text-red-600 mb-4">Erro: Detalhes do personagem não encontrados.</p>
-                    <button
-                      onClick={() => setSelectedCharId(null)}
-                      className="w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black text-white"
-                    >
-                      VOLTAR
-                    </button>
-                  </div>
-                );
-              }
-
+              const details = CHARACTER_DETAILS.find(d => d.name.toUpperCase() === c.nome.toUpperCase())!;
               return (
-                <div className="flex flex-col items-center p-4 text-gray-900 h-full">
-                  <div className="w-24 sm:w-32 aspect-square mb-4 shrink-0 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
+                <div className="flex flex-col items-center p-4 text-gray-900">
+                  <div className="w-24 sm:w-32 aspect-square mb-4 overflow-hidden rounded-xl border-2 border-[#d4af37]/30 bg-white/50 p-1">
                     <img src={CARD_IMAGES.AZUL[c.id - 1]!} alt={c.nome} className="h-full w-full object-contain contrast-125" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-4 shrink-0">{c.nome}</h3>
-                  
-                  <div className="flex flex-col w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-4 rounded-xl border border-black/5 overflow-y-auto custom-scrollbar flex-1 min-h-0">
-                    {/* Linha: Profissão */}
-                    <div className="flex items-start gap-2 border-b border-black/5 pb-2 mb-2">
-                      <span className="text-gray-500 uppercase text-[8px] w-[85px] shrink-0 pt-0.5">Profissão:</span>
-                      <span className="text-gray-800 break-words leading-tight flex-1">{details.profession}</span>
-                    </div>
-
-                    {/* Linha: Personalidade */}
-                    <div className="flex items-start gap-2 border-b border-black/5 pb-2 mb-2">
-                      <span className="text-gray-500 uppercase text-[8px] w-[85px] shrink-0 pt-0.5">Personalidade:</span>
-                      <span className="text-gray-800 break-words leading-tight flex-1">{details.personality}</span>
-                    </div>
-
-                    {/* Linha: Hobbies */}
-                    <div className="flex items-start gap-2 border-b border-black/5 pb-2 mb-2">
-                      <span className="text-gray-500 uppercase text-[8px] w-[85px] shrink-0 pt-0.5">Hobbies:</span>
-                      <span className="text-gray-800 break-words leading-tight flex-1">{details.hobbies.join(", ")}</span>
-                    </div>
-
-                    {/* Linha: Sobre */}
-                    <div className="flex flex-col gap-1.5 pt-1">
-                      <span className="text-gray-500 uppercase text-[8px] w-full">Sobre:</span>
-                      <span className="text-[11px] leading-snug text-gray-800 italic break-words">
-                        {details.bio}
-                      </span>
-                    </div>
+                  <h3 className="text-xl sm:text-2xl font-black italic uppercase tracking-tighter text-[#1e62ec] mb-2">{c.nome}</h3>
+                  <div className="grid grid-cols-1 gap-y-1.5 w-full text-left font-bold text-[10px] sm:text-xs bg-white/40 p-3 rounded-xl border border-black/5">
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Profissão:</span> {details.profession}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Personalidade:</span> {details.personality}</p>
+                    <p className="flex justify-between border-b border-black/5 pb-1"><span className="text-gray-500 uppercase text-[8px]">Hobbies:</span> {details.hobbies.join(", ")}</p>
+                    <p className="flex flex-col gap-0.5"><span className="text-gray-500 uppercase text-[8px]">Sobre:</span> <span className="text-[11px] leading-tight text-gray-800 italic">{details.bio}</span></p>
                   </div>
-
                   <button
                     onClick={() => setSelectedCharId(null)}
-                    className="mt-6 w-full shrink-0 rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
+                    className="mt-6 w-full rounded-xl border-2 border-gray-500/50 bg-gray-800 py-4 font-black tracking-[0.2em] text-white transition-all hover:bg-gray-700 hover:scale-[1.05] active:scale-95"
                   >
                     VOLTAR
                   </button>
@@ -671,9 +613,9 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
 }
 
 
-function Shell({ children, noPadding = false }: { children: React.ReactNode; noPadding?: boolean }) {
+function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className={`relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient text-center text-white sm:gap-10 ${noPadding ? "p-0" : "p-4"}`}>
+    <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-center gap-6 overflow-hidden bg-main-gradient p-4 text-center text-white sm:gap-10">
       {/* Dynamic Background Elements */}
       <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
         {/* Rotating Lightning/Energy effect */}
@@ -687,7 +629,7 @@ function Shell({ children, noPadding = false }: { children: React.ReactNode; noP
         <div className="absolute inset-0 opacity-10 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
       
-      <div className={`relative z-10 flex flex-col items-center w-full ${noPadding ? "" : "gap-6 sm:gap-10"}`}>
+      <div className="relative z-10 flex flex-col items-center gap-6 sm:gap-10 w-full">
         {children}
       </div>
     </main>

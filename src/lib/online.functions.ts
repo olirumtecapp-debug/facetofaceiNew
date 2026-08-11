@@ -152,28 +152,18 @@ export const startGame = createServerFn({ method: "POST" })
   });
 
 export const declareWinner = createServerFn({ method: "POST" })
-  .inputValidator((data: { roomId: string; winnerId: string; secretCharacterId?: number }) => 
-    z.object({ 
-      roomId: z.string(), 
-      winnerId: z.string(),
-      secretCharacterId: z.number().optional()
-    }).parse(data)
+  .inputValidator((data: { roomId: string; winnerId: string }) => 
+    z.object({ roomId: z.string(), winnerId: z.string() }).parse(data)
   )
   .handler(async ({ data }) => {
     const supabase = getPublicSupabase();
 
     // 1. Update winner of the round in the room
-    // We clear question and answer to prevent UI ghosting
     const { error: roomUpdateError } = await supabase
       .from("rooms")
       .update({ 
         winner_id: data.winnerId as any,
         status: "FINISHED",
-        current_question_id: null as any,
-        last_answer: null as any,
-        question_asked_by: null as any,
-        rematch_status: 'idle',
-        rematch_requested_by: null as any,
         last_action_timestamp: new Date().toISOString()
       })
       .eq("id", data.roomId);
@@ -288,7 +278,7 @@ export const handleRematchResponse = createServerFn({ method: "POST" })
     } else {
       const { error } = await supabase
         .from("rooms")
-        .update({ rematch_status: 'declined', status: 'FINISHED' })
+        .update({ rematch_status: 'declined' })
         .eq("id", data.roomId);
       if (error) throw error;
     }

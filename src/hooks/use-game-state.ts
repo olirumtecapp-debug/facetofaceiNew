@@ -6,14 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type GamePhase = 
-  | "PLAYER_TURN"        
-  | "WAITING_ANSWER"     
-  | "PLAYER_DISCARDING"  
-  | "WAITING_PASS_TURN"  
-  | "AI_TURN"            
-  | "PLAYER_RESPONDING"  
-  | "AI_DISCARDING"      
-  | "AI_PASS_TURN";      
+  | "PLAYER_TURN"        // Jogador pode perguntar
+  | "WAITING_ANSWER"     // Aguarda apenas a resposta SIM ou NÃO
+  | "PLAYER_DISCARDING"  // Jogador está descartando personagens
+  | "WAITING_PASS_TURN"  // Aguarda o clique em "Passar a vez"
+  | "AI_TURN"            // A IA faz apenas UMA pergunta
+  | "PLAYER_RESPONDING"  // Jogador responde
+  | "AI_DISCARDING"      // IA descarta seus personagens
+  | "AI_PASS_TURN";      // IA encerra seu turno
 
 export type GameMode = "IA" | "ONLINE";
 
@@ -31,7 +31,7 @@ export type GameState = {
   turnCount: number;
   history: { type: "PLAYER" | "AI"; text: string; answer?: "SIM" | "NÃO" }[];
   isGameOver: boolean;
-  winner?: "PLAYER" | "AI" | "WINNER" | "LOSER" | "ABANDONED" | undefined;
+  winner?: "PLAYER" | "AI" | "WINNER" | "LOSER" | undefined;
   matchWinnerId?: string | null;
   rematchStatus?: 'idle' | 'requested' | 'accepted' | 'declined';
   rematchRequestedBy?: string | null;
@@ -54,11 +54,10 @@ export type GameState = {
 
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
   const guestId = useMemo(() => {
-    if (typeof window === 'undefined') return "ssr-id";
-    let id = window.localStorage.getItem("ftf_guest_id");
+    let id = localStorage.getItem("ftf_guest_id");
     if (!id) {
-      id = window.crypto.randomUUID();
-      window.localStorage.setItem("ftf_guest_id", id);
+      id = crypto.randomUUID();
+      localStorage.setItem("ftf_guest_id", id);
     }
     return id;
   }, []);
@@ -91,7 +90,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       gameMode: isOnline ? "ONLINE" : "IA",
       roomCode: initialRoomCode || undefined,
       guestId,
-      playerName: typeof window !== 'undefined' ? (window.localStorage.getItem("ftf_player_name") || undefined) : undefined,
+      playerName: localStorage.getItem("ftf_player_name") || undefined,
       lastActionTime: Date.now()
     };
   });
@@ -99,27 +98,82 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   const nextTurn = useCallback(() => {
     setGameState((prev) => {
       if (prev.isGameOver) return prev;
+      
       const isAITurnEnding = prev.currentTurn === "AI";
       const newTurn = isAITurnEnding ? "PLAYER" : "AI";
+      
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
         const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
-        supabase.from("rooms").update({ current_turn_player_id: nextPlayerId as any, last_answer: null as any, current_question_id: null as any, question_asked_by: null as any, last_action_timestamp: new Date().toISOString() }).eq("code", prev.roomCode).then();
+        
+        console.log("[FTF TURN] changing to:", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
+
+        supabase
+          .from("rooms")
+          .update({ 
+            current_turn_player_id: nextPlayerId as any,
+            last_answer: null as any,
+            current_question_id: null as any,
+            question_asked_by: null as any,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", prev.roomCode)
+          .then();
       }
-      return { ...prev, currentTurn: newTurn, phase: isAITurnEnding ? "PLAYER_TURN" : "AI_TURN", turnCount: isAITurnEnding ? prev.turnCount + 1 : prev.turnCount };
+
+      return {
+        ...prev,
+        currentTurn: newTurn,
+        phase: isAITurnEnding ? "PLAYER_TURN" : "AI_TURN",
+        turnCount: isAITurnEnding ? prev.turnCount + 1 : prev.turnCount,
+      };
     });
   }, []);
 
   const handlePlayerQuestion = async (question: Question) => {
-    const isAlreadyAsked = gameState.gameMode === "ONLINE" ? gameState.myAskedQuestions.has(question.id) : gameState.askedQuestions.has(question.id);
+    const isAlreadyAsked = gameState.gameMode === "ONLINE" 
+      ? gameState.myAskedQuestions.has(question.id)
+      : gameState.askedQuestions.has(question.id);
+
     if (gameState.phase !== "PLAYER_TURN" || gameState.isGameOver || isAlreadyAsked) return;
+
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
-        const { error } = await supabase.from("rooms").update({ current_question_id: question.id, last_answer: null as any, question_asked_by: gameState.guestId, last_action_timestamp: new Date().toISOString() }).eq("code", gameState.roomCode);
-        if (error) { toast.error("Erro ao enviar pergunta."); return; }
-        setGameState(prev => ({ ...prev, phase: "WAITING_ANSWER", pendingQuestion: { question, type: "PLAYER" }, lastActionTime: Date.now() }));
-      } catch (err) { toast.error("Erro de conexão ao enviar pergunta."); return; }
+        console.log("Multiplayer: Enviando pergunta para a sala", gameState.roomCode);
+        const { error } = await supabase
+          .from("rooms")
+          .update({ 
+            current_question_id: question.id,
+            last_answer: null as any,
+            question_asked_by: gameState.guestId,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", gameState.roomCode);
+        
+        if (error) {
+          console.error("Multiplayer Error:", error);
+          toast.error("Erro ao enviar pergunta.");
+          return;
+        }
+
+        setGameState(prev => ({
+          ...prev,
+          phase: "WAITING_ANSWER",
+          pendingQuestion: { question, type: "PLAYER" },
+          lastActionTime: Date.now()
+        }));
+      } catch (err) {
+        console.error("Multiplayer Catch Error:", err);
+        toast.error("Erro de conexão ao enviar pergunta.");
+        return;
+      }
     } else {
-      setGameState((prev) => ({ ...prev, phase: "WAITING_ANSWER", pendingQuestion: { question, type: "PLAYER" }, askedQuestions: new Set(prev.askedQuestions).add(question.id), lastActionTime: Date.now() }));
+      setGameState((prev) => ({
+        ...prev,
+        phase: "WAITING_ANSWER",
+        pendingQuestion: { question, type: "PLAYER" },
+        askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        lastActionTime: Date.now()
+      }));
     }
   };
 
@@ -127,326 +181,383 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (gameState.gameMode === "ONLINE") return;
     if (!gameState.pendingQuestion || gameState.pendingQuestion.type !== "PLAYER") return;
     const answer = getAIResponse(gameState.aiSecret, gameState.pendingQuestion.question) ? "SIM" : "NÃO";
-    setGameState(prev => ({ ...prev, pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined }));
+    setGameState(prev => ({
+      ...prev,
+      pendingQuestion: prev.pendingQuestion ? { ...prev.pendingQuestion, revealedAnswer: answer } : undefined
+    }));
   };
 
   const answerQuestion = async (answer: "SIM" | "NÃO") => {
     if (!gameState.pendingQuestion) return;
+
     const { question, type } = gameState.pendingQuestion;
+
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && (type === "AI" || type === "AI_PALPITE")) {
       try {
-        const { error } = await supabase.from("rooms").update({ last_answer: answer, current_question_id: null as any, question_asked_by: gameState.guestId as any, last_action_timestamp: new Date().toISOString() }).eq("code", gameState.roomCode);
-        if (error) { toast.error("Erro ao enviar resposta."); return; }
-      } catch (err) { toast.error("Erro de conexão ao enviar resposta."); return; }
+        console.log("[FTF ANSWER] sending:", answer);
+        
+        const { error } = await supabase
+          .from("rooms")
+          .update({ 
+            last_answer: answer,
+            current_question_id: null as any,
+            question_asked_by: gameState.guestId as any,
+            last_action_timestamp: new Date().toISOString()
+          })
+          .eq("code", gameState.roomCode);
+        
+        if (error) {
+          toast.error("Erro ao enviar resposta.");
+          return;
+        }
+      } catch (err) {
+        toast.error("Erro de conexão ao enviar resposta.");
+        return;
+      }
     }
+
     if (type === "PLAYER") {
-      setGameState((prev) => ({ ...prev, history: [...prev.history, { type: "PLAYER", text: question.text, answer }], pendingQuestion: undefined, askedQuestions: new Set(prev.askedQuestions).add(question.id), myAskedQuestions: new Set(prev.myAskedQuestions).add(question.id), playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" }, phase: "PLAYER_DISCARDING" }));
+      setGameState((prev) => ({
+        ...prev,
+        history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
+        pendingQuestion: undefined,
+        askedQuestions: new Set(prev.askedQuestions).add(question.id),
+        myAskedQuestions: new Set(prev.myAskedQuestions).add(question.id),
+        playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
+        phase: "PLAYER_DISCARDING"
+      }));
     } else if (type === "AI_PALPITE") {
       const guessedCharId = question.id.replace('palpite-', '');
       const isCorrect = Number(guessedCharId) === gameState.playerSecret.id;
-      setGameState((prev) => ({ ...prev, isGameOver: true, winner: isCorrect ? "AI" : "PLAYER", aiScore: isCorrect ? prev.aiScore + 1 : prev.aiScore, playerScore: isCorrect ? prev.playerScore : prev.playerScore + 1, history: [...prev.history, { type: "AI", text: `Tentativa de palpite: ${question.text}`, answer }], pendingQuestion: undefined }));
+      
+      setGameState((prev) => ({
+        ...prev,
+        isGameOver: true,
+        winner: isCorrect ? "AI" : "PLAYER",
+        aiScore: isCorrect ? prev.aiScore + 1 : prev.aiScore,
+        playerScore: isCorrect ? prev.playerScore : prev.playerScore + 1,
+        history: [...prev.history, { type: "AI", text: `Tentativa de palpite: ${question.text}`, answer }],
+        pendingQuestion: undefined,
+      }));
     } else {
-      setGameState((prev) => ({ ...prev, history: [...prev.history, { type: "AI", text: question.text, answer }], pendingQuestion: undefined, opponentAskedQuestions: new Set(prev.opponentAskedQuestions).add(question.id), aiAskedQuestions: new Set(prev.aiAskedQuestions).add(question.id), aiKnowledge: { ...prev.aiKnowledge, [question.id]: answer === "SIM" }, phase: "AI_DISCARDING" }));
+      setGameState((prev) => ({
+        ...prev,
+        history: [...prev.history, { type: "AI", text: question.text, answer }],
+        pendingQuestion: undefined,
+        opponentAskedQuestions: new Set(prev.opponentAskedQuestions).add(question.id),
+        aiAskedQuestions: new Set(prev.aiAskedQuestions).add(question.id),
+        aiKnowledge: { ...prev.aiKnowledge, [question.id]: answer === "SIM" },
+        phase: "AI_DISCARDING"
+      }));
     }
   };
 
   const toggleCard = (id: number) => {
-    setGameState((prev) => ({ ...prev, playerBoard: prev.playerBoard.map((item) => item.character.id === id ? { ...item, isDown: !item.isDown } : item) }));
+    setGameState((prev) => ({
+      ...prev,
+      playerBoard: prev.playerBoard.map((item) =>
+        item.character.id === id ? { ...item, isDown: !item.isDown } : item
+      ),
+    }));
   };
 
   const autoDownCards = (question: Question, answer: "SIM" | "NÃO") => {
-    setGameState((prev) => ({ ...prev, playerBoard: prev.playerBoard.map((item) => { const matches = question.check(item.character); if (answer === "SIM" && !matches) return { ...item, isDown: true }; if (answer === "NÃO" && matches) return { ...item, isDown: true }; return item; }) }));
+    setGameState((prev) => ({
+      ...prev,
+      playerBoard: prev.playerBoard.map((item) => {
+        const matches = question.check(item.character);
+        if (answer === "SIM" && !matches) return { ...item, isDown: true };
+        if (answer === "NÃO" && matches) return { ...item, isDown: true };
+        return item;
+      }),
+    }));
   };
 
   const playerPalpite = async (character: Character) => {
     const isCorrect = character.id === gameState.aiSecret.id;
+    
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      try {
+      if (isCorrect) {
+        // We only notify the server if WE win by guessing
         const { declareWinner } = await import("@/lib/online.functions");
-        const winnerId = isCorrect ? gameState.guestId : gameState.opponentId!;
-        
-        // Bloqueio local imediato para o Vendedor/Perdedor
-        setGameState(prev => ({ 
-          ...prev, 
-          isGameOver: true, 
-          winner: isCorrect ? "WINNER" : "LOSER",
-          phase: "PLAYER_TURN", 
-          pendingQuestion: undefined
-        }));
-
-        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId } });
-      } catch (error) { 
-        console.error("Erro ao declarar vencedor:", error);
-        toast.error("Erro ao processar palpite final."); 
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.guestId } });
+      } else {
+        // If we guess wrong, the opponent wins
+        const { declareWinner } = await import("@/lib/online.functions");
+        await declareWinner({ data: { roomId: gameState.roomId || "", winnerId: gameState.opponentId! } });
       }
-      return;
+      return; // Realtime will handle the state update
     }
-    setGameState((prev) => ({ ...prev, isGameOver: true, winner: isCorrect ? "PLAYER" : "AI", playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore, aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1 }));
+
+    setGameState((prev) => ({
+      ...prev,
+      isGameOver: true,
+      winner: isCorrect ? "PLAYER" : "AI",
+      playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
+      aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
+    }));
   };
 
-  const passTurn = useCallback(() => {
+  const passTurn = () => {
     if (gameState.currentTurn !== "PLAYER" || gameState.isGameOver) return;
     if (gameState.phase !== "PLAYER_DISCARDING" && gameState.phase !== "PLAYER_TURN") return;
-    setGameState((prev) => ({ ...prev, history: [...prev.history, { type: "PLAYER", text: "Passou a vez." }] }));
-    setTimeout(nextTurn, 400);
-  }, [gameState.currentTurn, gameState.isGameOver, gameState.phase, nextTurn]);
 
-  const rematch = useCallback(() => {
-     setGameState((prev) => ({ ...prev, playerSecret: CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!, aiSecret: CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!, playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })), aiRemainingChars: [...CHARACTERS], currentTurn: "PLAYER", phase: "PLAYER_TURN", turnCount: 1, history: [], isGameOver: false, winner: undefined, askedQuestions: new Set<string>(), myAskedQuestions: new Set<string>(), opponentAskedQuestions: new Set<string>(), aiAskedQuestions: new Set<string>(), playerKnowledge: {}, aiKnowledge: {}, pendingQuestion: undefined }));
-  }, []);
+    setGameState((prev) => ({
+      ...prev,
+      history: [...prev.history, { type: "PLAYER", text: "Passou a vez." }],
+    }));
+    setTimeout(nextTurn, 400);
+  };
+
+  const rematch = () => {
+    setGameState((prev) => ({
+      ...prev,
+      playerSecret: CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!,
+      aiSecret: CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)]!,
+      playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
+      aiRemainingChars: [...CHARACTERS],
+      currentTurn: "PLAYER",
+      phase: "PLAYER_TURN",
+      turnCount: 1,
+      history: [],
+      isGameOver: false,
+      winner: undefined,
+      askedQuestions: new Set<string>(),
+      myAskedQuestions: new Set<string>(),
+      opponentAskedQuestions: new Set<string>(),
+      aiAskedQuestions: new Set<string>(),
+      playerKnowledge: {},
+      aiKnowledge: {},
+      pendingQuestion: undefined
+    }));
+  };
 
   useEffect(() => {
-    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
+    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
+      console.log("[FTF REALTIME] Disabling realtime for mode:", gameState.gameMode);
+      return;
+    }
 
-    // Use a ref to store the latest gameState to avoid stale closure issues in syncGameState
-    const syncGameState = async (roomData: any) => {
-      // Usar uma checagem rápida no início
-      const winnerId = roomData['winner_id'];
-      const status = roomData['status'];
-      const rematchStatus = roomData['rematch_status'];
-      
-      // 1. Prioridade Absoluta: Fim de Jogo
-      if (winnerId || status === "FINISHED" || status === "ABANDONED") {
-        if (status === "ABANDONED") {
-          setGameState(prev => {
-            if (prev.winner === "ABANDONED") return prev;
-            return { ...prev, isGameOver: true, winner: "ABANDONED", lastActionTime: Date.now() };
-          });
-          return;
-        }
+    const channel = supabase
+      .channel(`room_${gameState.roomCode}_${gameState.guestId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
+        (payload) => {
+          if (gameState.gameMode !== "ONLINE") return;
+          const newRoomData = payload.new as any;
+          
+          if (newRoomData['status'] === "FINISHED" || newRoomData['match_winner_id']) {
+            const winnerId = newRoomData['winner_id'];
+            const matchWinnerId = newRoomData['match_winner_id'];
+            setGameState(prev => ({
+              ...prev,
+              isGameOver: true,
+              winner: winnerId === gameState.guestId ? "WINNER" : "LOSER",
+              matchWinnerId,
+              rematchStatus: newRoomData['rematch_status'],
+              rematchRequestedBy: newRoomData['rematch_requested_by'],
+              lastActionTime: Date.now()
+            }));
+          }
 
-        const didIWin = winnerId === gameState.guestId;
-        const matchWinnerId = roomData['match_winner_id'];
-        
-        if (gameState.roomId) {
-          const { data } = await supabase.from('room_players').select('guest_id, score, secret_character_id').eq('room_id', gameState.roomId);
-          if (data) {
-            const opponent = data.find(p => p.guest_id !== gameState.guestId);
-            const me = data.find(p => p.guest_id === gameState.guestId);
-            const secretChar = CHARACTERS.find(c => c.id === opponent?.secret_character_id);
-            
+          if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
+            setGameState(prev => ({
+              ...prev,
+              rematchStatus: newRoomData['rematch_status'],
+              rematchRequestedBy: newRoomData['rematch_requested_by']
+            }));
+          }
+
+          if (newRoomData['status'] === "PLAYING" && payload.old?.['status'] === "FINISHED") {
+            // New round started
+            setGameState(prev => ({
+              ...prev,
+              isGameOver: false,
+              winner: undefined,
+              rematchStatus: 'idle',
+              rematchRequestedBy: null,
+              askedQuestions: new Set(),
+              myAskedQuestions: new Set(),
+              opponentAskedQuestions: new Set(),
+              turnCount: 1,
+              history: [],
+              pendingQuestion: undefined,
+              playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+              lastActionTime: Date.now()
+            }));
+          }
+
+          if (newRoomData['current_turn_player_id']) {
+            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
             setGameState(prev => {
-              // Bloqueio: Se já estamos em fim de jogo, só atualizamos se houver mudança nos dados críticos (placar, revanche)
-              // Mas nunca voltamos para isGameOver: false
-              return { 
-                ...prev, 
-                isGameOver: true, 
-                winner: didIWin ? "WINNER" : "LOSER",
-                aiSecret: secretChar || prev.aiSecret,
-                playerScore: me?.score ?? prev.playerScore,
-                aiScore: opponent?.score ?? prev.aiScore,
-                matchWinnerId: matchWinnerId || prev.matchWinnerId,
-                rematchStatus: rematchStatus || prev.rematchStatus,
-                rematchRequestedBy: roomData['rematch_requested_by'] || prev.rematchRequestedBy,
-                phase: "PLAYER_TURN",
-                pendingQuestion: undefined
+              if (prev.isGameOver) return prev;
+              let newPhase = prev.phase;
+              if (isMyTurn) {
+                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
+                  newPhase = "PLAYER_TURN";
+                }
+              } else {
+                if (prev.phase !== "PLAYER_RESPONDING") {
+                  newPhase = "AI_TURN"; 
+                }
+              }
+
+              return {
+                ...prev,
+                currentTurn: isMyTurn ? "PLAYER" : "AI",
+                phase: newPhase,
+                lastActionTime: Date.now()
               };
             });
           }
-        }
-        return; 
-      }
 
-      // Se o jogo está em andamento mas localmente achamos que acabou, 
-      // verificamos se é um reset de rodada (status PLAYING e winner_id null)
-      if (status === "PLAYING" && roomData['winner_id'] === null) {
-          // Checar se as questões foram limpas (sinal de nova rodada)
-          if (roomData['current_question_id'] === null && roomData['last_answer'] === null) {
-            if (gameState.roomId) {
-              const { data } = await supabase.from('room_players').select('guest_id, score, secret_character_id').eq('room_id', gameState.roomId);
-              if (data) {
-                const me = data.find(p => p.guest_id === gameState.guestId);
-                const opponent = data.find(p => p.guest_id !== gameState.guestId);
-                const secretChar = CHARACTERS.find(c => c.id === opponent?.secret_character_id);
-                const mySecret = CHARACTERS.find(c => c.id === me?.secret_character_id);
-
+          if (newRoomData['current_question_id']) {
+            const askerId = newRoomData['question_asked_by'];
+            const isFromOpponent = askerId && askerId !== gameState.guestId;
+            const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
+            
+            if (question) {
+              if (isFromOpponent) {
                 setGameState(prev => {
-                  // Só resetamos se realmente estivermos no estado de Game Over
-                  if (!prev.isGameOver) return prev;
-                  
-                  return { 
-                    ...prev, 
-                    isGameOver: false, 
-                    winner: undefined, 
-                    playerScore: me?.score || 0, 
-                    aiScore: opponent?.score || 0, 
-                    playerSecret: mySecret || prev.playerSecret, 
-                    aiSecret: secretChar || prev.aiSecret, 
-                    rematchStatus: 'idle', 
-                    rematchRequestedBy: null, 
-                    askedQuestions: new Set(), 
-                    myAskedQuestions: new Set(), 
-                    opponentAskedQuestions: new Set(), 
-                    turnCount: 1, 
-                    history: [], 
-                    pendingQuestion: undefined, 
-                    playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })), 
-                    lastActionTime: Date.now() 
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+                    return prev;
+                  }
+                  return {
+                    ...prev,
+                    phase: "PLAYER_RESPONDING",
+                    pendingQuestion: { question, type: "AI" },
+                    lastActionTime: Date.now()
+                  };
+                });
+              } else {
+                setGameState(prev => {
+                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev;
+                  return {
+                    ...prev,
+                    phase: "WAITING_ANSWER",
+                    pendingQuestion: { question, type: "PLAYER" },
+                    lastActionTime: Date.now()
                   };
                 });
               }
             }
           }
-      }
 
-      // 2. Bloqueio de Sincronização de Turno se já estivermos em Fim de Jogo
-      // Isso evita que o polling/realtime atrase e sobrescreva o estado final
-      setGameState(prev => {
-        if (prev.isGameOver) return prev;
+          if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
+            const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
+            const askerId = newRoomData['question_asked_by'];
+            const isMyQuestion = askerId && askerId !== gameState.guestId;
 
-        let nextState = { ...prev };
-        let stateChanged = false;
-
-        // Sync Revanche
-        if (rematchStatus && rematchStatus !== prev.rematchStatus) {
-          nextState.rematchStatus = rematchStatus;
-          nextState.rematchRequestedBy = roomData['rematch_requested_by'];
-          stateChanged = true;
-        }
-
-        // Sync Turno
-        if (roomData['current_turn_player_id']) {
-          const isMyTurn = roomData['current_turn_player_id'] === prev.guestId;
-          const newTurn = isMyTurn ? "PLAYER" : "AI";
-          if (prev.currentTurn !== newTurn) {
-            nextState.currentTurn = newTurn;
-            if (isMyTurn) {
-              if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
-                nextState.phase = "PLAYER_TURN";
-              }
-            } else {
-              if (prev.phase !== "PLAYER_RESPONDING") {
-                nextState.phase = "AI_TURN";
-              }
-            }
-            stateChanged = true;
-          }
-        }
-
-        // Sync Pergunta
-        if (roomData['current_question_id']) {
-          const askerId = roomData['question_asked_by'];
-          const isFromOpponent = askerId && askerId !== prev.guestId;
-          const question = QUESTIONS.find(q => q.id === roomData['current_question_id']);
-          
-          if (question && (!prev.pendingQuestion || prev.pendingQuestion.question.id !== question.id)) {
-            if (isFromOpponent) {
-              nextState.phase = "PLAYER_RESPONDING";
-              nextState.pendingQuestion = { question, type: "AI" };
-            } else {
-              nextState.phase = "WAITING_ANSWER";
-              nextState.pendingQuestion = { question, type: "PLAYER" };
-            }
-            stateChanged = true;
-          }
-        }
-
-        // Sync Resposta
-        if (roomData['last_answer'] && !roomData['current_question_id']) {
-          const answer = roomData['last_answer'] as "SIM" | "NÃO";
-          const askerId = roomData['question_asked_by'];
-          if (askerId && askerId !== prev.guestId) {
-            if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
-              nextState.pendingQuestion = { ...prev.pendingQuestion, revealedAnswer: answer };
-              nextState.myAskedQuestions = new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id);
-              stateChanged = true;
+            if (isMyQuestion) {
+              setGameState(prev => {
+                if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
+                  return {
+                    ...prev,
+                    pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
+                    myAskedQuestions: new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id),
+                    lastActionTime: Date.now()
+                  };
+                }
+                return prev;
+              });
             }
           }
+
+          if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "PLAYING") {
+            setGameState(prev => ({ ...prev, pendingQuestion: undefined }));
+          }
         }
-
-        return stateChanged ? { ...nextState, lastActionTime: Date.now() } : prev;
-      });
-    };
-    const pollInterval = setInterval(async () => {
-      if (!gameState.roomCode) return;
-      
-      // Se o jogo já acabou localmente, só permitimos o polling se não houver rematch_status pendente
-      // ou se o status for ABANDONED para fechar a modal se necessário.
-      // Mas para simplificar e seguir a instrução: bloqueio se finished.
-      const { data: room, error } = await supabase.from("rooms").select("*").eq("code", gameState.roomCode).single();
-      if (error || !room) return;
-
-      if (room.status === "ABANDONED") {
-        setGameState(prev => { 
-          if (prev.winner === "ABANDONED") return prev; 
-          toast.error("Ops, parece que alguém desistiu da luta 👻"); 
-          return { ...prev, isGameOver: true, winner: "ABANDONED" }; 
-        });
-        return;
-      }
-
-      await syncGameState(room);
-    }, 2000);
-
-    const channel = supabase.channel(`room_${gameState.roomCode}_${gameState.guestId}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` }, async (payload) => {
-        if (gameState.gameMode !== "ONLINE") return;
-        const newRoomData = payload.new as any;
-
-        if (newRoomData.status === "ABANDONED") { 
-          setGameState(prev => ({ ...prev, isGameOver: true, winner: "ABANDONED", lastActionTime: Date.now() })); 
-          toast.error("Ops, parece que alguém desistiu da luta 👻"); 
-          return; 
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomCode}` },
+        (payload) => {
+          const updatedPlayer = payload.new as any;
+          if (updatedPlayer.guest_id === gameState.guestId) {
+             setGameState(prev => {
+               const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
+               return { ...prev, playerScore: updatedPlayer.score, playerSecret: char || prev.playerSecret };
+             });
+          } else {
+             setGameState(prev => {
+               const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
+               return { ...prev, aiScore: updatedPlayer.score, aiSecret: char || prev.aiSecret };
+             });
+          }
         }
-
-        await syncGameState(newRoomData);
-
-        const oldRoomData = payload.old as any;
-        if (newRoomData['rematch_status'] === 'requested' && oldRoomData?.rematch_status !== 'requested' && newRoomData['rematch_requested_by'] !== gameState.guestId) {
-          toast.info("REVANCHE SOLICITADA!");
-        } else if (newRoomData['rematch_status'] === 'declined' && oldRoomData?.rematch_status !== 'declined') {
-          toast.info("Ah, desistiu? Campeão precisa descansar mesmo 😏");
-        }
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomId}` }, (payload) => {
-        const updatedPlayer = payload.new as any;
-        setGameState(prev => {
-          const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
-          if (updatedPlayer.guest_id === gameState.guestId) return { ...prev, playerScore: updatedPlayer.score, playerSecret: char || prev.playerSecret };
-          else return { ...prev, aiScore: updatedPlayer.score, aiSecret: char || prev.aiSecret };
-        });
-      })
+      )
       .subscribe();
-    return () => { clearInterval(pollInterval); supabase.removeChannel(channel); };
-  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId]);
+
+    return () => { supabase.removeChannel(channel); };
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
 
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       const syncRoom = async () => {
-        // Se já acabou, não precisamos do sync inicial de estado de jogo (fases/turnos)
-        if (gameState.isGameOver) return;
-
-        const { data: roomData, error } = await supabase.from("rooms").select("*, room_players(*)").eq("code", gameState.roomCode!).single();
+        const { data: roomData, error } = await supabase
+          .from("rooms")
+          .select("*, room_players(*)")
+          .eq("code", gameState.roomCode!)
+          .single();
+        
         if (error || !roomData) return;
 
-        if (roomData.winner_id || roomData.status === "FINISHED") {
-          // Se o banco diz que acabou, o syncGameState vai cuidar disso
-          return;
-        }
+        const players = roomData.room_players || [];
+        const opponent = players.find((p: any) => p.guest_id !== gameState.guestId);
+        const me = players.find((p: any) => p.guest_id === gameState.guestId);
 
-        const players = roomData.room_players || [], opponent = players.find((p: any) => p.guest_id !== gameState.guestId), me = players.find((p: any) => p.guest_id === gameState.guestId), isMyTurn = roomData.current_turn_player_id === gameState.guestId;
-        let mySecret = gameState.playerSecret, oppSecret = gameState.aiSecret;
-        if (me?.secret_character_id) { const char = CHARACTERS.find(c => c.id === me.secret_character_id); if (char) mySecret = char; }
-        if (opponent?.secret_character_id) { const char = CHARACTERS.find(c => c.id === opponent.secret_character_id); if (char) oppSecret = char; }
+        const isMyTurn = roomData.current_turn_player_id === gameState.guestId;
+        const currentQuestionId = roomData.current_question_id;
+        const lastAnswer = roomData.last_answer;
+        const askerId = roomData.question_asked_by;
+
+        let mySecret = gameState.playerSecret;
+        let oppSecret = gameState.aiSecret;
+
+        if (me?.secret_character_id) {
+          const char = CHARACTERS.find(c => c.id === me.secret_character_id);
+          if (char) mySecret = char;
+        }
+        if (opponent?.secret_character_id) {
+          const char = CHARACTERS.find(c => c.id === opponent.secret_character_id);
+          if (char) oppSecret = char;
+        }
         
         setGameState(prev => {
-          if (prev.isGameOver) return prev;
-          
-          let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN", pendingQuestion = undefined;
-          if (roomData.current_question_id) {
-            const question = QUESTIONS.find(q => q.id === roomData.current_question_id);
-            if (question) { 
-              if (roomData.question_asked_by === gameState.guestId) { 
-                newPhase = "WAITING_ANSWER"; 
-                pendingQuestion = { question, type: "PLAYER" as const }; 
-              } else { 
-                newPhase = "PLAYER_RESPONDING"; 
-                pendingQuestion = { question, type: "AI" as const }; 
-              } 
+          let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+          let pendingQuestion = undefined;
+
+          if (currentQuestionId) {
+            const question = QUESTIONS.find(q => q.id === currentQuestionId);
+            if (question) {
+              if (askerId === gameState.guestId) {
+                newPhase = "WAITING_ANSWER";
+                pendingQuestion = { question, type: "PLAYER" as const };
+              } else {
+                newPhase = "PLAYER_RESPONDING";
+                pendingQuestion = { question, type: "AI" as const };
+              }
             }
-          } else if (roomData.last_answer && roomData.question_asked_by !== gameState.guestId) newPhase = "WAITING_ANSWER";
-          
-          return { ...prev, playerSecret: mySecret, aiSecret: oppSecret, opponentId: opponent?.guest_id, opponentName: opponent?.name || undefined, playerName: me?.name || prev.playerName, roomId: roomData.id, playerScore: me?.score || 0, aiScore: opponent?.score || 0, currentTurn: isMyTurn ? "PLAYER" : "AI", phase: newPhase, pendingQuestion, lastActionTime: Date.now() };
+          } else if (lastAnswer && askerId !== gameState.guestId) {
+            newPhase = "WAITING_ANSWER";
+          }
+
+          return {
+            ...prev,
+            playerSecret: mySecret,
+            aiSecret: oppSecret,
+            opponentId: opponent?.guest_id,
+            opponentName: opponent?.name || undefined,
+            playerName: me?.name || prev.playerName,
+            roomId: roomData.id, // Ensure roomId is stored
+            playerScore: me?.score || 0,
+            aiScore: opponent?.score || 0,
+            currentTurn: isMyTurn ? "PLAYER" : "AI",
+            phase: newPhase,
+            pendingQuestion,
+            lastActionTime: Date.now()
+          };
         });
       };
       syncRoom();
@@ -455,20 +566,58 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
   useEffect(() => {
     if (gameState.isGameOver || gameState.gameMode === "ONLINE") return undefined;
+
     if (gameState.phase === "AI_TURN" && !gameState.pendingQuestion) {
       const timer = setTimeout(() => {
         const palpite = getAIPalpite(gameState.difficulty, gameState.aiRemainingChars);
-        if (palpite) setGameState((prev) => ({ ...prev, phase: "PLAYER_RESPONDING", pendingQuestion: { question: { id: `palpite-${palpite.id}`, text: `Seu personagem é ${palpite.nome}?`, category: "Palpite", check: (c) => c.id === palpite.id }, type: "AI_PALPITE" } }));
-        else {
-          const question = getBestAIQuestion(gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, gameState.aiAskedQuestions, gameState.aiKnowledge);
-          if (question) setGameState((prev) => ({ ...prev, phase: "PLAYER_RESPONDING", pendingQuestion: { question, type: "AI" }, aiAskedQuestions: new Set(prev.aiAskedQuestions).add(question.id) }));
-          else nextTurn();
+        if (palpite) {
+          setGameState((prev) => ({
+            ...prev,
+            phase: "PLAYER_RESPONDING",
+            pendingQuestion: { 
+              question: { 
+                id: `palpite-${palpite.id}`, 
+                text: `Seu personagem é ${palpite.nome}?`, 
+                category: "Palpite",
+                check: (c) => c.id === palpite.id 
+              }, 
+              type: "AI_PALPITE" 
+            }
+          }));
+        } else {
+          const question = getBestAIQuestion(
+            gameState.difficulty, 
+            gameState.aiRemainingChars, 
+            gameState.turnCount,
+            gameState.aiAskedQuestions,
+            gameState.aiKnowledge
+          );
+          setGameState((prev) => ({
+            ...prev,
+            phase: "PLAYER_RESPONDING",
+            pendingQuestion: { question, type: "AI" }
+          }));
         }
       }, 1500);
       return () => clearTimeout(timer);
     }
-    return undefined;
-  }, [gameState.phase, gameState.isGameOver, gameState.gameMode, gameState.difficulty, gameState.aiRemainingChars, gameState.aiAskedQuestions, gameState.aiKnowledge, gameState.pendingQuestion, gameState.turnCount, nextTurn]);
 
-  return { gameState, handlePlayerQuestion, answerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, revealAIAnswer, guestId };
+    if (gameState.phase === "AI_DISCARDING") {
+      const timer = setTimeout(() => {
+        setGameState(prev => ({ ...prev, phase: "AI_PASS_TURN" }));
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+
+    if (gameState.phase === "AI_PASS_TURN") {
+      const timer = setTimeout(() => {
+        nextTurn();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
+    return undefined;
+  }, [gameState.phase, gameState.isGameOver, gameState.pendingQuestion, gameState.difficulty, gameState.aiRemainingChars, gameState.turnCount, nextTurn, gameState.gameMode]);
+
+  return { gameState, handlePlayerQuestion, toggleCard, autoDownCards, playerPalpite, passTurn, rematch, answerQuestion, revealAIAnswer, guestId };
 };
