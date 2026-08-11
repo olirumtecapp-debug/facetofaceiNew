@@ -567,18 +567,21 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomCode}` },
+        gameState.roomId
+          ? { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomId}` }
+          : { event: "UPDATE", schema: "public", table: "room_players" },
         (payload) => {
           const updatedPlayer = payload.new as any;
+          if (gameState.roomId && updatedPlayer.room_id !== gameState.roomId) return;
           if (updatedPlayer.guest_id === gameState.guestId) {
              setGameState(prev => {
                const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
-               return { ...prev, playerScore: updatedPlayer.score, playerSecret: char || prev.playerSecret };
+               return { ...prev, playerScore: updatedPlayer.score ?? prev.playerScore, playerSecret: char || prev.playerSecret };
              });
           } else {
              setGameState(prev => {
                const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
-               return { ...prev, aiScore: updatedPlayer.score, aiSecret: char || prev.aiSecret };
+               return { ...prev, aiScore: updatedPlayer.score ?? prev.aiScore, aiSecret: char || prev.aiSecret };
              });
           }
         }
@@ -586,7 +589,8 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
+  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId]);
+
 
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
