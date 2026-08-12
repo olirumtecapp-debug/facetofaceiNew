@@ -40,6 +40,9 @@ export const getBestAIQuestion = (
       if (q.id === 'b_bigode') return false;
     }
 
+    // 3. Bloquear categoria Gênero até a 3ª pergunta da IA
+    if (q.category === "Gênero" && aiAskedQuestions.size < 2) return false;
+
     // Filtro original de turno
     return !q.minTurn || turn >= q.minTurn;
   });
