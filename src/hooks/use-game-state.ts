@@ -108,17 +108,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         
         console.log("[FTF TURN] changing to:", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
 
-        supabase
-          .from("rooms")
-          .update({ 
-            current_turn_player_id: nextPlayerId as any,
-            last_answer: null as any,
-            current_question_id: null as any,
-            question_asked_by: null as any,
-            last_action_timestamp: new Date().toISOString()
-          })
-          .eq("code", prev.roomCode)
-          .then();
+        const code = prev.roomCode;
+        const myId = prev.guestId;
+        import("@/lib/online.functions").then(({ setTurn }) =>
+          setTurn({ data: { code, guestId: myId, nextPlayerId: nextPlayerId ?? null } })
+        ).catch((e) => console.error("[FTF TURN] error", e));
       }
 
       return {
@@ -151,15 +145,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }));
 
         // 2. Synchronize with server
-        const { error } = await supabase
-          .from("rooms")
-          .update({ 
-            current_question_id: question.id,
-            last_answer: null as any,
-            question_asked_by: gameState.guestId,
-            last_action_timestamp: new Date().toISOString()
-          })
-          .eq("code", gameState.roomCode);
+        const { sendQuestion } = await import("@/lib/online.functions");
+        const error = await sendQuestion({
+          data: { code: gameState.roomCode, guestId: gameState.guestId, questionId: question.id }
+        }).then(() => null).catch((e) => e);
         
         if (error) {
           console.error("Multiplayer Error:", error);
@@ -219,15 +208,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }
 
         // 2. Send to server
-        const { error } = await supabase
-          .from("rooms")
-          .update({ 
-            last_answer: answer,
-            current_question_id: null as any,
-            question_asked_by: gameState.guestId as any,
-            last_action_timestamp: new Date().toISOString()
-          })
-          .eq("code", gameState.roomCode);
+        const { sendAnswer } = await import("@/lib/online.functions");
+        const error = await sendAnswer({
+          data: { code: gameState.roomCode, guestId: gameState.guestId, answer }
+        }).then(() => null).catch((e) => e);
         
         if (error) {
           toast.error("Erro ao enviar resposta.");
@@ -301,7 +285,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   const playerPalpite = async (character: Character) => {
-    const isCorrect = character.id === gameState.aiSecret.id;
+    let isCorrect = character.id === gameState.aiSecret.id;
 
     if (gameState.gameMode === "ONLINE") {
       if (!gameState.roomId) {
@@ -309,16 +293,21 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         toast.error("Sala não sincronizada. Tente novamente.");
         return;
       }
-      const winnerId = isCorrect ? gameState.guestId : gameState.opponentId;
-      if (!winnerId) {
-        console.error("[FTF PALPITE] Opponent ID missing during palpite", { isCorrect, guestId: gameState.guestId, opponentId: gameState.opponentId });
-        toast.error("Adversário não encontrado.");
+      let guessResult: { isCorrect: boolean; opponentSecretId: number | null };
+      try {
+        const { submitGuess } = await import("@/lib/online.functions");
+        guessResult = await submitGuess({
+          data: { roomId: gameState.roomId, guestId: gameState.guestId, characterId: character.id }
+        });
+      } catch (e: any) {
+        console.error("FINAL_ROUND_ERROR_FULL", { message: e?.message, stack: e?.stack });
+        toast.error("Erro ao registrar o fim da rodada. Tente novamente.");
         return;
       }
 
-      console.log("[FTF PALPITE] Starting online palpite flow", { isCorrect, winnerId });
+      isCorrect = guessResult.isCorrect;
+      const revealedOpponent = CHARACTERS.find(c => c.id === guessResult.opponentSecretId);
 
-      // Optimistic local end-of-round
       setGameState(prev => ({
         ...prev,
         isGameOver: true,
@@ -328,23 +317,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         pendingQuestion: undefined,
         rematchStatus: 'idle',
         rematchRequestedBy: null,
+        aiSecret: revealedOpponent || prev.aiSecret,
         lastActionTime: Date.now()
       }));
 
-      try {
-        const { declareWinner: declareWinnerFn } = await import("@/lib/online.functions");
-        console.log("[FTF PALPITE] Calling declareWinner server function", { roomId: gameState.roomId, winnerId });
-        const result = await declareWinnerFn({ data: { roomId: gameState.roomId, winnerId } });
-        console.log("[FTF PALPITE] declareWinner result success:", result);
-      } catch (e: any) {
-        console.error("FINAL_ROUND_ERROR_FULL", {
-          message: e?.message,
-          stack: e?.stack,
-          payload: { roomId: gameState.roomId, winnerId }
-        });
-        
-        toast.error("Erro ao registrar o fim da rodada. Tente novamente.");
-      }
       return; 
     }
 
@@ -604,20 +580,27 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           console.log("[FTF REALTIME] Player updated:", updatedPlayer.guest_id, "Score:", updatedPlayer.score);
           
           if (updatedPlayer.guest_id === gameState.guestId) {
-             setGameState(prev => {
-               const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
-               return { ...prev, playerScore: updatedPlayer.score ?? prev.playerScore, playerSecret: char || prev.playerSecret };
-             });
+             setGameState(prev => ({ ...prev, playerScore: updatedPlayer.score ?? prev.playerScore }));
           } else {
-             setGameState(prev => {
-               const char = CHARACTERS.find(c => c.id === updatedPlayer.secret_character_id);
-               return { 
-                 ...prev, 
-                 aiScore: updatedPlayer.score ?? prev.aiScore, 
-                 aiSecret: char || prev.aiSecret,
-                 opponentName: updatedPlayer.name || prev.opponentName
-               };
-             });
+             setGameState(prev => ({
+               ...prev,
+               aiScore: updatedPlayer.score ?? prev.aiScore,
+               opponentName: updatedPlayer.name || prev.opponentName
+             }));
+          }
+
+          // Secrets are never broadcast: fetch our own (and the opponent's only
+          // after the round ends) from the server.
+          if (gameState.roomCode) {
+            import("@/lib/online.functions").then(({ getSecrets }) =>
+              getSecrets({ data: { code: gameState.roomCode!, guestId: gameState.guestId } })
+            ).then((res) => {
+              setGameState(prev => {
+                const mine = CHARACTERS.find(c => c.id === res.mySecretId);
+                const opp = CHARACTERS.find(c => c.id === res.opponentSecretId);
+                return { ...prev, playerSecret: mine || prev.playerSecret, aiSecret: opp || prev.aiSecret };
+              });
+            }).catch(() => {});
           }
         }
       )
@@ -632,7 +615,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const syncRoom = async () => {
         const { data: roomData, error } = await supabase
           .from("rooms")
-          .select("*, room_players(*)")
+          .select("*, room_players(room_id, guest_id, color, score, is_ready, name)")
           .eq("code", gameState.roomCode!)
           .single();
         
@@ -650,13 +633,15 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         let mySecret = gameState.playerSecret;
         let oppSecret = gameState.aiSecret;
 
-        if (me?.secret_character_id) {
-          const char = CHARACTERS.find(c => c.id === me.secret_character_id);
-          if (char) mySecret = char;
-        }
-        if (opponent?.secret_character_id) {
-          const char = CHARACTERS.find(c => c.id === opponent.secret_character_id);
-          if (char) oppSecret = char;
+        try {
+          const { getSecrets } = await import("@/lib/online.functions");
+          const secrets = await getSecrets({ data: { code: gameState.roomCode!, guestId: gameState.guestId } });
+          const mine = CHARACTERS.find(c => c.id === secrets.mySecretId);
+          if (mine) mySecret = mine;
+          const opp = CHARACTERS.find(c => c.id === secrets.opponentSecretId);
+          if (opp) oppSecret = opp;
+        } catch (e) {
+          console.error("[FTF SYNC] secrets error", e);
         }
         
         setGameState(prev => {
