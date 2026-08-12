@@ -55,8 +55,8 @@ export type GameState = {
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
   const guestId = useMemo(() => {
     if (typeof window === 'undefined') return 'server';
-    let id = typeof window !== 'undefined' ? localStorage.getItem("ftf_guest_id") : null;
-    if (!id && typeof window !== 'undefined') {
+    let id = localStorage.getItem("ftf_guest_id");
+    if (!id) {
       id = crypto.randomUUID();
       localStorage.setItem("ftf_guest_id", id);
     }
