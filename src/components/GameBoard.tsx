@@ -387,7 +387,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                   onClick={rematch}
                   className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
                 >
-                  REVANCHE
+                  {gameState.winner === "PLAYER" ? "JOGAR NOVAMENTE" : "REVANCHE"}
                 </button>
               )}
               <button
