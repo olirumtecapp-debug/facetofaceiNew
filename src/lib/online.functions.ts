@@ -361,3 +361,48 @@ export const abandonMatch = createServerFn({ method: "POST" })
     if (error) throw error;
     return { success: true };
   });
+
+export const setTurn = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; guestId: string; nextPlayerId: string | null }) =>
+    z.object({ code: z.string(), guestId: z.string(), nextPlayerId: z.string().nullable() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { svcSetTurn } = await import("./online.server");
+    return svcSetTurn(data.code, data.guestId, data.nextPlayerId);
+  });
+
+export const sendQuestion = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; guestId: string; questionId: string }) =>
+    z.object({ code: z.string(), guestId: z.string(), questionId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { svcSendQuestion } = await import("./online.server");
+    return svcSendQuestion(data.code, data.guestId, data.questionId);
+  });
+
+export const sendAnswer = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; guestId: string; answer: "SIM" | "NÃO" }) =>
+    z.object({ code: z.string(), guestId: z.string(), answer: z.enum(["SIM", "NÃO"]) }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { svcSendAnswer } = await import("./online.server");
+    return svcSendAnswer(data.code, data.guestId, data.answer);
+  });
+
+export const getSecrets = createServerFn({ method: "POST" })
+  .inputValidator((data: { code: string; guestId: string }) =>
+    z.object({ code: z.string(), guestId: z.string() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { svcGetSecrets } = await import("./online.server");
+    return svcGetSecrets(data.code, data.guestId);
+  });
+
+export const submitGuess = createServerFn({ method: "POST" })
+  .inputValidator((data: { roomId: string; guestId: string; characterId: number }) =>
+    z.object({ roomId: z.string(), guestId: z.string(), characterId: z.number() }).parse(data)
+  )
+  .handler(async ({ data }) => {
+    const { svcSubmitGuess } = await import("./online.server");
+    return svcSubmitGuess(data.roomId, data.guestId, data.characterId);
+  });

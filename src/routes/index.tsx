@@ -173,7 +173,7 @@ type Screen = "MENU" | "CHOOSE_COLOR" | "CHOOSE_DIFFICULTY" | "GAME" | "ONLINE";
     const fetchPlayers = async () => {
       const { data } = await supabase
         .from("room_players")
-        .select("*")
+        .select("room_id, guest_id, color, score, is_ready, name")
         .eq("room_id", roomData.id);
       if (data) setPlayers(data);
     };
