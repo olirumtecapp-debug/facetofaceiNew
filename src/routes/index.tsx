@@ -151,9 +151,9 @@ function Index() {
   const [showChars, setShowChars] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
   const guestId = (typeof window !== 'undefined') 
-    ? (localStorage.getItem("ftf_guest_id") || (() => {
+    ? (sessionStorage.getItem("ftf_guest_id") || (() => {
         const id = crypto.randomUUID();
-        localStorage.setItem("ftf_guest_id", id);
+        sessionStorage.setItem("ftf_guest_id", id);
         return id;
       })())
     : "";

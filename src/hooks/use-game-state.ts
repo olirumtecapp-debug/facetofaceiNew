@@ -55,10 +55,10 @@ export type GameState = {
 export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Difficulty, initialRoomCode?: string) => {
   const guestId = useMemo(() => {
     if (typeof window === 'undefined') return 'server';
-    let id = localStorage.getItem("ftf_guest_id");
+    let id = sessionStorage.getItem("ftf_guest_id");
     if (!id) {
       id = crypto.randomUUID();
-      localStorage.setItem("ftf_guest_id", id);
+      sessionStorage.setItem("ftf_guest_id", id);
     }
     return id;
   }, []);
@@ -448,15 +448,33 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
+          const isHost = newRoomData.host_id === gameState.guestId;
+          const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
+          const oppSecretId = (statusLower === 'finished' || winnerId) ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
+          const myCard = CHARACTERS.find(c => c.id === mySecretId);
+          const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
+
+          if (myCard) {
+            setGameState(prev => ({
+              ...prev,
+              playerSecret: myCard,
+              aiSecret: oppCard || prev.aiSecret,
+              opponentId: isHost ? newRoomData.guest_id : newRoomData.host_id,
+              opponentName: (isHost ? newRoomData.guest_name : newRoomData.host_name) || prev.opponentName,
+              playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
+              aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+            }));
+          }
+
           if (statusLower === "playing") {
-            // New round started (server reset the room)
             setGameState(prev => {
-              // Trigger reset if it's currently game over OR if the rematch was accepted
-              if (!prev.isGameOver && prev.rematchStatus !== 'accepted') return prev;
+              if (!prev.isGameOver && prev.rematchStatus !== 'accepted' && prev.playerSecret?.id === mySecretId) return prev;
               
-              console.log("[FTF REALTIME] Resetting game for new round");
+              console.log("[FTF REALTIME] Syncing game for playing round", { mySecretId });
               return {
                 ...prev,
+                playerSecret: myCard || prev.playerSecret,
+                aiSecret: oppCard || prev.aiSecret,
                 isGameOver: false,
                 winner: undefined,
                 matchWinnerId: null,
