@@ -633,42 +633,43 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const syncRoom = async () => {
         const { data: roomData, error } = await supabase
           .from("rooms")
-          .select("*, room_players(room_id, guest_id, color, score, is_ready, name)")
+          .select("*")
           .eq("code", gameState.roomCode!)
           .single();
         
-        if (error || !roomData) return;
-
-        const players = roomData.room_players || [];
-        const opponent = players.find((p: any) => p.guest_id !== gameState.guestId);
-        const me = players.find((p: any) => p.guest_id === gameState.guestId);
+        if (error || !roomData) {
+          console.error("[FTF SYNC] syncRoom error:", error);
+          return;
+        }
 
         const state = roomData.state || {};
         const isHost = roomData.host_id === gameState.guestId;
-        const isMyTurn = (roomData.turn || state.currentTurnPlayerId || roomData.host_id) === gameState.guestId;
+        const currentTurnId = roomData.turn || state.currentTurnPlayerId || roomData.host_id;
+        const isMyTurn = currentTurnId === gameState.guestId;
         const currentQuestionId = state.currentQuestionId;
         const lastAnswer = state.lastAnswer;
         const askerId = state.questionAskedBy;
 
-        let mySecret = gameState.playerSecret;
-        let oppSecret = gameState.aiSecret;
+        const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
+        const isFinished = roomData.status?.toLowerCase() === "finished" || !!roomData.winner;
+        const oppSecretId = isFinished ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
 
-        try {
-          const { getSecrets } = await import("@/lib/online.functions");
-          const secrets = await getSecrets({ data: { code: gameState.roomCode!, guestId: gameState.guestId } });
-          const mine = CHARACTERS.find(c => c.id === secrets.mySecretId);
-          if (mine) mySecret = mine;
-          const opp = CHARACTERS.find(c => c.id === secrets.opponentSecretId);
-          if (opp) oppSecret = opp;
-        } catch (e) {
-          console.error("[FTF SYNC] secrets error", e);
-        }
+        const myCard = CHARACTERS.find(c => c.id === mySecretId);
+        const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
+
+        console.log("[FTF SYNC] Synced room:", {
+          isHost,
+          mySecretId,
+          myCard: myCard?.nome,
+          isMyTurn,
+          turn: currentTurnId
+        });
         
         setGameState(prev => {
           let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
           let pendingQuestion = undefined;
-          const winnerId = roomData.winner_id;
-          const isGameOver = roomData.status === "FINISHED" || !!winnerId;
+          const winnerId = roomData.winner;
+          const isGameOver = isFinished;
 
           if (isGameOver && winnerId) {
             newPhase = "PLAYER_TURN";
@@ -689,8 +690,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
           return {
             ...prev,
-            playerSecret: mySecret,
-            aiSecret: oppSecret,
+            playerSecret: myCard || prev.playerSecret,
+            aiSecret: oppCard || prev.aiSecret,
+            playerColor: isHost ? "AZUL" : "VERMELHO",
             opponentId: isHost ? roomData.guest_id : roomData.host_id,
             opponentName: (isHost ? roomData.guest_name : roomData.host_name) || prev.opponentName,
             playerName: (isHost ? roomData.host_name : roomData.guest_name) || prev.playerName,
@@ -701,10 +703,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             phase: newPhase,
             pendingQuestion,
             isGameOver,
-            winner: (roomData.winner || winnerId) ? ((roomData.winner || winnerId) === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
-            matchWinnerId: state.matchWinnerId || roomData.match_winner_id || null,
-            rematchStatus: (state.rematchStatus || roomData.rematch_status || prev.rematchStatus) as any,
-            rematchRequestedBy: state.rematchRequestedBy ?? roomData.rematch_requested_by ?? prev.rematchRequestedBy ?? null,
+            winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
+            matchWinnerId: state.matchWinnerId || null,
+            rematchStatus: (state.rematchStatus || prev.rematchStatus) as any,
+            rematchRequestedBy: state.rematchRequestedBy ?? prev.rematchRequestedBy ?? null,
             lastActionTime: Date.now()
           } as GameState;
         });
