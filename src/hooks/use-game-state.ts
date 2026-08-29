@@ -407,9 +407,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           const newRoomData = payload.new as any;
           console.log("[FTF REALTIME] Update received:", newRoomData);
           
-          if (newRoomData['status'] === "FINISHED" || newRoomData['winner_id']) {
-            const winnerId = newRoomData['winner_id'];
-            const matchWinnerId = newRoomData['match_winner_id'];
+          const state = newRoomData.state || {};
+          const statusLower = (newRoomData.status || '').toLowerCase();
+          const winnerId = newRoomData.winner || newRoomData.winner_id;
+          const matchWinnerId = state.matchWinnerId || newRoomData.match_winner_id;
+
+          if (statusLower === "finished" || winnerId) {
             
             console.log("[FTF REALTIME] Game over detected.", {
               winnerId,
@@ -445,7 +448,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }));
           }
 
-          if (newRoomData['status'] === "PLAYING") {
+          if (statusLower === "playing") {
             // New round started (server reset the room)
             setGameState(prev => {
               // Trigger reset if it's currently game over OR if the rematch was accepted
@@ -472,8 +475,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           }
 
 
-          if (newRoomData['current_turn_player_id'] && gameState.gameMode === "ONLINE") {
-            const isMyTurn = newRoomData['current_turn_player_id'] === gameState.guestId;
+          const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId;
+          if (turnPlayerId && gameState.gameMode === "ONLINE") {
+            const isMyTurn = turnPlayerId === gameState.guestId;
             setGameState(prev => {
               if (prev.isGameOver) return prev;
               let newPhase = prev.phase;
@@ -498,16 +502,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             });
           }
 
-          if (newRoomData['current_question_id']) {
-            const askerId = newRoomData['question_asked_by'];
-          const isFromOpponent = askerId && askerId !== gameState.guestId;
-          console.log("[FTF REALTIME] Question detected:", { 
-            id: newRoomData['current_question_id'], 
-            askerId, 
-            isFromOpponent,
-            myId: gameState.guestId 
-          });
-            const question = QUESTIONS.find(q => q.id === newRoomData['current_question_id']);
+          const qId = state.currentQuestionId || newRoomData.current_question_id;
+          if (qId) {
+            const askerId = state.questionAskedBy || newRoomData.question_asked_by;
+            const isFromOpponent = askerId && askerId !== gameState.guestId;
+            const question = QUESTIONS.find(q => q.id === qId);
             
             if (question) {
               if (isFromOpponent) {
@@ -536,9 +535,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             }
           }
 
-          if (newRoomData['last_answer'] && !newRoomData['current_question_id']) {
-            const answer = newRoomData['last_answer'] as "SIM" | "NÃO";
-            const askerId = newRoomData['question_asked_by'];
+          const lastAns = state.lastAnswer || newRoomData.last_answer;
+          if (lastAns && !qId) {
+            const answer = lastAns as "SIM" | "NÃO";
+            const askerId = state.questionAskedBy || newRoomData.question_asked_by;
             const isMyQuestion = askerId && askerId === gameState.guestId;
 
             if (isMyQuestion) {
@@ -625,10 +625,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         const opponent = players.find((p: any) => p.guest_id !== gameState.guestId);
         const me = players.find((p: any) => p.guest_id === gameState.guestId);
 
-        const isMyTurn = roomData.current_turn_player_id === gameState.guestId;
-        const currentQuestionId = roomData.current_question_id;
-        const lastAnswer = roomData.last_answer;
-        const askerId = roomData.question_asked_by;
+        const state = roomData.state || {};
+        const isHost = roomData.host_id === gameState.guestId;
+        const isMyTurn = (roomData.turn || state.currentTurnPlayerId || roomData.host_id) === gameState.guestId;
+        const currentQuestionId = state.currentQuestionId;
+        const lastAnswer = state.lastAnswer;
+        const askerId = state.questionAskedBy;
 
         let mySecret = gameState.playerSecret;
         let oppSecret = gameState.aiSecret;
@@ -671,20 +673,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             ...prev,
             playerSecret: mySecret,
             aiSecret: oppSecret,
-            opponentId: opponent?.guest_id,
-            opponentName: opponent?.name || prev.opponentName,
-            playerName: me?.name || prev.playerName,
+            opponentId: isHost ? roomData.guest_id : roomData.host_id,
+            opponentName: (isHost ? roomData.guest_name : roomData.host_name) || prev.opponentName,
+            playerName: (isHost ? roomData.host_name : roomData.guest_name) || prev.playerName,
             roomId: roomData.id,
-            playerScore: me?.score || 0,
-            aiScore: opponent?.score || 0,
+            playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
+            aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
             currentTurn: isMyTurn ? "PLAYER" : "AI",
             phase: newPhase,
             pendingQuestion,
             isGameOver,
-            winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
-            matchWinnerId: roomData.match_winner_id || null,
-            rematchStatus: (roomData.rematch_status as any) || prev.rematchStatus,
-            rematchRequestedBy: roomData.rematch_requested_by ?? prev.rematchRequestedBy ?? null,
+            winner: (roomData.winner || winnerId) ? ((roomData.winner || winnerId) === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
+            matchWinnerId: state.matchWinnerId || roomData.match_winner_id || null,
+            rematchStatus: (state.rematchStatus || roomData.rematch_status || prev.rematchStatus) as any,
+            rematchRequestedBy: state.rematchRequestedBy ?? roomData.rematch_requested_by ?? prev.rematchRequestedBy ?? null,
             lastActionTime: Date.now()
           } as GameState;
         });

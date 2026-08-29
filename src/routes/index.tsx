@@ -32,23 +32,26 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function Lobby({ room, players, guestId, onLeave, onToggleReady, onStart }: any) {
-  useRealtimeEffect(() => {
-    const channel = supabase
-      .channel(`lobby:${room.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${room.id}` },
-        () => {
-          // Trigger a refresh of players if needed
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [room.id]);
-
-  const me = players.find((p: any) => p.guest_id === guestId);
+function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
   const isHost = room.host_id === guestId;
+  const state = room.state || {};
+  const hostPlayer = {
+    guest_id: room.host_id,
+    name: room.host_name || 'Anfitrião',
+    color: 'AZUL',
+    is_ready: !!state.hostReady,
+    score: state.hostScore || 0
+  };
+  const guestPlayer = room.guest_id ? {
+    guest_id: room.guest_id,
+    name: room.guest_name || 'Adversário',
+    color: 'VERMELHO',
+    is_ready: !!state.guestReady,
+    score: state.guestScore || 0
+  } : null;
+
+  const players = [hostPlayer, ...(guestPlayer ? [guestPlayer] : [])];
+  const me = players.find((p: any) => p.guest_id === guestId);
   const allReady = players.length === 2 && players.every((p: any) => p.is_ready);
 
   return (
@@ -65,27 +68,36 @@ function Lobby({ room, players, guestId, onLeave, onToggleReady, onStart }: any)
                 navigator.clipboard.writeText(room.code);
                 toast.success("Código copiado!");
               }}
-              className="rounded-lg bg-yellow-400 p-3 text-black transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="flex h-full items-center justify-center rounded-lg border border-white/10 bg-white/5 px-4 font-bold text-xs uppercase hover:bg-white/10 cursor-pointer active:scale-95 transition-all"
             >
-              📋
+              COPIAR
             </button>
           </div>
         </div>
 
         <div className="space-y-3 mb-6">
-          <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Jogadores Conectados</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Jogadores Conectados</p>
           {players.map((p: any) => (
-            <div key={p.guest_id} className="flex items-center justify-between rounded-lg bg-white/5 p-3 border border-white/5">
+            <div key={p.guest_id} className="flex items-center justify-between rounded-lg bg-black/30 p-3 border border-white/5">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="h-3 w-3 rounded-full" 
+                  style={{ backgroundColor: p.color === 'AZUL' ? '#1e62ec' : '#e52e2e' }} 
+                />
+                <div>
+                  <p className="font-bold text-sm leading-tight text-white">{p.name || 'Jogador'}</p>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase">{p.color} • {p.guest_id === guestId ? '(Você)' : '(Adversário)'}</p>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
-                <div className={`h-2 w-2 rounded-full ${p.is_ready ? 'bg-green-500' : 'bg-yellow-500'}`} />
-                <span className="font-black italic text-sm">
-                  {p.guest_id === guestId ? "VOCÊ" : (p.name || "ADVERSÁRIO")} 
-                  {p.guest_id === room.host_id && <span className="ml-2 text-[8px] text-blue-400">(HOST)</span>}
+                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
+                  p.is_ready 
+                    ? 'bg-green-500/10 text-green-400 border-green-500/30' 
+                    : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                }`}>
+                  {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
                 </span>
               </div>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded ${p.is_ready ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}`}>
-                {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
-              </span>
             </div>
           ))}
           {players.length < 2 && (
@@ -164,34 +176,18 @@ function Index() {
   useRealtimeEffect(() => {
     if (!roomData?.id) return;
 
-    const fetchPlayers = async () => {
-      const { data } = await supabase
-        .from("room_players")
-        .select("room_id, guest_id, color, score, is_ready, name")
-        .eq("room_id", roomData.id);
-      if (data) setPlayers(data);
-    };
-
-    fetchPlayers();
-
     const roomSub = supabase
-      .channel(`room_state:${roomData.id}`)
+      .channel(`room_state_${roomData.id}_${Date.now()}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomData.id}` },
         (payload) => {
-          setRoomData(payload.new);
-          if ((payload.new as any).status === "PLAYING") {
+          const updated = payload.new as any;
+          setRoomData(updated);
+          if (updated.status?.toLowerCase() === "playing") {
             setLaunchMode("ONLINE");
             setScreen("GAME");
           }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "room_players", filter: `room_id=eq.${roomData.id}` },
-        () => {
-          fetchPlayers();
         }
       )
       .subscribe();
@@ -364,7 +360,6 @@ function Index() {
         ) : (
           <Lobby 
             room={roomData} 
-            players={players} 
             guestId={guestId}
             onLeave={() => {
               setRoomData(null);
