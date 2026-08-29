@@ -126,12 +126,122 @@ export const startGame = async (payload: { data: { roomId: string; guestId: stri
       current_question_id: null as any,
       last_answer: null as any,
       question_asked_by: null as any,
+      current_turn_player_id: guestId,
       last_action_timestamp: new Date().toISOString()
     })
     .eq("id", roomId)
     .eq("host_id", guestId);
     
   if (error) throw error;
+  return { success: true };
+};
+
+export const sendQuestion = async (payload: { data: { code: string; guestId: string; questionId: string } }) => {
+  const { code, guestId, questionId } = payload.data;
+  const { error } = await supabase
+    .from("rooms")
+    .update({
+      current_question_id: questionId,
+      last_answer: null as any,
+      question_asked_by: guestId,
+      last_action_timestamp: new Date().toISOString()
+    })
+    .eq("code", code);
+  if (error) throw error;
+  return { success: true };
+};
+
+export const sendAnswer = async (payload: { data: { code: string; guestId: string; answer: "SIM" | "NÃO" } }) => {
+  const { code, guestId, answer } = payload.data;
+  const { error } = await supabase
+    .from("rooms")
+    .update({
+      last_answer: answer,
+      current_question_id: null as any,
+      question_asked_by: guestId,
+      last_action_timestamp: new Date().toISOString()
+    })
+    .eq("code", code);
+  if (error) throw error;
+  return { success: true };
+};
+
+export const setTurn = async (payload: { data: { code: string; guestId: string; nextPlayerId: string | null } }) => {
+  const { code, nextPlayerId } = payload.data;
+  const { error } = await supabase
+    .from("rooms")
+    .update({
+      current_turn_player_id: nextPlayerId as any,
+      last_answer: null as any,
+      current_question_id: null as any,
+      question_asked_by: null as any,
+      last_action_timestamp: new Date().toISOString()
+    })
+    .eq("code", code);
+  if (error) throw error;
+  return { success: true };
+};
+
+export const submitGuess = async (payload: { data: { roomId: string; guestId: string; characterId: number } }) => {
+  const { roomId, guestId, characterId } = payload.data;
+
+  const { data: players, error: pError } = await supabase
+    .from("room_players")
+    .select("guest_id, secret_character_id, score")
+    .eq("room_id", roomId);
+
+  if (pError || !players) throw new Error("Erro ao buscar jogadores da sala");
+
+  const opponent = players.find((p) => p.guest_id !== guestId);
+  const me = players.find((p) => p.guest_id === guestId);
+
+  if (!opponent || !me) throw new Error("Adversário ou jogador não encontrado");
+
+  const isCorrect = opponent.secret_character_id === characterId;
+  const winnerId = isCorrect ? guestId : opponent.guest_id;
+  const winner = players.find((p) => p.guest_id === winnerId);
+  const newScore = (winner?.score || 0) + 1;
+
+  await supabase
+    .from("room_players")
+    .update({ score: newScore })
+    .eq("room_id", roomId)
+    .eq("guest_id", winnerId);
+
+  await supabase
+    .from("rooms")
+    .update({
+      winner_id: winnerId as any,
+      status: "FINISHED",
+      last_action_timestamp: new Date().toISOString(),
+      ...(newScore >= 3 ? { match_winner_id: winnerId as any } : {})
+    })
+    .eq("id", roomId);
+
+  return { isCorrect, winnerId, opponentSecretId: opponent.secret_character_id ?? null };
+};
+
+export const abandonMatch = async (payload: { data: { roomId: string; guestId: string } }) => {
+  const { roomId, guestId } = payload.data;
+
+  const { data: players } = await supabase
+    .from("room_players")
+    .select("guest_id")
+    .eq("room_id", roomId);
+
+  const opponent = players?.find((p) => p.guest_id !== guestId);
+  const winnerId = opponent?.guest_id || guestId;
+
+  await supabase
+    .from("rooms")
+    .update({
+      winner_id: winnerId as any,
+      match_winner_id: winnerId as any,
+      status: "FINISHED",
+      last_action_timestamp: new Date().toISOString()
+    })
+    .eq("id", roomId);
+
   return { success: true };
 };
 
@@ -256,16 +366,17 @@ export const getSecrets = async (payload: { data: { code: string; guestId: strin
   const { code, guestId } = payload.data;
   const { data: room } = await supabase
     .from("rooms")
-    .select("id, room_players(guest_id, secret_character_id)")
+    .select("id, status, winner_id, room_players(guest_id, secret_character_id)")
     .eq("code", code)
     .single();
 
   const players = (room as any)?.room_players || [];
   const me = players.find((p: any) => p.guest_id === guestId);
   const opp = players.find((p: any) => p.guest_id !== guestId);
+  const isFinished = room?.status === "FINISHED" || !!room?.winner_id;
 
   return {
-    mySecretId: me?.secret_character_id,
-    opponentSecretId: opp?.secret_character_id
+    mySecretId: me?.secret_character_id ?? null,
+    opponentSecretId: isFinished ? (opp?.secret_character_id ?? null) : null
   };
 };

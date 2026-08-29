@@ -182,6 +182,7 @@ function Index() {
         (payload) => {
           setRoomData(payload.new);
           if ((payload.new as any).status === "PLAYING") {
+            setLaunchMode("ONLINE");
             setScreen("GAME");
           }
         }
@@ -307,6 +308,8 @@ function Index() {
                     const res = await createRoomFn({ data: { guestId, playerName: playerName.trim() } });
                     setRoomCode(res.code);
                     setRoomData(res.room);
+                    setLaunchMode("ONLINE");
+                    setPlayerColor("AZUL");
                     toast.success(`Sala ${res.code} criada!`);
                   } catch (e) {
                     toast.error("Erro ao criar sala.");
@@ -340,6 +343,9 @@ function Index() {
                   try {
                     const res = await joinRoomFn({ data: { code: joinCode, guestId, playerName: playerName.trim() } });
                     setRoomData(res.room);
+                    setRoomCode(joinCode);
+                    setLaunchMode("ONLINE");
+                    setPlayerColor("VERMELHO");
                     toast.success("Entrou na sala!");
                   } catch (e) {
                     toast.error("Sala não encontrada.");
