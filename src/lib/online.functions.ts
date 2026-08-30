@@ -171,7 +171,8 @@ export const sendAnswer = async (payload: { data: { code: string; guestId: strin
     ...state,
     lastAnswer: answer,
     currentQuestionId: null,
-    questionAskedBy: guestId
+    answeredBy: guestId
+    // Preserve state.questionAskedBy so the asker receives the answer!
   };
 
   const { error } = await supabase
