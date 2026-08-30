@@ -1,5 +1,5 @@
 import { sounds } from "@/lib/sound";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";
 import { useGameState } from "@/hooks/use-game-state";
