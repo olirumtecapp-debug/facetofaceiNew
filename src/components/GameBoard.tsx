@@ -110,6 +110,17 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           <span className="text-[#e52e2e]">{gameState.aiScore}</span>
         </div>
       </header>
+      {/* Online Turn Timer Bar */}
+      {gameState.gameMode === "ONLINE" && !gameState.isGameOver && (
+        <div className="w-full bg-black/40 h-1 px-4">
+          <div
+            className={`h-full transition-all duration-1000 ${
+              turnTimeLeft <= 10 ? "bg-red-500 animate-pulse" : "bg-yellow-400"
+            }`}
+            style={{ width: `${(turnTimeLeft / 45) * 100}%` }}
+          />
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden p-1 lg:flex-row lg:gap-2 lg:p-2">
         {/* Board */}
@@ -156,6 +167,11 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                 Sua carta
               </div>
               <GameCard character={gameState.playerSecret} isDown={false} color={playerColor} onClick={() => {}} />
+              <div className={`mt-1 text-center text-[8px] font-black uppercase tracking-tight px-1 py-0.5 rounded ${
+                remainingCardsCount === 1 ? "bg-yellow-400 text-black animate-bounce font-black" : "bg-white/10 text-gray-300"
+              }`}>
+                Restam: {remainingCardsCount}
+              </div>
             </div>
             <div className="w-12 shrink-0 sm:w-20">
               <div className="mb-0.5 text-center text-[7px] font-black uppercase tracking-tight text-gray-500 sm:mb-1 sm:text-[8px]">
@@ -180,6 +196,23 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               >
                 Passar a vez
               </button>
+            </div>
+          </div>
+
+          {/* Reações Rápidas (Interação Social) */}
+          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0b0e14] p-1 px-2.5">
+            <span className="text-[8px] font-black uppercase text-gray-400">Reagir:</span>
+            <div className="flex items-center gap-1.5">
+              {['🤔', '😱', '😂', '🎯', '👏'].map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleSendReaction(emoji)}
+                  className="text-sm hover:scale-135 active:scale-90 transition-transform cursor-pointer"
+                  title={`Reagir com ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
             </div>
           </div>
 
