@@ -25,6 +25,64 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isAbandoning, setIsAbandoning] = useState(false);
+  const [floatingReaction, setFloatingReaction] = useState<{ emoji: string; id: number } | null>(null);
+  const [turnTimeLeft, setTurnTimeLeft] = useState<number>(45);
+
+  // Remaining cards count
+  const remainingCardsCount = useMemo(() => {
+    return gameState.playerBoard ? gameState.playerBoard.filter(c => !c.isDown).length : 0;
+  }, [gameState.playerBoard]);
+
+  // Turn timer for online matches
+  useEffect(() => {
+    if (gameState.gameMode !== "ONLINE" || gameState.isGameOver) return;
+    setTurnTimeLeft(45);
+    const interval = setInterval(() => {
+      setTurnTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [gameState.phase, gameState.currentTurn, gameState.gameMode, gameState.isGameOver]);
+
+  // Send / Show emoji reaction
+  const handleSendReaction = (emoji: string) => {
+    sounds.playClick();
+    setFloatingReaction({ emoji, id: Date.now() });
+    setTimeout(() => setFloatingReaction(null), 2000);
+
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+      import("@/integrations/supabase/client").then(({ supabase }) => {
+        supabase.from("rooms").select().eq("code", gameState.roomCode!).single().then(({ data: r }) => {
+          if (r) {
+            supabase.from("rooms").update({
+              state: { ...r.state, lastReaction: { emoji, from: gameState.guestId, time: Date.now() } },
+              updated_at: new Date().toISOString()
+            }).eq("code", gameState.roomCode!);
+          }
+        });
+      });
+    }
+  };
+
+  // Realtime reaction listener from opponent
+  useEffect(() => {
+    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
+    let cleanup: (() => void) | undefined;
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      const channel = supabase.channel(`reactions_${gameState.roomCode}`)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` }, (payload) => {
+          const st = (payload.new as any)?.state;
+          if (st?.lastReaction && st.lastReaction.from !== gameState.guestId) {
+            const timeDiff = Date.now() - (st.lastReaction.time || 0);
+            if (timeDiff < 4000) {
+              setFloatingReaction({ emoji: st.lastReaction.emoji, id: st.lastReaction.time });
+              setTimeout(() => setFloatingReaction(null), 2000);
+            }
+          }
+        }).subscribe();
+      cleanup = () => { supabase.removeChannel(channel); };
+    });
+    return () => { if (cleanup) cleanup(); };
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
 
   // Monitor connection timeout
   useState(() => {
