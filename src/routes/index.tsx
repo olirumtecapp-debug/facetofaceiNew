@@ -421,60 +421,41 @@ function Index() {
             aria-label="Jogar On-line"
           />
 
-          {/* Bottom Icons Row: CONFIGURAÇÕES | PERSONAGENS | COMO JOGAR */}
-          <div className="absolute bottom-[2%] left-0 w-full h-[15%] flex justify-between items-center px-4">
-            {/* CONFIGURAÇÕES ⚙️ */}
+          {/* Bottom Icons Row: CONFIGURAÇÕES (Esquerda) | PERSONAGENS (Centro) | COMO JOGAR (Direita) */}
+          <div className="absolute bottom-[1.5%] left-0 w-full h-[14%] flex justify-between items-center px-[3%]">
+            {/* CONFIGURAÇÕES ⚙️ (Esquerda) */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setShowSettings(true);
               }}
-              className="w-[28%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              className="w-[18%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
               aria-label="Configurações"
+              title="Configurações"
             />
-            {/* PERSONAGENS 👥 */}
+            {/* PERSONAGENS 👥 (Centro) */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setShowChars(true);
               }}
-              className="w-[38%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              className="w-[50%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
               aria-label="Personagens"
+              title="Personagens"
             />
-            {/* COMO JOGAR ℹ️ */}
+            {/* COMO JOGAR ℹ️ (Direita) */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setShowHowToPlay(true);
               }}
-              className="w-[28%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              className="w-[18%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
               aria-label="Como Jogar"
+              title="Como Jogar"
             />
           </div>
 
-          {/* Quick Floating Action Icons on Corners */}
-          <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-            <button
-              onClick={() => {
-                sounds.playClick();
-                setShowHowToPlay(true);
-              }}
-              title="Como Jogar / Regras"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-yellow-400/40 bg-black/70 text-base shadow-lg backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer text-yellow-300 hover:bg-black/90"
-            >
-              ℹ️
-            </button>
-            <button
-              onClick={() => {
-                sounds.playClick();
-                setShowSettings(true);
-              }}
-              title="Configurações de Som e Perfil"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-base shadow-lg backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer text-gray-200 hover:bg-black/90"
-            >
-              ⚙️
-            </button>
-          </div>
+
         </div>
       </Shell>
 
