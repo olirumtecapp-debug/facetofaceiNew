@@ -1,3 +1,4 @@
+import { sounds } from "@/lib/sound";
 import { useState } from "react";
 import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";

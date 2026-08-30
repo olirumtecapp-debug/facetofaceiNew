@@ -1,3 +1,6 @@
+import { HowToPlayModal } from "@/components/HowToPlayModal";
+import { SettingsModal } from "@/components/SettingsModal";
+import { sounds } from "@/lib/sound";
 import React, { useState, useEffect as useRealtimeEffect, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import homeAsset from "@/assets/home-interface.png.asset.json";
@@ -149,6 +152,8 @@ function Index() {
   const [playerColor, setPlayerColor] = useState<"AZUL" | "VERMELHO">("AZUL");
   const [difficulty, setDifficulty] = useState<Difficulty>("Médio");
   const [showChars, setShowChars] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
   const guestId = (typeof window !== 'undefined') 
     ? (sessionStorage.getItem("ftf_guest_id") || (() => {
@@ -416,14 +421,59 @@ function Index() {
             aria-label="Jogar On-line"
           />
 
-          {/* Bottom Icons Row - Only PERSONAGENS is interactive */}
-          <div className="absolute bottom-[2%] left-0 w-full h-[15%] flex justify-center items-center">
-            {/* PERSONAGENS */}
+          {/* Bottom Icons Row: CONFIGURAÇÕES | PERSONAGENS | COMO JOGAR */}
+          <div className="absolute bottom-[2%] left-0 w-full h-[15%] flex justify-between items-center px-4">
+            {/* CONFIGURAÇÕES ⚙️ */}
             <button
-              onClick={() => setShowChars(true)}
-              className="w-[45%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              onClick={() => {
+                sounds.playClick();
+                setShowSettings(true);
+              }}
+              className="w-[28%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              aria-label="Configurações"
+            />
+            {/* PERSONAGENS 👥 */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowChars(true);
+              }}
+              className="w-[38%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
               aria-label="Personagens"
             />
+            {/* COMO JOGAR ℹ️ */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowHowToPlay(true);
+              }}
+              className="w-[28%] h-full opacity-0 cursor-pointer active:scale-90 transition-transform"
+              aria-label="Como Jogar"
+            />
+          </div>
+
+          {/* Quick Floating Action Icons on Corners */}
+          <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowHowToPlay(true);
+              }}
+              title="Como Jogar / Regras"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-yellow-400/40 bg-black/70 text-base shadow-lg backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer text-yellow-300 hover:bg-black/90"
+            >
+              ℹ️
+            </button>
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setShowSettings(true);
+              }}
+              title="Configurações de Som e Perfil"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/70 text-base shadow-lg backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer text-gray-200 hover:bg-black/90"
+            >
+              ⚙️
+            </button>
           </div>
         </div>
       </Shell>
@@ -498,6 +548,9 @@ function Index() {
           </div>
         </div>
       )}
+      {/* Modais de Informações e Configurações */}
+      <HowToPlayModal isOpen={showHowToPlay} onClose={() => setShowHowToPlay(false)} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </>
   );
 }
