@@ -25,7 +25,6 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [isAbandoning, setIsAbandoning] = useState(false);
-  const [floatingReaction, setFloatingReaction] = useState<{ emoji: string; id: number } | null>(null);
   const [turnTimeLeft, setTurnTimeLeft] = useState<number>(45);
 
   // Remaining cards count
@@ -42,47 +41,6 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
     }, 1000);
     return () => clearInterval(interval);
   }, [gameState.phase, gameState.currentTurn, gameState.gameMode, gameState.isGameOver]);
-
-  // Send / Show emoji reaction
-  const handleSendReaction = (emoji: string) => {
-    sounds.playClick();
-    setFloatingReaction({ emoji, id: Date.now() });
-    setTimeout(() => setFloatingReaction(null), 2000);
-
-    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      import("@/integrations/supabase/client").then(({ supabase }) => {
-        supabase.from("rooms").select().eq("code", gameState.roomCode!).single().then(({ data: r }) => {
-          if (r) {
-            supabase.from("rooms").update({
-              state: { ...r.state, lastReaction: { emoji, from: gameState.guestId, time: Date.now() } },
-              updated_at: new Date().toISOString()
-            }).eq("code", gameState.roomCode!);
-          }
-        });
-      });
-    }
-  };
-
-  // Realtime reaction listener from opponent
-  useEffect(() => {
-    if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) return;
-    let cleanup: (() => void) | undefined;
-    import("@/integrations/supabase/client").then(({ supabase }) => {
-      const channel = supabase.channel(`reactions_${gameState.roomCode}`)
-        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` }, (payload) => {
-          const st = (payload.new as any)?.state;
-          if (st?.lastReaction && st.lastReaction.from !== gameState.guestId) {
-            const timeDiff = Date.now() - (st.lastReaction.time || 0);
-            if (timeDiff < 4000) {
-              setFloatingReaction({ emoji: st.lastReaction.emoji, id: st.lastReaction.time });
-              setTimeout(() => setFloatingReaction(null), 2000);
-            }
-          }
-        }).subscribe();
-      cleanup = () => { supabase.removeChannel(channel); };
-    });
-    return () => { if (cleanup) cleanup(); };
-  }, [gameState.gameMode, gameState.roomCode, gameState.guestId]);
 
   // Monitor connection timeout
   useState(() => {
@@ -257,22 +215,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </div>
           </div>
 
-          {/* Reações Rápidas (Interação Social) */}
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0b0e14] p-1 px-2.5">
-            <span className="text-[8px] font-black uppercase text-gray-400">Reagir:</span>
-            <div className="flex items-center gap-1.5">
-              {['🤔', '😱', '😂', '🎯', '👏'].map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => handleSendReaction(emoji)}
-                  className="text-sm hover:scale-135 active:scale-90 transition-transform cursor-pointer"
-                  title={`Reagir com ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
+
 
           {/* History */}
           <div className="flex min-h-[60px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
