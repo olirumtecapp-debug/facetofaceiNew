@@ -16,24 +16,24 @@ export const RELAX_TRACKS: RelaxTrack[] = [
   },
   {
     id: 1,
-    title: "Dedução Tranquila",
-    subtitle: "Valsa Acústica & Baixo Pizzicato Leve",
-    url: "./audio/relax-pizzicato.mp3",
-    icon: "🎨"
+    title: "Paz & Piano Suave",
+    subtitle: "Piano Acústico Calmo & Melodia Relaxante",
+    url: "./audio/relax-piano.mp3",
+    icon: "🎹"
   },
   {
     id: 2,
-    title: "Manhã de Domingo",
-    subtitle: "Ukulele, Marimba & Melodia Relaxante",
-    url: "./audio/relax-ukulele.mp3",
-    icon: "☀️"
+    title: "Jardim da Serenidade",
+    subtitle: "Piano Meditativo & Cordas Calmas",
+    url: "./audio/relax-serenity.mp3",
+    icon: "🌸"
   },
   {
     id: 3,
-    title: "Café & Pensamentos",
-    subtitle: "Violão Acústico & Ritmo Calmo",
-    url: "./audio/relax-acoustic.mp3",
-    icon: "☕"
+    title: "Reflexão Noturna",
+    subtitle: "Lofi Chill & Teclados Relaxantes",
+    url: "./audio/relax-meditation.mp3",
+    icon: "🌙"
   }
 ];
 
