@@ -14,8 +14,17 @@ import {
 
 const COLLECTION_NAME = "facetoface_rooms";
 
+export const getRoom = async (roomIdOrCode: string) => {
+  const roomRef = doc(db, COLLECTION_NAME, roomIdOrCode.trim().toUpperCase());
+  const snap = await getDoc(roomRef);
+  if (snap.exists()) {
+    return snap.data();
+  }
+  return null;
+};
+
 export const subscribeToRoom = (roomIdOrCode: string, onUpdate: (room: any) => void): Unsubscribe => {
-  const roomRef = doc(db, COLLECTION_NAME, roomIdOrCode);
+  const roomRef = doc(db, COLLECTION_NAME, roomIdOrCode.trim().toUpperCase());
   return onSnapshot(roomRef, (snapshot) => {
     if (snapshot.exists()) {
       onUpdate(snapshot.data());

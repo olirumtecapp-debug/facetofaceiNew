@@ -9,7 +9,7 @@ import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
-import { createRoom, joinRoom, toggleReady, startGame, subscribeToRoom } from "@/lib/online.functions";
+import { createRoom, joinRoom, toggleReady, startGame, subscribeToRoom, getRoom } from "@/lib/online.functions";
 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,8 +54,8 @@ function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
   } : null;
 
   const players = [hostPlayer, ...(guestPlayer ? [guestPlayer] : [])];
-  const me = players.find((p: any) => p.guest_id === guestId);
-  const allReady = players.length === 2 && players.every((p: any) => p.is_ready);
+  const myReady = isHost ? !!state.hostReady : !!state.guestReady;
+  const allReady = !!state.hostReady && !!state.guestReady && !!room.guest_id;
 
   return (
     <div className="w-full max-w-md space-y-4 animate-in fade-in zoom-in-95 duration-300">
@@ -95,7 +95,7 @@ function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
               <div className="flex items-center gap-2">
                 <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
                   p.is_ready 
-                    ? 'bg-green-500/10 text-green-400 border-green-500/30' 
+                    ? 'bg-green-500/10 text-green-400 border-green-500/30 font-bold' 
                     : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
                 }`}>
                   {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
@@ -106,36 +106,48 @@ function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
           {players.length < 2 && (
             <div className="flex items-center gap-3 rounded-lg bg-blue-500/5 p-3 border border-blue-500/10">
               <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
-              <p className="text-[10px] font-bold text-blue-400 animate-pulse uppercase tracking-widest">Aguardando adversário...</p>
+              <p className="text-[10px] font-bold text-blue-400 animate-pulse uppercase tracking-widest">Aguardando adversário conectar...</p>
             </div>
           )}
         </div>
 
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => onToggleReady(!me?.is_ready)}
+            onClick={() => onToggleReady(!myReady)}
             className={`w-full rounded-lg py-3 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer ${
-              me?.is_ready 
+              myReady 
                 ? 'bg-yellow-500 border-yellow-400/50 text-black hover:brightness-110' 
-                : 'bg-green-600 border-green-400/50 text-white hover:brightness-125'
+                : 'bg-green-600 border-green-400/50 text-white hover:brightness-125 shadow-[0_0_15px_rgba(34,197,94,0.4)]'
             }`}
           >
-            {me?.is_ready ? 'CANCELAR PRONTO' : 'ESTOU PRONTO'}
+            {myReady ? 'CANCELAR PRONTO' : 'ESTOU PRONTO'}
           </button>
 
           {isHost && (
             <button
               onClick={onStart}
               disabled={!allReady}
-              className="w-full rounded-lg bg-[#1e62ec] py-3 font-black uppercase tracking-widest border-2 border-blue-400/50 transition-all hover:brightness-125 active:scale-95 disabled:opacity-40 disabled:grayscale cursor-pointer"
+              className={`w-full rounded-lg py-3 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer ${
+                allReady
+                  ? 'bg-[#1e62ec] border-blue-400 text-white hover:brightness-125 animate-pulse shadow-[0_0_20px_rgba(30,98,236,0.6)]'
+                  : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed opacity-50'
+              }`}
             >
-              INICIAR PARTIDA
+              {allReady ? '🚀 INICIAR PARTIDA' : (players.length < 2 ? 'AGUARDANDO ADVERSÁRIO' : 'AGUARDANDO PRONTO DE AMBOS')}
             </button>
+          )}
+
+          {!isHost && allReady && (
+            <div className="rounded-lg bg-green-500/10 p-3 border border-green-500/20 text-center animate-pulse">
+              <p className="text-xs font-bold text-green-400 uppercase tracking-widest">
+                Prontos! Aguardando o Anfitrião iniciar a partida...
+              </p>
+            </div>
           )}
 
           <button
             onClick={onLeave}
-            className="w-full rounded-lg bg-gray-800 py-3 font-black uppercase tracking-widest border-2 border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95 cursor-pointer"
+            className="w-full rounded-lg bg-gray-800 py-3 font-black uppercase tracking-widest border-2 border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95 cursor-pointer text-gray-300"
           >
             SAIR PARA O MENU
           </button>
@@ -155,13 +167,15 @@ function Index() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedCharId, setSelectedCharId] = useState<number | null>(null);
-  const guestId = (typeof window !== 'undefined') 
-    ? (sessionStorage.getItem("ftf_guest_id") || (() => {
-        const id = crypto.randomUUID();
-        sessionStorage.setItem("ftf_guest_id", id);
-        return id;
-      })())
-    : "";
+  const [guestId, setGuestId] = useState<string>(() => {
+    if (typeof window === 'undefined') return "";
+    let id = sessionStorage.getItem("ftf_guest_id");
+    if (!id) {
+      id = 'p_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+      sessionStorage.setItem("ftf_guest_id", id);
+    }
+    return id;
+  });
   const [roomCode, setRoomCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [launchMode, setLaunchMode] = useState<"IA" | "ONLINE">("IA");
@@ -181,18 +195,33 @@ function Index() {
   useEffect(() => {
     if (!roomData?.id) return;
 
-    const unsubscribe = subscribeToRoom(roomData.id, (updated) => {
-      if (updated) {
-        setRoomData(updated);
-        if (updated.status?.toLowerCase() === "playing") {
-          setLaunchMode("ONLINE");
-          setScreen("GAME");
-        }
+    let isMounted = true;
+    const handleRoomUpdate = (updated: any) => {
+      if (!isMounted || !updated) return;
+      setRoomData(updated);
+      if (updated.status?.toLowerCase() === "playing") {
+        setLaunchMode("ONLINE");
+        setScreen("GAME");
       }
-    });
+    };
+
+    // 1. Realtime Firestore listener
+    const unsubscribe = subscribeToRoom(roomData.id, handleRoomUpdate);
+
+    // 2. High-reliability Polling fallback (every 800ms)
+    const interval = setInterval(async () => {
+      try {
+        const latest = await getRoom(roomData.id);
+        if (latest) handleRoomUpdate(latest);
+      } catch (e) {
+        // ignore
+      }
+    }, 800);
 
     return () => {
+      isMounted = false;
       unsubscribe();
+      clearInterval(interval);
     };
   }, [roomData?.id]);
 
@@ -365,13 +394,34 @@ function Index() {
               setPlayers([]);
             }}
             onToggleReady={async (isReady: boolean) => {
-              await toggleReadyFn({ data: { roomId: roomData.id, guestId, isReady } });
+              try {
+                // Optimistic UI update
+                setRoomData((prev: any) => {
+                  if (!prev) return prev;
+                  const isHost = prev.host_id === guestId;
+                  return {
+                    ...prev,
+                    state: {
+                      ...(prev.state || {}),
+                      ...(isHost ? { hostReady: isReady } : { guestReady: isReady })
+                    }
+                  };
+                });
+
+                await toggleReadyFn({ data: { roomId: roomData.id, guestId, isReady } });
+                const latest = await getRoom(roomData.id);
+                if (latest) setRoomData(latest);
+              } catch (e: any) {
+                toast.error(e?.message || "Erro ao atualizar status");
+              }
             }}
             onStart={async () => {
               try {
                 await startGameFn({ data: { roomId: roomData.id, guestId } });
+                setLaunchMode("ONLINE");
+                setScreen("GAME");
               } catch (e: any) {
-                toast.error(e.message);
+                toast.error(e?.message || "Erro ao iniciar partida");
               }
             }}
           />

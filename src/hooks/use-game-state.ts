@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
 import { Question, QUESTIONS } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export type GamePhase = 
