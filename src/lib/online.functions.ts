@@ -67,7 +67,7 @@ export const createRoom = async (payload: { data: { guestId: string; playerName:
 };
 
 export const joinRoom = async (payload: { data: { code: string; guestId: string; playerName: string } }) => {
-  const { code, guestId, playerName } = payload.data;
+  let { code, guestId, playerName } = payload.data;
   const normalizedCode = code.trim().toUpperCase();
 
   const roomRef = doc(db, COLLECTION_NAME, normalizedCode);
@@ -83,19 +83,20 @@ export const joinRoom = async (payload: { data: { code: string; guestId: string;
     throw new Error("Esta partida já foi iniciada!");
   }
 
-  // Entrando como convidado (Guest)
-  if (room.host_id !== guestId) {
-    const updatedData = {
-      guest_id: guestId,
-      guest_name: playerName || "Jogador 2",
-      updated_at: new Date().toISOString()
-    };
-
-    await updateDoc(roomRef, updatedData);
-    return { room: { ...room, ...updatedData } };
+  // Se o guestId for igual ao hostId (ex: abas do mesmo navegador), gera um guestId exclusivo para o jogador 2
+  let finalGuestId = guestId;
+  if (room.host_id === guestId) {
+    finalGuestId = 'guest_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
   }
 
-  return { room };
+  const updatedData = {
+    guest_id: finalGuestId,
+    guest_name: playerName || "Jogador 2",
+    updated_at: new Date().toISOString()
+  };
+
+  await updateDoc(roomRef, updatedData);
+  return { room: { ...room, ...updatedData }, assignedGuestId: finalGuestId };
 };
 
 export const toggleReady = async (payload: { data: { roomId: string; guestId: string; isReady: boolean } }) => {
