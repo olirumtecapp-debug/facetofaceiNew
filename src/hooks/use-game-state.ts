@@ -390,327 +390,278 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   useEffect(() => {
-    // Realtime only exists for ONLINE rooms. State isolation between modes is
-    // guaranteed by the caller remounting this hook (keyed by mode + room code).
     if (gameState.gameMode !== "ONLINE" || !gameState.roomCode) {
       return;
     }
 
+    const unsubscribe = subscribeToRoom(gameState.roomCode, (newRoomData: any) => {
+      if (gameState.gameMode !== "ONLINE" || !newRoomData) return;
+      console.log("[FTF REALTIME] Update received:", newRoomData);
+      
+      const state = newRoomData.state || {};
+      const statusLower = (newRoomData.status || '').toLowerCase();
+      const winnerId = newRoomData.winner || newRoomData.winner_id;
+      const matchWinnerId = state.matchWinnerId || newRoomData.match_winner_id;
 
-    const channel = supabase
-      .channel(`room_${gameState.roomCode}_${gameState.guestId}_${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "rooms", filter: `code=eq.${gameState.roomCode}` },
-        (payload) => {
-          if (gameState.gameMode !== "ONLINE") return;
-          const newRoomData = payload.new as any;
-          console.log("[FTF REALTIME] Update received:", newRoomData);
-          
-          const state = newRoomData.state || {};
-          const statusLower = (newRoomData.status || '').toLowerCase();
-          const winnerId = newRoomData.winner || newRoomData.winner_id;
-          const matchWinnerId = state.matchWinnerId || newRoomData.match_winner_id;
-
-          if (statusLower === "finished" || winnerId) {
-            
-            console.log("[FTF REALTIME] Game over detected.", {
-              winnerId,
-              myId: gameState.guestId,
-              status: newRoomData['status']
-            });
-
-            // If we have a winner_id, the game is definitely over
-            if (winnerId) {
-              setGameState(prev => {
-                const newWinner = winnerId === gameState.guestId ? "WINNER" : "LOSER";
-                console.log("[FTF REALTIME] Setting winner state to:", newWinner);
-                return {
-                  ...prev,
-                  isGameOver: true,
-                  winner: newWinner,
-                  matchWinnerId: matchWinnerId || prev.matchWinnerId,
-                  rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-                  rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-                  phase: "PLAYER_TURN",
-                  pendingQuestion: undefined,
-                  lastActionTime: Date.now()
-                };
-              });
-            }
-          }
-
-          if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
-            setGameState(prev => ({
-              ...prev,
-              rematchStatus: newRoomData['rematch_status'],
-              rematchRequestedBy: newRoomData['rematch_requested_by']
-            }));
-          }
-
-          const isHost = newRoomData.host_id === gameState.guestId;
-          const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
-          const oppSecretId = (statusLower === 'finished' || winnerId) ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
-          const myCard = CHARACTERS.find(c => c.id === mySecretId);
-          const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
-
-          if (myCard) {
-            setGameState(prev => ({
-              ...prev,
-              playerSecret: myCard,
-              aiSecret: oppCard || prev.aiSecret,
-              opponentId: isHost ? newRoomData.guest_id : newRoomData.host_id,
-              opponentName: (isHost ? newRoomData.guest_name : newRoomData.host_name) || prev.opponentName,
-              playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
-              aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
-            }));
-          }
-
-          if (statusLower === "playing") {
-            setGameState(prev => {
-              if (!prev.isGameOver && prev.rematchStatus !== 'accepted' && prev.playerSecret?.id === mySecretId) return prev;
-              
-              console.log("[FTF REALTIME] Syncing game for playing round", { mySecretId });
-              return {
-                ...prev,
-                playerSecret: myCard || prev.playerSecret,
-                aiSecret: oppCard || prev.aiSecret,
-                isGameOver: false,
-                winner: undefined,
-                matchWinnerId: null,
-                rematchStatus: 'idle',
-                rematchRequestedBy: null,
-                askedQuestions: new Set(),
-                myAskedQuestions: new Set(),
-                opponentAskedQuestions: new Set(),
-                turnCount: 1,
-                history: [],
-                pendingQuestion: undefined,
-                playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
-                lastActionTime: Date.now()
-              };
-            });
-          }
-
-
-          const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId;
-          if (turnPlayerId && gameState.gameMode === "ONLINE") {
-            const isMyTurn = turnPlayerId === gameState.guestId;
-            setGameState(prev => {
-              if (prev.isGameOver) return prev;
-              let newPhase = prev.phase;
-              if (isMyTurn) {
-                // Se é minha vez e não estou respondendo nem aguardando resposta, é fase de perguntar
-                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
-                  newPhase = "PLAYER_TURN";
-                }
-              } else {
-                // Se não é minha vez e não estou respondendo (o que seria o caso se recebi uma pergunta), é turno da IA/Oponente
-                if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
-                  newPhase = "AI_TURN"; 
-                }
-              }
-
-              return {
-                ...prev,
-                currentTurn: isMyTurn ? "PLAYER" : "AI",
-                phase: newPhase,
-                lastActionTime: Date.now()
-              };
-            });
-          }
-
-          const qId = state.currentQuestionId || newRoomData.current_question_id;
-          if (qId) {
-            const askerId = state.questionAskedBy || newRoomData.question_asked_by;
-            const isFromOpponent = askerId && askerId !== gameState.guestId;
-            const question = QUESTIONS.find(q => q.id === qId);
-            
-            if (question) {
-              if (isFromOpponent) {
-                setGameState(prev => {
-                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
-                    return prev;
-                  }
-                  return {
-                    ...prev,
-                    phase: "PLAYER_RESPONDING",
-                    pendingQuestion: { question, type: "AI" },
-                    lastActionTime: Date.now()
-                  };
-                });
-              } else {
-                setGameState(prev => {
-                  if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev;
-                  return {
-                    ...prev,
-                    phase: "WAITING_ANSWER",
-                    pendingQuestion: { question, type: "PLAYER" },
-                    lastActionTime: Date.now()
-                  };
-                });
-              }
-            }
-          }
-
-          const lastAns = state.lastAnswer || newRoomData.last_answer;
-          if (lastAns && !qId) {
-            const answer = lastAns as "SIM" | "NÃO";
-            const askerId = state.questionAskedBy || newRoomData.question_asked_by;
-            const isMyQuestion = askerId && askerId === gameState.guestId;
-
-            if (isMyQuestion) {
-              setGameState(prev => {
-                if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
-                  const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id);
-                  console.log("[FTF DEBUG] Online answer received. New count:", newMyAskedQuestions.size);
-                  return {
-                    ...prev,
-                    pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                    myAskedQuestions: newMyAskedQuestions,
-                    lastActionTime: Date.now()
-                  };
-                }
-                return prev;
-              });
-            }
-          }
-
-          if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "PLAYING") {
-            setGameState(prev => {
-              if (prev.phase === "WAITING_ANSWER" || prev.phase === "PLAYER_RESPONDING") {
-                return { ...prev, pendingQuestion: undefined };
-              }
-              return prev;
-            });
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        gameState.roomId
-          ? { event: "UPDATE", schema: "public", table: "room_players", filter: `room_id=eq.${gameState.roomId}` }
-          : { event: "UPDATE", schema: "public", table: "room_players" },
-        (payload) => {
-          if (gameState.gameMode !== "ONLINE") return;
-          const updatedPlayer = payload.new as any;
-          if (gameState.roomId && updatedPlayer.room_id !== gameState.roomId) return;
-          console.log("[FTF REALTIME] Player updated:", updatedPlayer.guest_id, "Score:", updatedPlayer.score);
-          
-          if (updatedPlayer.guest_id === gameState.guestId) {
-             setGameState(prev => ({ ...prev, playerScore: updatedPlayer.score ?? prev.playerScore }));
-          } else {
-             setGameState(prev => ({
-               ...prev,
-               aiScore: updatedPlayer.score ?? prev.aiScore,
-               opponentName: updatedPlayer.name || prev.opponentName
-             }));
-          }
-
-          // Secrets are never broadcast: fetch our own (and the opponent's only
-          // after the round ends) from the server.
-          if (gameState.roomCode) {
-            import("@/lib/online.functions").then(({ getSecrets }) =>
-              getSecrets({ data: { code: gameState.roomCode!, guestId: gameState.guestId } })
-            ).then((res) => {
-              setGameState(prev => {
-                const mine = CHARACTERS.find(c => c.id === res.mySecretId);
-                const opp = CHARACTERS.find(c => c.id === res.opponentSecretId);
-                return { ...prev, playerSecret: mine || prev.playerSecret, aiSecret: opp || prev.aiSecret };
-              });
-            }).catch(() => {});
-          }
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId]);
-
-
-  useEffect(() => {
-    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      const syncRoom = async () => {
-        const { data: roomData, error } = await supabase
-          .from("rooms")
-          .select("*")
-          .eq("code", gameState.roomCode!)
-          .single();
-        
-        if (error || !roomData) {
-          console.error("[FTF SYNC] syncRoom error:", error);
-          return;
-        }
-
-        const state = roomData.state || {};
-        const isHost = roomData.host_id === gameState.guestId;
-        const currentTurnId = roomData.turn || state.currentTurnPlayerId || roomData.host_id;
-        const isMyTurn = currentTurnId === gameState.guestId;
-        const currentQuestionId = state.currentQuestionId;
-        const lastAnswer = state.lastAnswer;
-        const askerId = state.questionAskedBy;
-
-        const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
-        const isFinished = roomData.status?.toLowerCase() === "finished" || !!roomData.winner;
-        const oppSecretId = isFinished ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
-
-        const myCard = CHARACTERS.find(c => c.id === mySecretId);
-        const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
-
-        console.log("[FTF SYNC] Synced room:", {
-          isHost,
-          mySecretId,
-          myCard: myCard?.nome,
-          isMyTurn,
-          turn: currentTurnId
+      if (statusLower === "finished" || winnerId) {
+        console.log("[FTF REALTIME] Game over detected.", {
+          winnerId,
+          myId: gameState.guestId,
+          status: newRoomData['status']
         });
-        
+
+        if (winnerId) {
+          setGameState(prev => {
+            const newWinner = winnerId === gameState.guestId ? "WINNER" : "LOSER";
+            console.log("[FTF REALTIME] Setting winner state to:", newWinner);
+            return {
+              ...prev,
+              isGameOver: true,
+              winner: newWinner,
+              matchWinnerId: matchWinnerId || prev.matchWinnerId,
+              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
+              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
+              phase: "PLAYER_TURN",
+              pendingQuestion: undefined,
+              lastActionTime: Date.now()
+            };
+          });
+        }
+      }
+
+      if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
+        setGameState(prev => ({
+          ...prev,
+          rematchStatus: newRoomData['rematch_status'],
+          rematchRequestedBy: newRoomData['rematch_requested_by']
+        }));
+      }
+
+      const isHost = newRoomData.host_id === gameState.guestId;
+      const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
+      const oppSecretId = (statusLower === 'finished' || winnerId) ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
+      const myCard = CHARACTERS.find(c => c.id === mySecretId);
+      const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
+
+      if (myCard) {
+        setGameState(prev => ({
+          ...prev,
+          playerSecret: myCard,
+          aiSecret: oppCard || prev.aiSecret,
+          opponentId: isHost ? newRoomData.guest_id : newRoomData.host_id,
+          opponentName: (isHost ? newRoomData.guest_name : newRoomData.host_name) || prev.opponentName,
+          playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
+          aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+        }));
+      }
+
+      if (statusLower === "playing") {
         setGameState(prev => {
-          let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
-          let pendingQuestion = undefined;
-          const winnerId = roomData.winner;
-          const isGameOver = isFinished;
-
-          if (isGameOver && winnerId) {
-            newPhase = "PLAYER_TURN";
-          } else if (currentQuestionId) {
-            const question = QUESTIONS.find(q => q.id === currentQuestionId);
-            if (question) {
-              if (askerId === gameState.guestId) {
-                newPhase = "WAITING_ANSWER";
-                pendingQuestion = { question, type: "PLAYER" as const };
-              } else {
-                newPhase = "PLAYER_RESPONDING";
-                pendingQuestion = { question, type: "AI" as const };
-              }
-            }
-          } else if (lastAnswer && askerId !== gameState.guestId) {
-            newPhase = "WAITING_ANSWER";
-          }
-
+          if (!prev.isGameOver && prev.rematchStatus !== 'accepted' && prev.playerSecret?.id === mySecretId) return prev;
+          
+          console.log("[FTF REALTIME] Syncing game for playing round", { mySecretId });
           return {
             ...prev,
             playerSecret: myCard || prev.playerSecret,
             aiSecret: oppCard || prev.aiSecret,
-            playerColor: isHost ? "AZUL" : "VERMELHO",
-            opponentId: isHost ? roomData.guest_id : roomData.host_id,
-            opponentName: (isHost ? roomData.guest_name : roomData.host_name) || prev.opponentName,
-            playerName: (isHost ? roomData.host_name : roomData.guest_name) || prev.playerName,
-            roomId: roomData.id,
-            playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
-            aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+            isGameOver: false,
+            winner: undefined,
+            matchWinnerId: null,
+            rematchStatus: 'idle',
+            rematchRequestedBy: null,
+            askedQuestions: new Set(),
+            myAskedQuestions: new Set(),
+            opponentAskedQuestions: new Set(),
+            turnCount: 1,
+            history: [],
+            pendingQuestion: undefined,
+            playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+            lastActionTime: Date.now()
+          };
+        });
+      }
+
+      const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId;
+      if (turnPlayerId && gameState.gameMode === "ONLINE") {
+        const isMyTurn = turnPlayerId === gameState.guestId;
+        setGameState(prev => {
+          if (prev.isGameOver) return prev;
+          let newPhase = prev.phase;
+          if (isMyTurn) {
+            if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
+              newPhase = "PLAYER_TURN";
+            }
+          } else {
+            if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
+              newPhase = "AI_TURN"; 
+            }
+          }
+
+          return {
+            ...prev,
             currentTurn: isMyTurn ? "PLAYER" : "AI",
             phase: newPhase,
-            pendingQuestion,
-            isGameOver,
-            winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
-            matchWinnerId: state.matchWinnerId || null,
-            rematchStatus: (state.rematchStatus || prev.rematchStatus) as any,
-            rematchRequestedBy: state.rematchRequestedBy ?? prev.rematchRequestedBy ?? null,
             lastActionTime: Date.now()
-          } as GameState;
+          };
         });
+      }
+
+      const qId = state.currentQuestionId || newRoomData.current_question_id;
+      if (qId) {
+        const askerId = state.questionAskedBy || newRoomData.question_asked_by;
+        const isFromOpponent = askerId && askerId !== gameState.guestId;
+        const question = QUESTIONS.find(q => q.id === qId);
+        
+        if (question) {
+          if (isFromOpponent) {
+            setGameState(prev => {
+              if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
+                return prev;
+              }
+              return {
+                ...prev,
+                phase: "PLAYER_RESPONDING",
+                pendingQuestion: { question, type: "AI" },
+                lastActionTime: Date.now()
+              };
+            });
+          } else {
+            setGameState(prev => {
+              if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev;
+              return {
+                ...prev,
+                phase: "WAITING_ANSWER",
+                pendingQuestion: { question, type: "PLAYER" },
+                lastActionTime: Date.now()
+              };
+            });
+          }
+        }
+      }
+
+      const lastAns = state.lastAnswer || newRoomData.last_answer;
+      if (lastAns && !qId) {
+        const answer = lastAns as "SIM" | "NÃO";
+        const askerId = state.questionAskedBy || newRoomData.question_asked_by;
+        const isMyQuestion = askerId && askerId === gameState.guestId;
+
+        if (isMyQuestion) {
+          setGameState(prev => {
+            if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
+              const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id);
+              console.log("[FTF DEBUG] Online answer received. New count:", newMyAskedQuestions.size);
+              return {
+                ...prev,
+                pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
+                myAskedQuestions: newMyAskedQuestions,
+                lastActionTime: Date.now()
+              };
+            }
+            return prev;
+          });
+        }
+      }
+
+      if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "PLAYING") {
+        setGameState(prev => {
+          if (prev.phase === "WAITING_ANSWER" || prev.phase === "PLAYER_RESPONDING") {
+            return { ...prev, pendingQuestion: undefined };
+          }
+          return prev;
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId]);
+
+  useEffect(() => {
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+      const syncRoom = async () => {
+        try {
+          const roomRef = doc(db, "facetoface_rooms", gameState.roomCode!);
+          const snap = await getDoc(roomRef);
+          if (!snap.exists()) {
+            console.error("[FTF SYNC] Room not found in Firestore:", gameState.roomCode);
+            return;
+          }
+
+          const roomData = snap.data() as any;
+          const state = roomData.state || {};
+          const isHost = roomData.host_id === gameState.guestId;
+          const currentTurnId = roomData.turn || state.currentTurnPlayerId || roomData.host_id;
+          const isMyTurn = currentTurnId === gameState.guestId;
+          const currentQuestionId = state.currentQuestionId;
+          const lastAnswer = state.lastAnswer;
+          const askerId = state.questionAskedBy;
+
+          const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
+          const isFinished = roomData.status?.toLowerCase() === "finished" || !!roomData.winner;
+          const oppSecretId = isFinished ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
+
+          const myCard = CHARACTERS.find(c => c.id === mySecretId);
+          const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
+
+          console.log("[FTF SYNC] Synced room with Firestore:", {
+            isHost,
+            mySecretId,
+            myCard: myCard?.nome,
+            isMyTurn,
+            turn: currentTurnId
+          });
+          
+          setGameState(prev => {
+            let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+            let pendingQuestion = undefined;
+            const winnerId = roomData.winner;
+            const isGameOver = isFinished;
+
+            if (isGameOver && winnerId) {
+              newPhase = "PLAYER_TURN";
+            } else if (currentQuestionId) {
+              const question = QUESTIONS.find(q => q.id === currentQuestionId);
+              if (question) {
+                if (askerId === gameState.guestId) {
+                  newPhase = "WAITING_ANSWER";
+                  pendingQuestion = { question, type: "PLAYER" as const };
+                } else {
+                  newPhase = "PLAYER_RESPONDING";
+                  pendingQuestion = { question, type: "AI" as const };
+                }
+              }
+            } else if (lastAnswer && askerId !== gameState.guestId) {
+              newPhase = "WAITING_ANSWER";
+            }
+
+            return {
+              ...prev,
+              playerSecret: myCard || prev.playerSecret,
+              aiSecret: oppCard || prev.aiSecret,
+              playerColor: isHost ? "AZUL" : "VERMELHO",
+              opponentId: isHost ? roomData.guest_id : roomData.host_id,
+              opponentName: (isHost ? roomData.guest_name : roomData.host_name) || prev.opponentName,
+              playerName: (isHost ? roomData.host_name : roomData.guest_name) || prev.playerName,
+              roomId: roomData.id,
+              playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
+              aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+              currentTurn: isMyTurn ? "PLAYER" : "AI",
+              phase: newPhase,
+              pendingQuestion,
+              isGameOver,
+              winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
+              matchWinnerId: state.matchWinnerId || null,
+              rematchStatus: (state.rematchStatus || prev.rematchStatus) as any,
+              rematchRequestedBy: state.rematchRequestedBy ?? prev.rematchRequestedBy ?? null,
+              lastActionTime: Date.now()
+            } as GameState;
+          });
+        } catch (err) {
+          console.error("[FTF SYNC] Error fetching initial room:", err);
+        }
       };
+
       syncRoom();
     }
   }, [gameState.roomCode, gameState.guestId]);

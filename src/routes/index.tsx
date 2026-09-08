@@ -9,7 +9,7 @@ import { CHARACTERS } from "@/data/characters";
 import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
-import { createRoom, joinRoom, toggleReady, startGame } from "@/lib/online.functions";
+import { createRoom, joinRoom, toggleReady, startGame, subscribeToRoom } from "@/lib/online.functions";
 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
