@@ -371,163 +371,105 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const winnerId = newRoomData.winner || newRoomData.winner_id;
       const matchWinnerId = state.matchWinnerId || newRoomData.match_winner_id;
 
-      if (statusLower === "finished" || winnerId) {
-        if (winnerId) {
-          setGameState(prev => {
-            const newWinner = winnerId === gameState.guestId ? "WINNER" : "LOSER";
-            return {
-              ...prev,
-              isGameOver: true,
-              winner: newWinner,
-              matchWinnerId: matchWinnerId || prev.matchWinnerId,
-              rematchStatus: newRoomData['rematch_status'] || prev.rematchStatus,
-              rematchRequestedBy: newRoomData['rematch_requested_by'] || prev.rematchRequestedBy,
-              phase: "PLAYER_TURN",
-              pendingQuestion: undefined,
-              lastActionTime: Date.now()
-            };
-          });
-        }
-      }
-
-      if (newRoomData['rematch_status'] && newRoomData['status'] === "finished") {
-        setGameState(prev => ({
-          ...prev,
-          rematchStatus: newRoomData['rematch_status'],
-          rematchRequestedBy: newRoomData['rematch_requested_by']
-        }));
-      }
-
       const isHost = playerColor === "AZUL";
+      const myId = isHost ? newRoomData.host_id : newRoomData.guest_id;
+      const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId || newRoomData.host_id;
+      const isMyTurn = turnPlayerId === myId;
+
       const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
       const oppSecretId = (statusLower === 'finished' || winnerId) ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
       const myCard = CHARACTERS.find(c => c.id === mySecretId);
       const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
 
-      if (myCard) {
-        setGameState(prev => ({
-          ...prev,
-          playerSecret: myCard,
-          aiSecret: oppCard || prev.aiSecret,
-          opponentId: isHost ? newRoomData.guest_id : newRoomData.host_id,
-          opponentName: (isHost ? newRoomData.guest_name : newRoomData.host_name) || prev.opponentName,
-          playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
-          aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
-        }));
-      }
+      const qId = state.currentQuestionId || newRoomData.current_question_id || null;
+      const lastAns = state.lastAnswer || newRoomData.last_answer || null;
+      const askerId = state.questionAskedBy || newRoomData.question_asked_by || null;
 
-      if (statusLower === "playing") {
-        setGameState(prev => {
-          if (!prev.isGameOver && prev.rematchStatus !== 'accepted' && prev.playerSecret?.id === mySecretId) return prev;
+      setGameState(prev => {
+        // 1. GAME OVER CHECK
+        if (statusLower === "finished" || winnerId) {
+          const newWinner = (winnerId === myId || winnerId === gameState.guestId) ? "WINNER" : "LOSER";
           return {
             ...prev,
             playerSecret: myCard || prev.playerSecret,
             aiSecret: oppCard || prev.aiSecret,
-            isGameOver: false,
-            winner: undefined,
-            matchWinnerId: null,
-            rematchStatus: 'idle',
-            rematchRequestedBy: null,
-            askedQuestions: new Set(),
-            myAskedQuestions: new Set(),
-            opponentAskedQuestions: new Set(),
-            turnCount: 1,
-            history: [],
+            isGameOver: true,
+            winner: newWinner,
+            matchWinnerId: matchWinnerId || prev.matchWinnerId,
+            rematchStatus: (state.rematchStatus || newRoomData.rematch_status || prev.rematchStatus) as any,
+            rematchRequestedBy: state.rematchRequestedBy || newRoomData.rematch_requested_by || prev.rematchRequestedBy,
+            phase: "PLAYER_TURN",
             pendingQuestion: undefined,
-            playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
             lastActionTime: Date.now()
           };
-        });
-      }
+        }
 
-      const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId;
-      if (turnPlayerId && gameState.gameMode === "ONLINE") {
-        const isMyTurn = isHost ? (turnPlayerId === newRoomData.host_id) : (turnPlayerId === newRoomData.guest_id);
-        setGameState(prev => {
-          if (prev.isGameOver) return prev;
-          let newPhase = prev.phase;
-          if (isMyTurn) {
-            if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER" && prev.phase !== "PLAYER_DISCARDING") {
-              newPhase = "PLAYER_TURN";
-            }
-          } else {
-            if (prev.phase !== "PLAYER_RESPONDING" && prev.phase !== "WAITING_ANSWER") {
-              newPhase = "AI_TURN"; 
-            }
-          }
+        // 2. ACTIVE ROUND SYNC
+        let newPhase: GamePhase = prev.phase;
+        let newPendingQuestion = prev.pendingQuestion;
 
-          return {
-            ...prev,
-            currentTurn: isMyTurn ? "PLAYER" : "AI",
-            phase: newPhase,
-            lastActionTime: Date.now()
-          };
-        });
-      }
-
-      const qId = state.currentQuestionId || newRoomData.current_question_id;
-      if (qId) {
-        const askerId = state.questionAskedBy || newRoomData.question_asked_by;
-        const isFromOpponent = isHost ? (askerId === newRoomData.guest_id) : (askerId === newRoomData.host_id);
-        const question = QUESTIONS.find(q => q.id === qId);
-        
-        if (question) {
-          if (isFromOpponent) {
-            setGameState(prev => {
-              if (prev.pendingQuestion?.question.id === question.id && prev.phase === "PLAYER_RESPONDING") {
-                return prev;
+        if (qId) {
+          const questionObj = QUESTIONS.find(q => q.id === qId);
+          if (questionObj) {
+            const iAsked = (askerId === myId || askerId === gameState.guestId);
+            if (iAsked) {
+              // I asked the question
+              if (lastAns) {
+                // Opponent answered, I see the revealed answer
+                newPhase = "WAITING_ANSWER";
+                newPendingQuestion = { question: questionObj, type: "PLAYER", revealedAnswer: lastAns as "SIM" | "NÃO" };
+              } else {
+                // Waiting for opponent to answer
+                newPhase = "WAITING_ANSWER";
+                newPendingQuestion = { question: questionObj, type: "PLAYER" };
               }
-              return {
-                ...prev,
-                phase: "PLAYER_RESPONDING",
-                pendingQuestion: { question, type: "AI" },
-                lastActionTime: Date.now()
-              };
-            });
-          } else {
-            setGameState(prev => {
-              if (prev.pendingQuestion?.question.id === question.id && prev.phase === "WAITING_ANSWER") return prev;
-              return {
-                ...prev,
-                phase: "WAITING_ANSWER",
-                pendingQuestion: { question, type: "PLAYER" },
-                lastActionTime: Date.now()
-              };
-            });
-          }
-        }
-      }
-
-      const lastAns = state.lastAnswer || newRoomData.last_answer;
-      if (lastAns && !qId) {
-        const answer = lastAns as "SIM" | "NÃO";
-        const askerId = state.questionAskedBy || newRoomData.question_asked_by;
-        const isMyQuestion = isHost ? (askerId === newRoomData.host_id) : (askerId === newRoomData.guest_id);
-
-        if (isMyQuestion) {
-          setGameState(prev => {
-            if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
-              const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id);
-              return {
-                ...prev,
-                pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
-                myAskedQuestions: newMyAskedQuestions,
-                lastActionTime: Date.now()
-              };
+            } else {
+              // Opponent asked the question
+              if (lastAns) {
+                // I already answered, modal is closed for me
+                newPendingQuestion = undefined;
+                newPhase = "AI_DISCARDING";
+              } else {
+                // I must answer SIM or NÃO
+                newPhase = "PLAYER_RESPONDING";
+                newPendingQuestion = { question: questionObj, type: "AI" };
+              }
             }
-            return prev;
-          });
-        }
-      }
-
-      if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "playing") {
-        setGameState(prev => {
-          if (prev.phase === "WAITING_ANSWER" || prev.phase === "PLAYER_RESPONDING") {
-            return { ...prev, pendingQuestion: undefined };
           }
-          return prev;
-        });
-      }
+        } else {
+          // No question is active on server
+          if (prev.phase === "WAITING_ANSWER" || prev.phase === "PLAYER_RESPONDING") {
+            newPendingQuestion = undefined;
+            newPhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+          } else if (prev.phase === "PLAYER_DISCARDING") {
+            // Player is discarding cards locally before passing turn
+            newPendingQuestion = undefined;
+            newPhase = isMyTurn ? "PLAYER_DISCARDING" : "AI_TURN";
+          } else {
+            newPendingQuestion = undefined;
+            newPhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
+          }
+        }
+
+        return {
+          ...prev,
+          playerSecret: myCard || prev.playerSecret,
+          aiSecret: oppCard || prev.aiSecret,
+          opponentId: isHost ? newRoomData.guest_id : newRoomData.host_id,
+          opponentName: (isHost ? newRoomData.guest_name : newRoomData.host_name) || prev.opponentName,
+          playerName: (isHost ? newRoomData.host_name : newRoomData.guest_name) || prev.playerName,
+          roomId: newRoomData.id || newRoomData.code || gameState.roomCode,
+          playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
+          aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+          currentTurn: isMyTurn ? "PLAYER" : "AI",
+          phase: newPhase,
+          pendingQuestion: newPendingQuestion,
+          isGameOver: false,
+          rematchStatus: (state.rematchStatus || newRoomData.rematch_status || 'idle') as any,
+          rematchRequestedBy: state.rematchRequestedBy || newRoomData.rematch_requested_by || null,
+          lastActionTime: Date.now()
+        };
+      });
     };
 
     // Initial fetch
