@@ -282,6 +282,19 @@ export const answerQuestion = async (payload: { data: { code?: string; roomId?: 
 };
 export const sendAnswer = answerQuestion;
 
+export const clearQuestion = async (payload: { data: { code?: string; roomId?: string } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const roomRef = doc(db, COLLECTION_NAME, code);
+  await updateDoc(roomRef, {
+    'state.currentQuestionId': null,
+    'state.lastAnswer': null,
+    'state.questionAskedBy': null,
+    'state.answeredBy': null,
+    updated_at: new Date().toISOString()
+  });
+  return { success: true };
+};
+
 export const passTurn = async (payload: { data: { code?: string; roomId?: string; guestId: string; nextPlayerId?: string | null } }) => {
   const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
   const { guestId, nextPlayerId: providedNextId } = payload.data;

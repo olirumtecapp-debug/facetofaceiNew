@@ -7,6 +7,7 @@ import {
   subscribeToRoom, 
   sendQuestion, 
   answerQuestion as answerQuestionFn, 
+  clearQuestion,
   passTurn as passTurnFn, 
   makeGuess, 
   abandonMatch 
@@ -203,6 +204,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     }
 
     if (type === "PLAYER") {
+      // The asking player clicked "ENTENDI, CONTINUAR"
       setGameState((prev) => {
         const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(question.id);
         return {
@@ -212,9 +214,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           askedQuestions: new Set(prev.askedQuestions).add(question.id),
           myAskedQuestions: newMyAskedQuestions,
           playerKnowledge: { ...prev.playerKnowledge, [question.id]: answer === "SIM" },
-          phase: "PLAYER_DISCARDING"
+          phase: "PLAYER_DISCARDING",
+          lastActionTime: Date.now()
         };
       });
+
+      if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
+        clearQuestion({ data: { code: gameState.roomCode } }).catch(() => {});
+      }
     } else if (type === "AI_PALPITE") {
       const guessedCharId = question.id.replace('palpite-', '');
       const isCorrect = Number(guessedCharId) === gameState.playerSecret.id;
@@ -415,9 +422,14 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             if (iAsked) {
               // I asked the question
               if (lastAns) {
-                // Opponent answered, I see the revealed answer
-                newPhase = "WAITING_ANSWER";
-                newPendingQuestion = { question: questionObj, type: "PLAYER", revealedAnswer: lastAns as "SIM" | "NÃO" };
+                // If I already clicked ENTENDI, CONTINUAR (I am in PLAYER_DISCARDING or registered question)
+                if (prev.myAskedQuestions.has(qId) || prev.phase === "PLAYER_DISCARDING") {
+                  newPendingQuestion = undefined;
+                  newPhase = "PLAYER_DISCARDING";
+                } else {
+                  newPhase = "WAITING_ANSWER";
+                  newPendingQuestion = { question: questionObj, type: "PLAYER", revealedAnswer: lastAns as "SIM" | "NÃO" };
+                }
               } else {
                 // Waiting for opponent to answer
                 newPhase = "WAITING_ANSWER";
