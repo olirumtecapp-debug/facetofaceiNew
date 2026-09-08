@@ -2,6 +2,15 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Character, CHARACTERS } from "@/data/characters";
 import { Question, QUESTIONS } from "@/data/questions";
 import { Difficulty, getAIResponse, getBestAIQuestion, getAIPalpite } from "@/lib/ai-logic";
+import { 
+  getRoom, 
+  subscribeToRoom, 
+  sendQuestion, 
+  answerQuestion as answerQuestionFn, 
+  passTurn as passTurnFn, 
+  makeGuess, 
+  abandonMatch 
+} from "@/lib/online.functions";
 import { toast } from "sonner";
 
 export type GamePhase = 
@@ -56,7 +65,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (typeof window === 'undefined') return 'server';
     let id = sessionStorage.getItem("ftf_guest_id");
     if (!id) {
-      id = crypto.randomUUID();
+      id = 'p_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
       sessionStorage.setItem("ftf_guest_id", id);
     }
     return id;
@@ -104,14 +113,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       
       if (prev.gameMode === "ONLINE" && prev.roomCode) {
         const nextPlayerId = isAITurnEnding ? prev.guestId : (prev.opponentId || null);
-        
-        console.log("[FTF TURN] changing to:", nextPlayerId === prev.guestId ? "EU" : "ADVERSÁRIO");
-
         const code = prev.roomCode;
         const myId = prev.guestId;
-        import("@/lib/online.functions").then(({ setTurn }) =>
-          setTurn({ data: { code, guestId: myId, nextPlayerId: nextPlayerId ?? null } })
-        ).catch((e) => console.error("[FTF TURN] error", e));
+        passTurnFn({ data: { code, guestId: myId, nextPlayerId } }).catch((e) => console.error("[FTF TURN] error", e));
       }
 
       return {
@@ -133,9 +137,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
-        console.log("Multiplayer: Enviando pergunta para a sala", gameState.roomCode);
-        
-        // 1. Update local state immediately for responsiveness
         setGameState(prev => ({
           ...prev,
           phase: "WAITING_ANSWER",
@@ -143,23 +144,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           lastActionTime: Date.now()
         }));
 
-        // 2. Synchronize with server
-        const { sendQuestion } = await import("@/lib/online.functions");
-        const error = await sendQuestion({
+        await sendQuestion({
           data: { code: gameState.roomCode, guestId: gameState.guestId, questionId: question.id }
-        }).then(() => null).catch((e) => e);
-        
-        if (error) {
-          console.error("Multiplayer Error:", error);
-          toast.error("Erro ao enviar pergunta.");
-          return;
-        }
-
-        // Local state already updated above
+        });
       } catch (err) {
         console.error("Multiplayer Catch Error:", err);
-        toast.error("Erro de conexão ao enviar pergunta.");
-        return;
+        toast.error("Erro ao enviar pergunta.");
       }
     } else if (gameState.gameMode === "IA") {
       setGameState((prev) => ({
@@ -189,35 +179,25 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     if (gameState.gameMode === "ONLINE" && gameState.roomCode && (type === "AI" || type === "AI_PALPITE")) {
       try {
-        console.log("[FTF ANSWER] sending:", answer);
-        
-        // 1. Update local state immediately
         if (type === "AI" || type === "AI_PALPITE") {
           setGameState(prev => ({
             ...prev,
             history: [...prev.history, { 
-              type: type === "AI" ? "AI" : "AI", 
+              type: "AI", 
               text: type === "AI_PALPITE" ? `Tentativa de palpite: ${question.text}` : question.text, 
               answer 
             }],
             pendingQuestion: undefined,
-            phase: type === "AI_PALPITE" ? prev.phase : "AI_DISCARDING", // Winner logic will handle game over
+            phase: type === "AI_PALPITE" ? prev.phase : "AI_DISCARDING",
             lastActionTime: Date.now()
           }));
         }
 
-        // 2. Send to server
-        const { sendAnswer } = await import("@/lib/online.functions");
-        const error = await sendAnswer({
+        await answerQuestionFn({
           data: { code: gameState.roomCode, guestId: gameState.guestId, answer }
-        }).then(() => null).catch((e) => e);
-        
-        if (error) {
-          toast.error("Erro ao enviar resposta.");
-          return;
-        }
+        });
       } catch (err) {
-        toast.error("Erro de conexão ao enviar resposta.");
+        toast.error("Erro ao enviar resposta.");
         return;
       }
     }
@@ -225,7 +205,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
     if (type === "PLAYER") {
       setGameState((prev) => {
         const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(question.id);
-        console.log("[FTF DEBUG] Player question answered. New count:", newMyAskedQuestions.size);
         return {
           ...prev,
           history: [...prev.history, { type: "PLAYER", text: question.text, answer }],
@@ -286,43 +265,34 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   const playerPalpite = async (character: Character) => {
     let isCorrect = character.id === gameState.aiSecret.id;
 
-    if (gameState.gameMode === "ONLINE") {
-      if (!gameState.roomId) {
-        console.error("[FTF PALPITE] Room ID missing during palpite");
-        toast.error("Sala não sincronizada. Tente novamente.");
-        return;
-      }
-      let guessResult: { isCorrect: boolean; opponentSecretId: number | null };
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
-        const { submitGuess } = await import("@/lib/online.functions");
-        guessResult = await submitGuess({
-          data: { roomId: gameState.roomId, guestId: gameState.guestId, characterId: character.id }
+        const guessResult = await makeGuess({
+          data: { code: gameState.roomCode, guestId: gameState.guestId, characterId: character.id }
         });
+
+        isCorrect = guessResult.isCorrect;
+        const revealedOpponent = CHARACTERS.find(c => c.id === guessResult.opponentSecretId);
+
+        setGameState(prev => ({
+          ...prev,
+          isGameOver: true,
+          winner: isCorrect ? "WINNER" : "LOSER",
+          playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
+          aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
+          pendingQuestion: undefined,
+          rematchStatus: 'idle',
+          rematchRequestedBy: null,
+          aiSecret: revealedOpponent || prev.aiSecret,
+          lastActionTime: Date.now()
+        }));
+
+        return; 
       } catch (e: any) {
-        console.error("FINAL_ROUND_ERROR_FULL", { message: e?.message, stack: e?.stack });
-        toast.error("Erro ao registrar o fim da rodada. Tente novamente.");
+        toast.error("Erro ao registrar o palpite.");
         return;
       }
-
-      isCorrect = guessResult.isCorrect;
-      const revealedOpponent = CHARACTERS.find(c => c.id === guessResult.opponentSecretId);
-
-      setGameState(prev => ({
-        ...prev,
-        isGameOver: true,
-        winner: isCorrect ? "WINNER" : "LOSER",
-        playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
-        aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
-        pendingQuestion: undefined,
-        rematchStatus: 'idle',
-        rematchRequestedBy: null,
-        aiSecret: revealedOpponent || prev.aiSecret,
-        lastActionTime: Date.now()
-      }));
-
-      return; 
     }
-
 
     setGameState((prev) => ({
       ...prev,
@@ -371,10 +341,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
   };
 
   const abandon = async () => {
-    if (gameState.gameMode === "ONLINE" && gameState.roomId) {
+    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
       try {
-        const { abandonMatch: abandonMatchFn } = await import("@/lib/online.functions");
-        await abandonMatchFn({ data: { roomId: gameState.roomId, guestId: gameState.guestId } });
+        await abandonMatch({ data: { code: gameState.roomCode, guestId: gameState.guestId } });
       } catch (e) {
         console.error("Erro ao abandonar partida:", e);
       }
@@ -395,7 +364,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
     let isMounted = true;
     const handleRoomData = (newRoomData: any) => {
-      if (!isMounted || gameState.gameMode !== "ONLINE" || !newRoomData) return;
+      if (!isMounted || !newRoomData) return;
       
       const state = newRoomData.state || {};
       const statusLower = (newRoomData.status || '').toLowerCase();
@@ -421,7 +390,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }
       }
 
-      if (newRoomData['rematch_status'] && newRoomData['status'] === "FINISHED") {
+      if (newRoomData['rematch_status'] && newRoomData['status'] === "finished") {
         setGameState(prev => ({
           ...prev,
           rematchStatus: newRoomData['rematch_status'],
@@ -551,7 +520,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }
       }
 
-      if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "PLAYING") {
+      if (!newRoomData['current_question_id'] && !newRoomData['last_answer'] && newRoomData['status'] === "playing") {
         setGameState(prev => {
           if (prev.phase === "WAITING_ANSWER" || prev.phase === "PLAYER_RESPONDING") {
             return { ...prev, pendingQuestion: undefined };
@@ -561,13 +530,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }
     };
 
+    // Initial fetch
+    getRoom(gameState.roomCode).then(data => {
+      if (data) handleRoomData(data);
+    });
+
     // 1. Realtime listener
     const unsubscribe = subscribeToRoom(gameState.roomCode, handleRoomData);
 
     // 2. High-speed REST polling fallback every 400ms
     const interval = setInterval(async () => {
       try {
-        const latest = await getRoom(gameState.roomCode);
+        const latest = await getRoom(gameState.roomCode!);
         if (latest) handleRoomData(latest);
       } catch (e) {}
     }, 400);
@@ -577,96 +551,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       unsubscribe();
       clearInterval(interval);
     };
-  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId, playerColor]);
-
-  useEffect(() => {
-    if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
-      const syncRoom = async () => {
-        try {
-          const roomRef = doc(db, "facetoface_rooms", gameState.roomCode!);
-          const snap = await getDoc(roomRef);
-          if (!snap.exists()) {
-            console.error("[FTF SYNC] Room not found in Firestore:", gameState.roomCode);
-            return;
-          }
-
-          const roomData = snap.data() as any;
-          const state = roomData.state || {};
-          const isHost = roomData.host_id === gameState.guestId;
-          const currentTurnId = roomData.turn || state.currentTurnPlayerId || roomData.host_id;
-          const isMyTurn = currentTurnId === gameState.guestId;
-          const currentQuestionId = state.currentQuestionId;
-          const lastAnswer = state.lastAnswer;
-          const askerId = state.questionAskedBy;
-
-          const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
-          const isFinished = roomData.status?.toLowerCase() === "finished" || !!roomData.winner;
-          const oppSecretId = isFinished ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
-
-          const myCard = CHARACTERS.find(c => c.id === mySecretId);
-          const oppCard = CHARACTERS.find(c => c.id === oppSecretId);
-
-          console.log("[FTF SYNC] Synced room with Firestore:", {
-            isHost,
-            mySecretId,
-            myCard: myCard?.nome,
-            isMyTurn,
-            turn: currentTurnId
-          });
-          
-          setGameState(prev => {
-            let newPhase: GamePhase = isMyTurn ? "PLAYER_TURN" : "AI_TURN";
-            let pendingQuestion = undefined;
-            const winnerId = roomData.winner;
-            const isGameOver = isFinished;
-
-            if (isGameOver && winnerId) {
-              newPhase = "PLAYER_TURN";
-            } else if (currentQuestionId) {
-              const question = QUESTIONS.find(q => q.id === currentQuestionId);
-              if (question) {
-                if (askerId === gameState.guestId) {
-                  newPhase = "WAITING_ANSWER";
-                  pendingQuestion = { question, type: "PLAYER" as const };
-                } else {
-                  newPhase = "PLAYER_RESPONDING";
-                  pendingQuestion = { question, type: "AI" as const };
-                }
-              }
-            } else if (lastAnswer && askerId !== gameState.guestId) {
-              newPhase = "WAITING_ANSWER";
-            }
-
-            return {
-              ...prev,
-              playerSecret: myCard || prev.playerSecret,
-              aiSecret: oppCard || prev.aiSecret,
-              playerColor: isHost ? "AZUL" : "VERMELHO",
-              opponentId: isHost ? roomData.guest_id : roomData.host_id,
-              opponentName: (isHost ? roomData.guest_name : roomData.host_name) || prev.opponentName,
-              playerName: (isHost ? roomData.host_name : roomData.guest_name) || prev.playerName,
-              roomId: roomData.id,
-              playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
-              aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
-              currentTurn: isMyTurn ? "PLAYER" : "AI",
-              phase: newPhase,
-              pendingQuestion,
-              isGameOver,
-              winner: winnerId ? (winnerId === gameState.guestId ? "WINNER" : "LOSER") : prev.winner,
-              matchWinnerId: state.matchWinnerId || null,
-              rematchStatus: (state.rematchStatus || prev.rematchStatus) as any,
-              rematchRequestedBy: state.rematchRequestedBy ?? prev.rematchRequestedBy ?? null,
-              lastActionTime: Date.now()
-            } as GameState;
-          });
-        } catch (err) {
-          console.error("[FTF SYNC] Error fetching initial room:", err);
-        }
-      };
-
-      syncRoom();
-    }
-  }, [gameState.roomCode, gameState.guestId]);
+  }, [gameState.gameMode, gameState.roomCode, gameState.guestId, playerColor]);
 
   useEffect(() => {
     if (gameState.isGameOver || gameState.gameMode === "ONLINE") return undefined;

@@ -3,6 +3,7 @@ import {
   doc, 
   setDoc, 
   getDoc, 
+  getDocFromServer,
   updateDoc, 
   onSnapshot, 
   Unsubscribe 
@@ -42,33 +43,43 @@ export function parseFirestoreDoc(docObj: any): any {
   return res;
 }
 
-// REST Fetch to bypass ANY browser caching or websocket blocks
 export const getRoom = async (roomIdOrCode: string): Promise<any> => {
+  if (!roomIdOrCode) return null;
   const code = roomIdOrCode.trim().toUpperCase();
+  
   try {
-    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_NAME}/${code}?_t=${Date.now()}`;
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return parseFirestoreDoc(json);
+    const roomRef = doc(db, COLLECTION_NAME, code);
+    const snap = await getDocFromServer(roomRef);
+    if (snap.exists()) return { id: code, ...snap.data() };
   } catch (e) {
     try {
       const roomRef = doc(db, COLLECTION_NAME, code);
       const snap = await getDoc(roomRef);
-      if (snap.exists()) return snap.data();
+      if (snap.exists()) return { id: code, ...snap.data() };
     } catch (_) {}
-    return null;
   }
+
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_NAME}/${code}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const json = await res.json();
+      const parsed = parseFirestoreDoc(json);
+      if (parsed) return { id: code, ...parsed };
+    }
+  } catch (_) {}
+
+  return null;
 };
 
 export const subscribeToRoom = (roomIdOrCode: string, onUpdate: (room: any) => void): Unsubscribe => {
+  if (!roomIdOrCode) return () => {};
   const code = roomIdOrCode.trim().toUpperCase();
   const roomRef = doc(db, COLLECTION_NAME, code);
   
-  // Realtime snapshot listener
   const unsub = onSnapshot(roomRef, (snapshot) => {
     if (snapshot.exists()) {
-      onUpdate(snapshot.data());
+      onUpdate({ id: code, ...snapshot.data() });
     }
   }, (err) => {
     console.warn("[FTF Realtime Notice - Polling active]", err?.message);
@@ -182,15 +193,16 @@ export const startGame = async (payload: { data: { roomId: string; guestId?: str
 
   if (!room) throw new Error("Sala não encontrada");
 
-  // Embaralha e sorteia 2 personagens secretos únicos (1 a 24)
-  const CHAR_IDS = Array.from({ length: 24 }, (_, i) => i + 1);
+  const CHAR_IDS: number[] = Array.from({ length: 24 }, (_, i) => i + 1);
   for (let i = CHAR_IDS.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [CHAR_IDS[i], CHAR_IDS[j]] = [CHAR_IDS[j], CHAR_IDS[i]];
+    const temp = CHAR_IDS[i]!;
+    CHAR_IDS[i] = CHAR_IDS[j]!;
+    CHAR_IDS[j] = temp;
   }
 
-  const hostSecretId = CHAR_IDS[0];
-  const guestSecretId = CHAR_IDS[1];
+  const hostSecretId = CHAR_IDS[0]!;
+  const guestSecretId = CHAR_IDS[1]!;
 
   const state = room.state || {};
   const updatedState = {
@@ -219,9 +231,10 @@ export const startGame = async (payload: { data: { roomId: string; guestId?: str
   return { success: true };
 };
 
-export const sendQuestion = async (payload: { data: { code: string; guestId: string; questionId: string } }) => {
-  const { code, guestId, questionId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const sendQuestion = async (payload: { data: { code?: string; roomId?: string; guestId: string; questionId: string } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { guestId, questionId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
@@ -244,9 +257,10 @@ export const sendQuestion = async (payload: { data: { code: string; guestId: str
   return { success: true };
 };
 
-export const answerQuestion = async (payload: { data: { code: string; guestId: string; answer: "SIM" | "NÃO" } }) => {
-  const { code, guestId, answer } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const answerQuestion = async (payload: { data: { code?: string; roomId?: string; guestId: string; answer: "SIM" | "NÃO" } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { guestId, answer } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
@@ -266,15 +280,17 @@ export const answerQuestion = async (payload: { data: { code: string; guestId: s
 
   return { success: true };
 };
+export const sendAnswer = answerQuestion;
 
-export const passTurn = async (payload: { data: { code: string; guestId: string } }) => {
-  const { code, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const passTurn = async (payload: { data: { code?: string; roomId?: string; guestId: string; nextPlayerId?: string | null } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { guestId, nextPlayerId: providedNextId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
-  const nextPlayerId = room.host_id === guestId ? room.guest_id : room.host_id;
+  const nextPlayerId = providedNextId || (room.host_id === guestId ? room.guest_id : room.host_id);
   const state = room.state || {};
 
   const updatedState = {
@@ -294,10 +310,12 @@ export const passTurn = async (payload: { data: { code: string; guestId: string 
 
   return { success: true };
 };
+export const setTurn = passTurn;
 
-export const makeGuess = async (payload: { data: { code: string; guestId: string; characterId: number } }) => {
-  const { code, guestId, characterId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const makeGuess = async (payload: { data: { code?: string; roomId?: string; guestId: string; characterId: number } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { guestId, characterId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
@@ -326,12 +344,14 @@ export const makeGuess = async (payload: { data: { code: string; guestId: string
     updated_at: new Date().toISOString()
   });
 
-  return { isCorrect, winnerId };
+  return { isCorrect, winnerId, opponentSecretId: targetSecretId };
 };
+export const submitGuess = makeGuess;
 
-export const abandonMatch = async (payload: { data: { code: string; guestId: string } }) => {
-  const { code, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const abandonMatch = async (payload: { data: { code?: string; roomId?: string; guestId: string } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { guestId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) return;
@@ -346,9 +366,10 @@ export const abandonMatch = async (payload: { data: { code: string; guestId: str
   });
 };
 
-export const requestRematch = async (payload: { data: { code: string; guestId: string } }) => {
-  const { code, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const requestRematch = async (payload: { data: { code?: string; roomId?: string; guestId: string } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { guestId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   await updateDoc(roomRef, {
     'state.rematchStatus': 'requested',
     'state.rematchRequestedBy': guestId,
@@ -356,9 +377,10 @@ export const requestRematch = async (payload: { data: { code: string; guestId: s
   });
 };
 
-export const respondRematch = async (payload: { data: { code: string; guestId: string; accept: boolean } }) => {
-  const { code, guestId, accept } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+export const respondRematch = async (payload: { data: { code?: string; roomId?: string; guestId?: string; accept: boolean } }) => {
+  const code = (payload.data.code || payload.data.roomId || "").trim().toUpperCase();
+  const { accept } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code);
   
   if (!accept) {
     await updateDoc(roomRef, {
@@ -368,15 +390,16 @@ export const respondRematch = async (payload: { data: { code: string; guestId: s
     return;
   }
 
-  // Novo round
-  const CHAR_IDS = Array.from({ length: 24 }, (_, i) => i + 1);
+  const CHAR_IDS: number[] = Array.from({ length: 24 }, (_, i) => i + 1);
   for (let i = CHAR_IDS.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [CHAR_IDS[i], CHAR_IDS[j]] = [CHAR_IDS[j], CHAR_IDS[i]];
+    const temp = CHAR_IDS[i]!;
+    CHAR_IDS[i] = CHAR_IDS[j]!;
+    CHAR_IDS[j] = temp;
   }
 
-  const hostSecretId = CHAR_IDS[0];
-  const guestSecretId = CHAR_IDS[1];
+  const hostSecretId = CHAR_IDS[0]!;
+  const guestSecretId = CHAR_IDS[1]!;
 
   await updateDoc(roomRef, {
     status: "playing",
@@ -392,3 +415,4 @@ export const respondRematch = async (payload: { data: { code: string; guestId: s
     updated_at: new Date().toISOString()
   });
 };
+export const handleRematchResponse = respondRematch;

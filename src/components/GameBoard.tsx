@@ -4,7 +4,8 @@ import { CHARACTERS } from "@/data/characters";
 import { QUESTIONS } from "@/data/questions";
 import { useGameState } from "@/hooks/use-game-state";
 import { GameCard } from "@/components/GameCard";
-import { Difficulty, getAIResponse } from "@/lib/ai-logic";
+import { Difficulty } from "@/lib/ai-logic";
+import { requestRematch, respondRematch } from "@/lib/online.functions";
 
 interface GameBoardProps {
   playerColor: "AZUL" | "VERMELHO";
@@ -43,11 +44,10 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
   }, [gameState.phase, gameState.currentTurn, gameState.gameMode, gameState.isGameOver]);
 
   // Monitor connection timeout
-  useState(() => {
+  useEffect(() => {
     const checkTimeout = setInterval(() => {
       if (gameState.gameMode === "ONLINE" && !gameState.isGameOver && gameState.lastActionTime) {
         const secondsSinceLastAction = (Date.now() - gameState.lastActionTime) / 1000;
-        // If waiting for answer or turn for more than 20 seconds, show warning
         const isWaiting = gameState.phase === "WAITING_ANSWER" || 
                          (gameState.currentTurn === "AI" && gameState.phase === "AI_TURN");
         
@@ -59,7 +59,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
       }
     }, 5000);
     return () => clearInterval(checkTimeout);
-  });
+  }, [gameState.gameMode, gameState.isGameOver, gameState.lastActionTime, gameState.phase, gameState.currentTurn]);
 
   const myTurn = gameState.currentTurn === "PLAYER" && !gameState.isGameOver;
   const canAsk = myTurn && gameState.phase === "PLAYER_TURN";
@@ -70,14 +70,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
   return (
     <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-main-gradient text-white">
       {/* Game Background Effects */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        {/* Rotating Lightning/Energy effect for game screen */}
+      <div className="absolute inset-0 -z-20 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180vmax] h-[180vmax] animate-lightning-spin opacity-20 bg-[conic-gradient(from_0deg,transparent_0deg,transparent_40deg,#1e62ec_45deg,transparent_50deg,transparent_90deg,transparent_130deg,#e52e2e_135deg,transparent_140deg,transparent_180deg,transparent_220deg,#1e62ec_225deg,transparent_230deg,transparent_270deg,transparent_310deg,#e52e2e_315deg,transparent_320deg,transparent_360deg)] blur-2xl" />
-        
-        {/* Glow Pulses for game screen */}
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(30,98,236,0.15),transparent_50%),radial-gradient(circle_at_80%_80%,rgba(229,46,46,0.15),transparent_50%)] animate-pulse-glow" />
-        
-        {/* Subtle Grid overlay */}
         <div className="absolute inset-0 opacity-[0.05] bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
@@ -93,7 +88,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           }}
           className="group flex items-center gap-1.5 rounded-lg border-2 border-gray-400/30 bg-gray-800/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-gray-400 transition-all hover:border-yellow-400/50 hover:text-yellow-400 hover:scale-105 active:scale-95"
         >
-          <span className="text-sm">{"<"}</span> <span translate="no">VOLTAR{" "}AO{" "}MENU</span>
+          <span className="text-sm">{"<"}</span> <span translate="no">VOLTAR AO MENU</span>
         </button>
         <div className="flex min-w-0 flex-col items-center justify-center leading-tight">
           <div className={`text-[10px] font-black uppercase tracking-[0.15em] drop-shadow-[0_2px_3px_rgba(0,0,0,0.8)] sm:text-xs px-3 py-0.5 rounded-full ${
@@ -126,6 +121,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           <span className="text-[#e52e2e]">{gameState.aiScore}</span>
         </div>
       </header>
+
       {/* Online Turn Timer Bar */}
       {gameState.gameMode === "ONLINE" && !gameState.isGameOver && (
         <div className="w-full bg-black/40 h-1 px-4">
@@ -214,8 +210,6 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
               </button>
             </div>
           </div>
-
-
 
           {/* History */}
           <div className="flex min-h-[60px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#0b0e14]">
@@ -360,8 +354,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                   ) : (
                     <button
                       onClick={async () => {
-                        const { requestRematch } = await import("@/lib/online.functions");
-                        await requestRematch({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId } });
+                        await requestRematch({ data: { code: gameState.roomCode || "", guestId: gameState.guestId } });
                       }}
                       className="rounded-full border-2 border-yellow-500/50 bg-yellow-400 px-10 py-4 text-xl font-black text-black transition-all hover:scale-110 hover:shadow-[0_0_20px_rgba(250,204,21,0.4)] active:scale-95"
                     >
@@ -377,8 +370,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                       <div className="flex gap-4">
                         <button
                           onClick={async () => {
-                            const { handleRematchResponse } = await import("@/lib/online.functions");
-                            await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: true } });
+                            await respondRematch({ data: { code: gameState.roomCode || "", guestId: gameState.guestId, accept: true } });
                           }}
                           className="flex-1 rounded-lg bg-green-500 py-3 font-black text-white transition-all hover:bg-green-600 active:scale-95"
                         >
@@ -386,8 +378,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                         </button>
                         <button
                           onClick={async () => {
-                            const { handleRematchResponse } = await import("@/lib/online.functions");
-                            await handleRematchResponse({ data: { roomId: gameState.roomId || "", guestId: gameState.guestId, accept: false } });
+                            await respondRematch({ data: { code: gameState.roomCode || "", guestId: gameState.guestId, accept: false } });
                           }}
                           className="flex-1 rounded-lg bg-red-500 py-3 font-black text-white transition-all hover:bg-red-600 active:scale-95"
                         >
@@ -429,7 +420,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
                 onClick={onBack}
                 className="rounded-full border-2 border-gray-500/50 bg-gray-800 px-10 py-4 text-xl font-black transition-all hover:scale-110 active:scale-95"
               >
-                <span translate="no">VOLTAR{" "}AO{" "}MENU</span>
+                <span translate="no">VOLTAR AO MENU</span>
               </button>
             </div>
           </div>
@@ -468,6 +459,7 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           </div>
         </div>
       )}
+
       {/* Interativo Modal de Pergunta */}
       {gameState.pendingQuestion && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md">
