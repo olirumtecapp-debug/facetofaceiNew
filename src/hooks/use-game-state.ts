@@ -403,15 +403,40 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             isGameOver: true,
             winner: newWinner,
             matchWinnerId: matchWinnerId || prev.matchWinnerId,
-            rematchStatus: (state.rematchStatus || newRoomData.rematch_status || prev.rematchStatus) as any,
-            rematchRequestedBy: state.rematchRequestedBy || newRoomData.rematch_requested_by || prev.rematchRequestedBy,
+            rematchStatus: (state.rematchStatus || newRoomData.rematch_status || prev.rematchStatus || 'idle') as any,
+            rematchRequestedBy: state.rematchRequestedBy || newRoomData.rematch_requested_by || prev.rematchRequestedBy || null,
             phase: "PLAYER_TURN",
             pendingQuestion: undefined,
             lastActionTime: Date.now()
           };
         }
 
-        // 2. ACTIVE ROUND SYNC
+        // 2. REMATCH ACCEPTED (Transition from GameOver to Playing)
+        if (statusLower === "playing" && prev.isGameOver) {
+          return {
+            ...prev,
+            playerSecret: myCard || prev.playerSecret,
+            aiSecret: oppCard || prev.aiSecret,
+            playerBoard: prev.playerBoard.map(b => ({ ...b, isDown: false })),
+            askedQuestions: new Set(),
+            myAskedQuestions: new Set(),
+            opponentAskedQuestions: new Set(),
+            history: [],
+            isGameOver: false,
+            winner: undefined,
+            matchWinnerId: null,
+            rematchStatus: 'idle',
+            rematchRequestedBy: null,
+            phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN",
+            pendingQuestion: undefined,
+            turnCount: 1,
+            playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
+            aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+            lastActionTime: Date.now()
+          };
+        }
+
+        // 3. ACTIVE ROUND SYNC
         let newPhase: GamePhase = prev.phase;
         let newPendingQuestion = prev.pendingQuestion;
 
