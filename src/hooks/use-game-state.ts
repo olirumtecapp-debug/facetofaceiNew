@@ -31,6 +31,10 @@ export type GameState = {
   difficulty: Difficulty;
   playerScore: number;
   aiScore: number;
+  hostScore: number;
+  guestScore: number;
+  hostName?: string;
+  guestName?: string;
   playerSecret: Character;
   aiSecret: Character;
   playerBoard: { character: Character; isDown: boolean }[];
@@ -82,6 +86,10 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       difficulty,
       playerScore: 0,
       aiScore: 0,
+      hostScore: 0,
+      guestScore: 0,
+      hostName: undefined,
+      guestName: undefined,
       playerSecret,
       aiSecret,
       playerBoard: CHARACTERS.map((c) => ({ character: c, isDown: false })),
@@ -226,15 +234,22 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const guessedCharId = question.id.replace('palpite-', '');
       const isCorrect = Number(guessedCharId) === gameState.playerSecret.id;
       
-      setGameState((prev) => ({
-        ...prev,
-        isGameOver: true,
-        winner: isCorrect ? "AI" : "PLAYER",
-        aiScore: isCorrect ? prev.aiScore + 1 : prev.aiScore,
-        playerScore: isCorrect ? prev.playerScore : prev.playerScore + 1,
-        history: [...prev.history, { type: "AI", text: `Tentativa de palpite: ${question.text}`, answer }],
-        pendingQuestion: undefined,
-      }));
+      setGameState((prev) => {
+        const pScore = isCorrect ? prev.playerScore : prev.playerScore + 1;
+        const aScore = isCorrect ? prev.aiScore + 1 : prev.aiScore;
+        const isAzul = prev.playerColor === "AZUL";
+        return {
+          ...prev,
+          isGameOver: true,
+          winner: isCorrect ? "AI" : "PLAYER",
+          playerScore: pScore,
+          aiScore: aScore,
+          hostScore: isAzul ? pScore : aScore,
+          guestScore: isAzul ? aScore : pScore,
+          history: [...prev.history, { type: "AI", text: `Tentativa de palpite: ${question.text}`, answer }],
+          pendingQuestion: undefined,
+        };
+      });
     } else {
       setGameState((prev) => ({
         ...prev,
@@ -280,13 +295,18 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
         isCorrect = guessResult.isCorrect;
         const revealedOpponent = CHARACTERS.find(c => c.id === guessResult.opponentSecretId);
+        const isHost = gameState.playerColor === "AZUL";
+        const hScore = guessResult.hostScore ?? (isHost ? (isCorrect ? gameState.playerScore + 1 : gameState.playerScore) : (isCorrect ? gameState.aiScore : gameState.aiScore + 1));
+        const gScore = guessResult.guestScore ?? (!isHost ? (isCorrect ? gameState.playerScore + 1 : gameState.playerScore) : (isCorrect ? gameState.aiScore : gameState.aiScore + 1));
 
         setGameState(prev => ({
           ...prev,
           isGameOver: true,
           winner: isCorrect ? "WINNER" : "LOSER",
-          playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
-          aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
+          playerScore: isHost ? hScore : gScore,
+          aiScore: isHost ? gScore : hScore,
+          hostScore: hScore,
+          guestScore: gScore,
           pendingQuestion: undefined,
           rematchStatus: 'idle',
           rematchRequestedBy: null,
@@ -301,13 +321,20 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       }
     }
 
-    setGameState((prev) => ({
-      ...prev,
-      isGameOver: true,
-      winner: isCorrect ? "PLAYER" : "AI",
-      playerScore: isCorrect ? prev.playerScore + 1 : prev.playerScore,
-      aiScore: isCorrect ? prev.aiScore : prev.aiScore + 1,
-    }));
+    setGameState((prev) => {
+      const pScore = isCorrect ? prev.playerScore + 1 : prev.playerScore;
+      const aScore = isCorrect ? prev.aiScore : prev.aiScore + 1;
+      const isAzul = prev.playerColor === "AZUL";
+      return {
+        ...prev,
+        isGameOver: true,
+        winner: isCorrect ? "PLAYER" : "AI",
+        playerScore: pScore,
+        aiScore: aScore,
+        hostScore: isAzul ? pScore : aScore,
+        guestScore: isAzul ? aScore : pScore,
+      };
+    });
   };
 
   const passTurn = () => {
@@ -383,6 +410,11 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId || newRoomData.host_id;
       const isMyTurn = turnPlayerId === myId;
 
+      const hostScore = Number(state.hostScore ?? 0);
+      const guestScore = Number(state.guestScore ?? 0);
+      const hostName = newRoomData.host_name || (isHost ? (gameState.playerName || "AZUL") : (gameState.opponentName || "AZUL"));
+      const guestName = newRoomData.guest_name || (!isHost ? (gameState.playerName || "VERMELHO") : (gameState.opponentName || "VERMELHO"));
+
       const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
       const oppSecretId = (statusLower === 'finished' || winnerId) ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
       const myCard = CHARACTERS.find(c => c.id === mySecretId);
@@ -403,6 +435,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             isGameOver: true,
             winner: newWinner,
             matchWinnerId: matchWinnerId || prev.matchWinnerId,
+            playerScore: isHost ? hostScore : guestScore,
+            aiScore: isHost ? guestScore : hostScore,
+            hostScore,
+            guestScore,
+            hostName,
+            guestName,
             rematchStatus: (state.rematchStatus || newRoomData.rematch_status || prev.rematchStatus || 'idle') as any,
             rematchRequestedBy: state.rematchRequestedBy || newRoomData.rematch_requested_by || prev.rematchRequestedBy || null,
             phase: "PLAYER_TURN",
@@ -430,8 +468,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
             phase: isMyTurn ? "PLAYER_TURN" : "AI_TURN",
             pendingQuestion: undefined,
             turnCount: 1,
-            playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
-            aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+            playerScore: isHost ? hostScore : guestScore,
+            aiScore: isHost ? guestScore : hostScore,
+            hostScore,
+            guestScore,
+            hostName,
+            guestName,
             lastActionTime: Date.now()
           };
         }
@@ -496,8 +538,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           opponentName: (isHost ? newRoomData.guest_name : newRoomData.host_name) || prev.opponentName,
           playerName: (isHost ? newRoomData.host_name : newRoomData.guest_name) || prev.playerName,
           roomId: newRoomData.id || newRoomData.code || gameState.roomCode,
-          playerScore: (isHost ? state.hostScore : state.guestScore) || 0,
-          aiScore: (isHost ? state.guestScore : state.hostScore) || 0,
+          playerScore: isHost ? hostScore : guestScore,
+          aiScore: isHost ? guestScore : hostScore,
+          hostScore,
+          guestScore,
+          hostName,
+          guestName,
           currentTurn: isMyTurn ? "PLAYER" : "AI",
           phase: newPhase,
           pendingQuestion: newPendingQuestion,

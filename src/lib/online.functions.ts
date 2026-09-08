@@ -343,11 +343,14 @@ export const makeGuess = async (payload: { data: { code?: string; roomId?: strin
     ? guestId 
     : (isHost ? room.guest_id : room.host_id);
 
+  const hostScore = (state.hostScore || 0) + (winnerId === room.host_id ? 1 : 0);
+  const guestScore = (state.guestScore || 0) + (winnerId === room.guest_id ? 1 : 0);
+
   const updatedState = {
     ...state,
     matchWinnerId: winnerId,
-    hostScore: (state.hostScore || 0) + (winnerId === room.host_id ? 1 : 0),
-    guestScore: (state.guestScore || 0) + (winnerId === room.guest_id ? 1 : 0)
+    hostScore,
+    guestScore
   };
 
   await updateDoc(roomRef, {
@@ -357,7 +360,7 @@ export const makeGuess = async (payload: { data: { code?: string; roomId?: strin
     updated_at: new Date().toISOString()
   });
 
-  return { isCorrect, winnerId, opponentSecretId: targetSecretId };
+  return { isCorrect, winnerId, opponentSecretId: targetSecretId, hostScore, guestScore };
 };
 export const submitGuess = makeGuess;
 
@@ -370,11 +373,17 @@ export const abandonMatch = async (payload: { data: { code?: string; roomId?: st
   if (!roomSnap.exists()) return;
   const room = roomSnap.data() as any;
   const opponentId = room.host_id === guestId ? room.guest_id : room.host_id;
+  const state = room.state || {};
+  const hostWon = opponentId === room.host_id;
+  const hostScore = (state.hostScore || 0) + (hostWon ? 1 : 0);
+  const guestScore = (state.guestScore || 0) + (hostWon ? 0 : 1);
 
   await updateDoc(roomRef, {
     status: "finished",
     winner: opponentId,
     'state.matchWinnerId': opponentId,
+    'state.hostScore': hostScore,
+    'state.guestScore': guestScore,
     updated_at: new Date().toISOString()
   });
 };

@@ -116,9 +116,9 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
           )}
         </div>
         <div className="flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-sm font-black">
-          <span className="text-[#1e62ec]">{gameState.playerScore}</span>
+          <span className="text-[#1e62ec]">{gameState.gameMode === "ONLINE" ? gameState.hostScore : (gameState.playerColor === "AZUL" ? gameState.playerScore : gameState.aiScore)}</span>
           <span className="text-gray-600">×</span>
-          <span className="text-[#e52e2e]">{gameState.aiScore}</span>
+          <span className="text-[#e52e2e]">{gameState.gameMode === "ONLINE" ? gameState.guestScore : (gameState.playerColor === "VERMELHO" ? gameState.playerScore : gameState.aiScore)}</span>
         </div>
       </header>
 
@@ -328,9 +328,17 @@ export const GameBoard = ({ playerColor, difficulty, onBack, initialRoomCode }: 
             </h2>
 
             <div className="mb-6 flex items-center justify-center gap-4 text-2xl font-black">
-              <span className="text-[#1e62ec]">{gameState.playerColor === "AZUL" ? (gameState.playerName || "VOCÊ") : (gameState.opponentName || "OPONENTE")} {gameState.playerScore}</span>
+              <span className="text-[#1e62ec]">
+                {gameState.gameMode === "ONLINE"
+                  ? `${gameState.hostName || "AZUL"} ${gameState.hostScore}`
+                  : `${gameState.playerColor === "AZUL" ? (gameState.playerName || "VOCÊ") : "IA"} ${gameState.playerColor === "AZUL" ? gameState.playerScore : gameState.aiScore}`}
+              </span>
               <span className="text-gray-500">×</span>
-              <span className="text-[#e52e2e]">{gameState.playerColor === "VERMELHO" ? (gameState.playerName || "VOCÊ") : (gameState.opponentName || "OPONENTE")} {gameState.aiScore}</span>
+              <span className="text-[#e52e2e]">
+                {gameState.gameMode === "ONLINE"
+                  ? `${gameState.guestName || "VERMELHO"} ${gameState.guestScore}`
+                  : `${gameState.playerColor === "VERMELHO" ? (gameState.playerName || "VOCÊ") : "IA"} ${gameState.playerColor === "VERMELHO" ? gameState.playerScore : gameState.aiScore}`}
+              </span>
             </div>
 
             <p className="mb-6 text-lg text-gray-300">
