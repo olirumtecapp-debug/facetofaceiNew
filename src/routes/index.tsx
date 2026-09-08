@@ -10,9 +10,7 @@ import { CHARACTER_DETAILS } from "@/data/character-details";
 import { Difficulty } from "@/lib/ai-logic";
 import { GameBoard } from "@/components/GameBoard";
 import { createRoom, joinRoom, toggleReady, startGame, subscribeToRoom, getRoom } from "@/lib/online.functions";
-
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,18 +33,15 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
-  const isHost = room.host_id === guestId;
+function Lobby({ room, isHost, onLeave, onToggleReady, onStart }: any) {
   const state = room.state || {};
   const hostPlayer = {
-    guest_id: room.host_id,
     name: room.host_name || 'Anfitrião',
     color: 'AZUL',
     is_ready: !!state.hostReady,
     score: state.hostScore || 0
   };
-  const guestPlayer = room.guest_id ? {
-    guest_id: room.guest_id,
+  const guestPlayer = (room.guest_id || room.guest_name) ? {
     name: room.guest_name || 'Adversário',
     color: 'VERMELHO',
     is_ready: !!state.guestReady,
@@ -55,7 +50,7 @@ function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
 
   const players = [hostPlayer, ...(guestPlayer ? [guestPlayer] : [])];
   const myReady = isHost ? !!state.hostReady : !!state.guestReady;
-  const allReady = !!state.hostReady && !!state.guestReady && !!room.guest_id;
+  const allReady = !!state.hostReady && !!state.guestReady && (players.length >= 2 || !!room.guest_name);
 
   return (
     <div className="w-full max-w-md space-y-4 animate-in fade-in zoom-in-95 duration-300">
@@ -80,29 +75,32 @@ function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
 
         <div className="space-y-3 mb-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Jogadores Conectados</p>
-          {players.map((p: any) => (
-            <div key={p.guest_id} className="flex items-center justify-between rounded-lg bg-black/30 p-3 border border-white/5">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="h-3 w-3 rounded-full" 
-                  style={{ backgroundColor: p.color === 'AZUL' ? '#1e62ec' : '#e52e2e' }} 
-                />
-                <div>
-                  <p className="font-bold text-sm leading-tight text-white">{p.name || 'Jogador'}</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">{p.color} • {p.guest_id === guestId ? '(Você)' : '(Adversário)'}</p>
+          {players.map((p: any) => {
+            const isMe = (isHost && p.color === 'AZUL') || (!isHost && p.color === 'VERMELHO');
+            return (
+              <div key={p.color} className="flex items-center justify-between rounded-lg bg-black/30 p-3 border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="h-3 w-3 rounded-full" 
+                    style={{ backgroundColor: p.color === 'AZUL' ? '#1e62ec' : '#e52e2e' }} 
+                  />
+                  <div>
+                    <p className="font-bold text-sm leading-tight text-white">{p.name || 'Jogador'}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase">{p.color} • {isMe ? '(Você)' : '(Adversário)'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
+                    p.is_ready 
+                      ? 'bg-green-500/20 text-green-400 border-green-500/40 font-bold' 
+                      : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                  }`}>
+                    {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
-                  p.is_ready 
-                    ? 'bg-green-500/10 text-green-400 border-green-500/30 font-bold' 
-                    : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
-                }`}>
-                  {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {players.length < 2 && (
             <div className="flex items-center gap-3 rounded-lg bg-blue-500/5 p-3 border border-blue-500/10">
               <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
@@ -113,7 +111,10 @@ function Lobby({ room, guestId, onLeave, onToggleReady, onStart }: any) {
 
         <div className="flex flex-col gap-3">
           <button
-            onClick={() => onToggleReady(!myReady)}
+            onClick={() => {
+              sounds.playClick();
+              onToggleReady(!myReady);
+            }}
             className={`w-full rounded-lg py-3 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer ${
               myReady 
                 ? 'bg-yellow-500 border-yellow-400/50 text-black hover:brightness-110' 
@@ -208,7 +209,7 @@ function Index() {
     // 1. Realtime Firestore listener
     const unsubscribe = subscribeToRoom(roomData.id, handleRoomUpdate);
 
-    // 2. High-reliability Polling fallback (every 800ms)
+    // 2. High-reliability Polling fallback (every 500ms)
     const interval = setInterval(async () => {
       try {
         const latest = await getRoom(roomData.id);
@@ -216,7 +217,7 @@ function Index() {
       } catch (e) {
         // ignore
       }
-    }, 800);
+    }, 500);
 
     return () => {
       isMounted = false;
@@ -366,6 +367,10 @@ function Index() {
                   setIsConnecting(true);
                   try {
                     const res = await joinRoomFn({ data: { code: joinCode, guestId, playerName: playerName.trim() } });
+                    if (res.assignedGuestId) {
+                      setGuestId(res.assignedGuestId);
+                      sessionStorage.setItem("ftf_guest_id", res.assignedGuestId);
+                    }
                     setRoomData(res.room);
                     setRoomCode(joinCode);
                     setLaunchMode("ONLINE");
@@ -388,17 +393,17 @@ function Index() {
         ) : (
           <Lobby 
             room={roomData} 
-            guestId={guestId}
+            isHost={playerColor === "AZUL"}
             onLeave={() => {
               setRoomData(null);
               setPlayers([]);
             }}
             onToggleReady={async (isReady: boolean) => {
+              const isHost = playerColor === "AZUL";
               try {
                 // Optimistic UI update
                 setRoomData((prev: any) => {
                   if (!prev) return prev;
-                  const isHost = prev.host_id === guestId;
                   return {
                     ...prev,
                     state: {
@@ -408,7 +413,7 @@ function Index() {
                   };
                 });
 
-                await toggleReadyFn({ data: { roomId: roomData.id, guestId, isReady } });
+                await toggleReadyFn({ data: { roomId: roomData.id, isHost, isReady } });
                 const latest = await getRoom(roomData.id);
                 if (latest) setRoomData(latest);
               } catch (e: any) {
@@ -417,7 +422,7 @@ function Index() {
             }}
             onStart={async () => {
               try {
-                await startGameFn({ data: { roomId: roomData.id, guestId } });
+                await startGameFn({ data: { roomId: roomData.id, isHost: true } });
                 setLaunchMode("ONLINE");
                 setScreen("GAME");
               } catch (e: any) {
@@ -443,6 +448,7 @@ function Index() {
           {/* VS IA Hotspot */}
           <button
             onClick={() => {
+              sounds.playClick();
               setLaunchMode("IA");
               setRoomCode("");
               setJoinCode("");
@@ -458,6 +464,7 @@ function Index() {
           {/* ONLINE Hotspot */}
           <button
             onClick={() => {
+              sounds.playClick();
               setLaunchMode("ONLINE");
               setScreen("ONLINE");
             }}

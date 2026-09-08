@@ -108,15 +108,18 @@ export const joinRoom = async (payload: { data: { code: string; guestId: string;
   return { room: { ...room, ...updatedData }, assignedGuestId: finalGuestId };
 };
 
-export const toggleReady = async (payload: { data: { roomId: string; guestId: string; isReady: boolean } }) => {
-  const { roomId, guestId, isReady } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
+export const toggleReady = async (payload: { data: { roomId: string; guestId?: string; isHost?: boolean; isReady: boolean } }) => {
+  const { roomId, guestId, isHost: isHostParam, isReady } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, roomId.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
 
-  const isHost = room.host_id === guestId;
+  const isHost = (typeof isHostParam === 'boolean') 
+    ? isHostParam 
+    : (room.host_id === guestId);
+
   const state = room.state || {};
   const updatedState = {
     ...state,
@@ -131,22 +134,15 @@ export const toggleReady = async (payload: { data: { roomId: string; guestId: st
   return { success: true };
 };
 
-export const startGame = async (payload: { data: { roomId: string; guestId: string } }) => {
-  const { roomId, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
+export const startGame = async (payload: { data: { roomId: string; guestId?: string; isHost?: boolean } }) => {
+  const { roomId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, roomId.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
 
-  if (room.host_id !== guestId) throw new Error("Apenas o anfitrião pode iniciar a partida!");
-
-  const state = room.state || {};
-  if (!state.hostReady || !state.guestReady) {
-    throw new Error("Ambos os jogadores precisam clicar em 'PRONTO'!");
-  }
-
-  // Embaralha e sorteia 2 personagens secretos únicos
+  // Embaralha e sorteia 2 personagens secretos únicos (1 a 24)
   const CHAR_IDS = Array.from({ length: 24 }, (_, i) => i + 1);
   for (let i = CHAR_IDS.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -156,6 +152,7 @@ export const startGame = async (payload: { data: { roomId: string; guestId: stri
   const hostSecretId = CHAR_IDS[0];
   const guestSecretId = CHAR_IDS[1];
 
+  const state = room.state || {};
   const updatedState = {
     ...state,
     hostSecretId,
@@ -164,7 +161,7 @@ export const startGame = async (payload: { data: { roomId: string; guestId: stri
     lastAnswer: null,
     questionAskedBy: null,
     answeredBy: null,
-    currentTurnPlayerId: guestId,
+    currentTurnPlayerId: room.host_id,
     rematchStatus: "idle",
     rematchRequestedBy: null,
     matchWinnerId: null
@@ -173,7 +170,7 @@ export const startGame = async (payload: { data: { roomId: string; guestId: stri
   await updateDoc(roomRef, {
     status: "playing",
     winner: null,
-    turn: guestId,
+    turn: room.host_id,
     state: updatedState,
     updated_at: new Date().toISOString()
   });
