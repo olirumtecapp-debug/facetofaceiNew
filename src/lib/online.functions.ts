@@ -5,33 +5,76 @@ import {
   getDoc, 
   updateDoc, 
   onSnapshot, 
-  collection, 
-  query, 
-  where, 
-  getDocs,
   Unsubscribe 
 } from "firebase/firestore";
 
 const COLLECTION_NAME = "facetoface_rooms";
+const PROJECT_ID = "expedicao-brasil";
 
-export const getRoom = async (roomIdOrCode: string) => {
-  const roomRef = doc(db, COLLECTION_NAME, roomIdOrCode.trim().toUpperCase());
-  const snap = await getDoc(roomRef);
-  if (snap.exists()) {
-    return snap.data();
+function parseFirestoreValue(val: any): any {
+  if (!val || typeof val !== 'object') return val;
+  if ('stringValue' in val) return val.stringValue;
+  if ('booleanValue' in val) return val.booleanValue;
+  if ('integerValue' in val) return parseInt(val.integerValue, 10);
+  if ('doubleValue' in val) return parseFloat(val.doubleValue);
+  if ('nullValue' in val) return null;
+  if ('mapValue' in val) {
+    const res: any = {};
+    const fields = val.mapValue.fields || {};
+    for (const k of Object.keys(fields)) {
+      res[k] = parseFirestoreValue(fields[k]);
+    }
+    return res;
   }
-  return null;
+  if ('arrayValue' in val) {
+    const values = val.arrayValue.values || [];
+    return values.map(parseFirestoreValue);
+  }
+  return val;
+}
+
+export function parseFirestoreDoc(docObj: any): any {
+  if (!docObj || !docObj.fields) return null;
+  const res: any = {};
+  for (const k of Object.keys(docObj.fields)) {
+    res[k] = parseFirestoreValue(docObj.fields[k]);
+  }
+  return res;
+}
+
+// REST Fetch to bypass ANY browser caching or websocket blocks
+export const getRoom = async (roomIdOrCode: string): Promise<any> => {
+  const code = roomIdOrCode.trim().toUpperCase();
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_NAME}/${code}?_t=${Date.now()}`;
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return parseFirestoreDoc(json);
+  } catch (e) {
+    try {
+      const roomRef = doc(db, COLLECTION_NAME, code);
+      const snap = await getDoc(roomRef);
+      if (snap.exists()) return snap.data();
+    } catch (_) {}
+    return null;
+  }
 };
 
 export const subscribeToRoom = (roomIdOrCode: string, onUpdate: (room: any) => void): Unsubscribe => {
-  const roomRef = doc(db, COLLECTION_NAME, roomIdOrCode.trim().toUpperCase());
-  return onSnapshot(roomRef, (snapshot) => {
+  const code = roomIdOrCode.trim().toUpperCase();
+  const roomRef = doc(db, COLLECTION_NAME, code);
+  
+  // Realtime snapshot listener
+  const unsub = onSnapshot(roomRef, (snapshot) => {
     if (snapshot.exists()) {
       onUpdate(snapshot.data());
     }
   }, (err) => {
-    console.error("[FTF Realtime Error]", err);
+    console.warn("[FTF Realtime Notice - Polling active]", err?.message);
   });
+
+  return unsub;
 };
 
 export const createRoom = async (payload: { data: { guestId: string; playerName: string } }) => {
@@ -79,20 +122,15 @@ export const joinRoom = async (payload: { data: { code: string; guestId: string;
   let { code, guestId, playerName } = payload.data;
   const normalizedCode = code.trim().toUpperCase();
 
-  const roomRef = doc(db, COLLECTION_NAME, normalizedCode);
-  const roomSnap = await getDoc(roomRef);
-
-  if (!roomSnap.exists()) {
+  const room = await getRoom(normalizedCode);
+  if (!room) {
     throw new Error("Sala não encontrada. Verifique o código digitado!");
   }
-
-  const room = roomSnap.data() as any;
 
   if (room.status !== "waiting" && room.guest_id !== guestId && room.host_id !== guestId) {
     throw new Error("Esta partida já foi iniciada!");
   }
 
-  // Se o guestId for igual ao hostId (ex: abas do mesmo navegador), gera um guestId exclusivo para o jogador 2
   let finalGuestId = guestId;
   if (room.host_id === guestId) {
     finalGuestId = 'guest_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
@@ -104,17 +142,19 @@ export const joinRoom = async (payload: { data: { code: string; guestId: string;
     updated_at: new Date().toISOString()
   };
 
+  const roomRef = doc(db, COLLECTION_NAME, normalizedCode);
   await updateDoc(roomRef, updatedData);
-  return { room: { ...room, ...updatedData }, assignedGuestId: finalGuestId };
+
+  const fresh = await getRoom(normalizedCode);
+  return { room: fresh || { ...room, ...updatedData }, assignedGuestId: finalGuestId };
 };
 
 export const toggleReady = async (payload: { data: { roomId: string; guestId?: string; isHost?: boolean; isReady: boolean } }) => {
   const { roomId, guestId, isHost: isHostParam, isReady } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId.trim().toUpperCase());
-  const roomSnap = await getDoc(roomRef);
+  const code = roomId.trim().toUpperCase();
+  const room = await getRoom(code);
 
-  if (!roomSnap.exists()) throw new Error("Sala não encontrada");
-  const room = roomSnap.data() as any;
+  if (!room) throw new Error("Sala não encontrada");
 
   const isHost = (typeof isHostParam === 'boolean') 
     ? isHostParam 
@@ -126,6 +166,7 @@ export const toggleReady = async (payload: { data: { roomId: string; guestId?: s
     ...(isHost ? { hostReady: isReady } : { guestReady: isReady })
   };
 
+  const roomRef = doc(db, COLLECTION_NAME, code);
   await updateDoc(roomRef, {
     state: updatedState,
     updated_at: new Date().toISOString()
@@ -136,11 +177,10 @@ export const toggleReady = async (payload: { data: { roomId: string; guestId?: s
 
 export const startGame = async (payload: { data: { roomId: string; guestId?: string; isHost?: boolean } }) => {
   const { roomId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId.trim().toUpperCase());
-  const roomSnap = await getDoc(roomRef);
+  const code = roomId.trim().toUpperCase();
+  const room = await getRoom(code);
 
-  if (!roomSnap.exists()) throw new Error("Sala não encontrada");
-  const room = roomSnap.data() as any;
+  if (!room) throw new Error("Sala não encontrada");
 
   // Embaralha e sorteia 2 personagens secretos únicos (1 a 24)
   const CHAR_IDS = Array.from({ length: 24 }, (_, i) => i + 1);
@@ -167,6 +207,7 @@ export const startGame = async (payload: { data: { roomId: string; guestId?: str
     matchWinnerId: null
   };
 
+  const roomRef = doc(db, COLLECTION_NAME, code);
   await updateDoc(roomRef, {
     status: "playing",
     winner: null,
@@ -180,18 +221,19 @@ export const startGame = async (payload: { data: { roomId: string; guestId?: str
 
 export const sendQuestion = async (payload: { data: { code: string; guestId: string; questionId: string } }) => {
   const { code, guestId, questionId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code);
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
-
   const state = room.state || {};
+
   const updatedState = {
     ...state,
     currentQuestionId: questionId,
     lastAnswer: null,
-    questionAskedBy: guestId
+    questionAskedBy: guestId,
+    answeredBy: null
   };
 
   await updateDoc(roomRef, {
@@ -202,19 +244,18 @@ export const sendQuestion = async (payload: { data: { code: string; guestId: str
   return { success: true };
 };
 
-export const sendAnswer = async (payload: { data: { code: string; guestId: string; answer: "SIM" | "NÃO" } }) => {
+export const answerQuestion = async (payload: { data: { code: string; guestId: string; answer: "SIM" | "NÃO" } }) => {
   const { code, guestId, answer } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code);
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
-
   const state = room.state || {};
+
   const updatedState = {
     ...state,
     lastAnswer: answer,
-    currentQuestionId: null,
     answeredBy: guestId
   };
 
@@ -226,22 +267,23 @@ export const sendAnswer = async (payload: { data: { code: string; guestId: strin
   return { success: true };
 };
 
-export const setTurn = async (payload: { data: { code: string; guestId: string; nextPlayerId: string | null } }) => {
-  const { code, nextPlayerId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code);
+export const passTurn = async (payload: { data: { code: string; guestId: string } }) => {
+  const { code, guestId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
-
+  const nextPlayerId = room.host_id === guestId ? room.guest_id : room.host_id;
   const state = room.state || {};
+
   const updatedState = {
     ...state,
-    currentTurnPlayerId: nextPlayerId,
-    lastAnswer: null,
     currentQuestionId: null,
+    lastAnswer: null,
     questionAskedBy: null,
-    answeredBy: null
+    answeredBy: null,
+    currentTurnPlayerId: nextPlayerId
   };
 
   await updateDoc(roomRef, {
@@ -253,195 +295,100 @@ export const setTurn = async (payload: { data: { code: string; guestId: string; 
   return { success: true };
 };
 
-export const submitGuess = async (payload: { data: { roomId: string; guestId: string; characterId: number } }) => {
-  const { roomId, guestId, characterId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
+export const makeGuess = async (payload: { data: { code: string; guestId: string; characterId: number } }) => {
+  const { code, guestId, characterId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
   if (!roomSnap.exists()) throw new Error("Sala não encontrada");
   const room = roomSnap.data() as any;
+  const state = room.state || {};
 
   const isHost = room.host_id === guestId;
-  const state = room.state || {};
-  const opponentSecretId = isHost ? state.guestSecretId : state.hostSecretId;
-  const opponentGuestId = isHost ? room.guest_id : room.host_id;
+  const targetSecretId = isHost ? state.guestSecretId : state.hostSecretId;
+  const isCorrect = Number(characterId) === Number(targetSecretId);
 
-  const isCorrect = opponentSecretId === characterId;
-  const winnerId = isCorrect ? guestId : opponentGuestId;
-
-  const hostScore = (state.hostScore || 0) + (winnerId === room.host_id ? 1 : 0);
-  const guestScore = (state.guestScore || 0) + (winnerId === room.guest_id ? 1 : 0);
-  const matchWinnerId = hostScore >= 3 ? room.host_id : (guestScore >= 3 ? room.guest_id : null);
+  const winnerId = isCorrect 
+    ? guestId 
+    : (isHost ? room.guest_id : room.host_id);
 
   const updatedState = {
     ...state,
-    hostScore,
-    guestScore,
-    matchWinnerId
+    matchWinnerId: winnerId,
+    hostScore: (state.hostScore || 0) + (winnerId === room.host_id ? 1 : 0),
+    guestScore: (state.guestScore || 0) + (winnerId === room.guest_id ? 1 : 0)
   };
 
   await updateDoc(roomRef, {
-    winner: winnerId,
     status: "finished",
+    winner: winnerId,
     state: updatedState,
     updated_at: new Date().toISOString()
   });
 
-  return { isCorrect, winnerId, opponentSecretId: opponentSecretId ?? null };
+  return { isCorrect, winnerId };
 };
 
-export const abandonMatch = async (payload: { data: { roomId: string; guestId: string } }) => {
-  const { roomId, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
+export const abandonMatch = async (payload: { data: { code: string; guestId: string } }) => {
+  const { code, guestId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
   const roomSnap = await getDoc(roomRef);
 
-  if (!roomSnap.exists()) return { success: true };
+  if (!roomSnap.exists()) return;
   const room = roomSnap.data() as any;
-
   const opponentId = room.host_id === guestId ? room.guest_id : room.host_id;
-  const winnerId = opponentId || guestId;
-
-  const state = room.state || {};
-  const updatedState = {
-    ...state,
-    matchWinnerId: winnerId
-  };
 
   await updateDoc(roomRef, {
-    winner: winnerId,
     status: "finished",
-    state: updatedState,
+    winner: opponentId,
+    'state.matchWinnerId': opponentId,
     updated_at: new Date().toISOString()
   });
-
-  return { success: true };
 };
 
-export const declareWinner = async (payload: { data: { roomId: string; winnerId: string } }) => {
-  const { roomId, winnerId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
-  const roomSnap = await getDoc(roomRef);
-
-  if (!roomSnap.exists()) throw new Error("Sala não encontrada");
-  const room = roomSnap.data() as any;
-
-  const state = room.state || {};
-  const hostScore = (state.hostScore || 0) + (winnerId === room.host_id ? 1 : 0);
-  const guestScore = (state.guestScore || 0) + (winnerId === room.guest_id ? 1 : 0);
-  const matchWinnerId = hostScore >= 3 ? room.host_id : (guestScore >= 3 ? room.guest_id : null);
-
-  const updatedState = {
-    ...state,
-    hostScore,
-    guestScore,
-    matchWinnerId
-  };
-
+export const requestRematch = async (payload: { data: { code: string; guestId: string } }) => {
+  const { code, guestId } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
   await updateDoc(roomRef, {
-    winner: winnerId,
-    status: "finished",
-    state: updatedState,
+    'state.rematchStatus': 'requested',
+    'state.rematchRequestedBy': guestId,
     updated_at: new Date().toISOString()
   });
-
-  return { success: true, newScore: winnerId === room.host_id ? hostScore : guestScore };
 };
 
-export const requestRematch = async (payload: { data: { roomId: string; guestId: string } }) => {
-  const { roomId, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
-  const roomSnap = await getDoc(roomRef);
-
-  if (!roomSnap.exists()) throw new Error("Sala não encontrada");
-  const room = roomSnap.data() as any;
-
-  const state = room.state || {};
-  const updatedState = {
-    ...state,
-    rematchRequestedBy: guestId,
-    rematchStatus: "requested"
-  };
-
-  await updateDoc(roomRef, {
-    state: updatedState,
-    updated_at: new Date().toISOString()
-  });
-
-  return { success: true };
-};
-
-export const handleRematchResponse = async (payload: { data: { roomId: string; guestId: string; accept: boolean } }) => {
-  const { roomId, guestId, accept } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, roomId);
-  const roomSnap = await getDoc(roomRef);
-
-  if (!roomSnap.exists()) throw new Error("Sala não encontrada");
-  const room = roomSnap.data() as any;
-
-  const state = room.state || {};
-
-  if (accept) {
-    const CHAR_IDS = Array.from({ length: 24 }, (_, i) => i + 1);
-    for (let i = CHAR_IDS.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [CHAR_IDS[i], CHAR_IDS[j]] = [CHAR_IDS[j], CHAR_IDS[i]];
-    }
-
-    const nextTurnPlayerId = room.winner === room.host_id ? room.guest_id : room.host_id;
-
-    const updatedState = {
-      ...state,
-      hostSecretId: CHAR_IDS[0],
-      guestSecretId: CHAR_IDS[1],
-      currentQuestionId: null,
-      lastAnswer: null,
-      questionAskedBy: null,
-      answeredBy: null,
-      currentTurnPlayerId: nextTurnPlayerId || guestId,
-      rematchStatus: "idle",
-      rematchRequestedBy: null
-    };
-
+export const respondRematch = async (payload: { data: { code: string; guestId: string; accept: boolean } }) => {
+  const { code, guestId, accept } = payload.data;
+  const roomRef = doc(db, COLLECTION_NAME, code.trim().toUpperCase());
+  
+  if (!accept) {
     await updateDoc(roomRef, {
-      status: "playing",
-      winner: null,
-      turn: nextTurnPlayerId || guestId,
-      state: updatedState,
+      'state.rematchStatus': 'declined',
       updated_at: new Date().toISOString()
     });
-  } else {
-    const updatedState = {
-      ...state,
-      rematchStatus: "declined",
-      rematchRequestedBy: null
-    };
-
-    await updateDoc(roomRef, {
-      state: updatedState,
-      updated_at: new Date().toISOString()
-    });
+    return;
   }
 
-  return { success: true };
-};
+  // Novo round
+  const CHAR_IDS = Array.from({ length: 24 }, (_, i) => i + 1);
+  for (let i = CHAR_IDS.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [CHAR_IDS[i], CHAR_IDS[j]] = [CHAR_IDS[j], CHAR_IDS[i]];
+  }
 
-export const getSecrets = async (payload: { data: { code: string; guestId: string } }) => {
-  const { code, guestId } = payload.data;
-  const roomRef = doc(db, COLLECTION_NAME, code);
-  const roomSnap = await getDoc(roomRef);
+  const hostSecretId = CHAR_IDS[0];
+  const guestSecretId = CHAR_IDS[1];
 
-  if (!roomSnap.exists()) return { mySecretId: null, opponentSecretId: null };
-  const room = roomSnap.data() as any;
-
-  const state = room.state || {};
-  const isHost = room.host_id === guestId;
-  const isFinished = room.status === "finished" || !!room.winner;
-
-  const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
-  const opponentSecretId = isFinished ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
-
-  return {
-    mySecretId: mySecretId ?? null,
-    opponentSecretId: opponentSecretId ?? null
-  };
+  await updateDoc(roomRef, {
+    status: "playing",
+    winner: null,
+    'state.hostSecretId': hostSecretId,
+    'state.guestSecretId': guestSecretId,
+    'state.currentQuestionId': null,
+    'state.lastAnswer': null,
+    'state.questionAskedBy': null,
+    'state.answeredBy': null,
+    'state.rematchStatus': 'accepted',
+    'state.matchWinnerId': null,
+    updated_at: new Date().toISOString()
+  });
 };

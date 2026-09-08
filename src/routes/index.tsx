@@ -50,11 +50,13 @@ function Lobby({ room, isHost, onLeave, onToggleReady, onStart }: any) {
 
   const players = [hostPlayer, ...(guestPlayer ? [guestPlayer] : [])];
   const myReady = isHost ? !!state.hostReady : !!state.guestReady;
-  const allReady = !!state.hostReady && !!state.guestReady && (players.length >= 2 || !!room.guest_name);
+  const opponentReady = isHost ? !!state.guestReady : !!state.hostReady;
+  const opponentJoined = !!(isHost ? (room.guest_id || room.guest_name) : true);
+  const allReady = !!state.hostReady && !!state.guestReady && !!(room.guest_id || room.guest_name);
 
   return (
     <div className="w-full max-w-md space-y-4 animate-in fade-in zoom-in-95 duration-300">
-      <div className="rounded-xl border border-white/10 bg-[#11151d] p-5">
+      <div className="rounded-xl border border-white/10 bg-[#11151d] p-5 shadow-2xl">
         <div className="flex flex-col items-center gap-2 mb-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-yellow-500/70">Código da Sala</p>
           <div className="flex w-full items-center gap-2">
@@ -73,26 +75,38 @@ function Lobby({ room, isHost, onLeave, onToggleReady, onStart }: any) {
           </div>
         </div>
 
+        {/* Status Geral */}
+        <div className="rounded-lg bg-black/40 p-3 mb-4 border border-white/5 text-center">
+          <p className="text-xs font-black uppercase tracking-wider text-gray-300">
+            Você está jogando como: <span className={isHost ? "text-blue-400" : "text-red-400"}>{isHost ? "AZUL (Anfitrião)" : "VERMELHO (Convidado)"}</span>
+          </p>
+        </div>
+
         <div className="space-y-3 mb-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Jogadores Conectados</p>
           {players.map((p: any) => {
             const isMe = (isHost && p.color === 'AZUL') || (!isHost && p.color === 'VERMELHO');
             return (
-              <div key={p.color} className="flex items-center justify-between rounded-lg bg-black/30 p-3 border border-white/5">
+              <div key={p.color} className={`flex items-center justify-between rounded-lg p-3 border ${
+                isMe ? 'bg-white/10 border-yellow-400/40' : 'bg-black/30 border-white/5'
+              }`}>
                 <div className="flex items-center gap-3">
                   <div 
-                    className="h-3 w-3 rounded-full" 
+                    className="h-3.5 w-3.5 rounded-full ring-2 ring-white/20" 
                     style={{ backgroundColor: p.color === 'AZUL' ? '#1e62ec' : '#e52e2e' }} 
                   />
                   <div>
-                    <p className="font-bold text-sm leading-tight text-white">{p.name || 'Jogador'}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase">{p.color} • {isMe ? '(Você)' : '(Adversário)'}</p>
+                    <p className="font-black text-sm leading-tight text-white flex items-center gap-1.5">
+                      {p.name || 'Jogador'}
+                      {isMe && <span className="text-[9px] bg-yellow-400/20 text-yellow-300 px-1.5 py-0.2 rounded font-bold uppercase">VOCÊ</span>}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase">{p.color} • {p.color === 'AZUL' ? 'Anfitrião' : 'Convidado'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border ${
+                  <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded border ${
                     p.is_ready 
-                      ? 'bg-green-500/20 text-green-400 border-green-500/40 font-bold' 
+                      ? 'bg-green-500/20 text-green-400 border-green-500/50 font-bold animate-pulse' 
                       : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
                   }`}>
                     {p.is_ready ? 'PRONTO' : 'AGUARDANDO'}
@@ -101,7 +115,7 @@ function Lobby({ room, isHost, onLeave, onToggleReady, onStart }: any) {
               </div>
             );
           })}
-          {players.length < 2 && (
+          {!guestPlayer && (
             <div className="flex items-center gap-3 rounded-lg bg-blue-500/5 p-3 border border-blue-500/10">
               <div className="h-2 w-2 animate-ping rounded-full bg-blue-500" />
               <p className="text-[10px] font-bold text-blue-400 animate-pulse uppercase tracking-widest">Aguardando adversário conectar...</p>
@@ -115,40 +129,40 @@ function Lobby({ room, isHost, onLeave, onToggleReady, onStart }: any) {
               sounds.playClick();
               onToggleReady(!myReady);
             }}
-            className={`w-full rounded-lg py-3 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer ${
+            className={`w-full rounded-lg py-3.5 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer text-sm sm:text-base ${
               myReady 
-                ? 'bg-yellow-500 border-yellow-400/50 text-black hover:brightness-110' 
-                : 'bg-green-600 border-green-400/50 text-white hover:brightness-125 shadow-[0_0_15px_rgba(34,197,94,0.4)]'
+                ? 'bg-yellow-500 border-yellow-400 text-black hover:brightness-110 shadow-[0_0_20px_rgba(234,179,8,0.5)]' 
+                : 'bg-green-600 border-green-400 text-white hover:brightness-125 shadow-[0_0_20px_rgba(34,197,94,0.5)]'
             }`}
           >
-            {myReady ? 'CANCELAR PRONTO' : 'ESTOU PRONTO'}
+            {myReady ? 'CANCELAR MEU PRONTO' : 'CLIQUE AQUI: ESTOU PRONTO!'}
           </button>
 
           {isHost && (
             <button
               onClick={onStart}
               disabled={!allReady}
-              className={`w-full rounded-lg py-3 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer ${
+              className={`w-full rounded-lg py-3.5 font-black uppercase tracking-widest border-2 transition-all active:scale-95 cursor-pointer text-sm sm:text-base ${
                 allReady
-                  ? 'bg-[#1e62ec] border-blue-400 text-white hover:brightness-125 animate-pulse shadow-[0_0_20px_rgba(30,98,236,0.6)]'
+                  ? 'bg-[#1e62ec] border-blue-400 text-white hover:brightness-125 animate-pulse shadow-[0_0_25px_rgba(30,98,236,0.8)]'
                   : 'bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed opacity-50'
               }`}
             >
-              {allReady ? '🚀 INICIAR PARTIDA' : (players.length < 2 ? 'AGUARDANDO ADVERSÁRIO' : 'AGUARDANDO PRONTO DE AMBOS')}
+              {allReady ? '🚀 INICIAR PARTIDA AGORA' : (!guestPlayer ? 'AGUARDANDO ADVERSÁRIO' : 'AGUARDANDO PRONTO DE AMBOS')}
             </button>
           )}
 
           {!isHost && allReady && (
-            <div className="rounded-lg bg-green-500/10 p-3 border border-green-500/20 text-center animate-pulse">
-              <p className="text-xs font-bold text-green-400 uppercase tracking-widest">
-                Prontos! Aguardando o Anfitrião iniciar a partida...
+            <div className="rounded-lg bg-green-500/15 p-3.5 border border-green-500/30 text-center animate-pulse">
+              <p className="text-xs font-bold text-green-300 uppercase tracking-widest">
+                Prontos! Aguardando o Anfitrião clicar em Iniciar Partida...
               </p>
             </div>
           )}
 
           <button
             onClick={onLeave}
-            className="w-full rounded-lg bg-gray-800 py-3 font-black uppercase tracking-widest border-2 border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95 cursor-pointer text-gray-300"
+            className="w-full rounded-lg bg-gray-800/80 py-2.5 font-black uppercase tracking-widest border border-gray-600/50 transition-all hover:bg-gray-700 active:scale-95 cursor-pointer text-gray-400 text-xs"
           >
             SAIR PARA O MENU
           </button>

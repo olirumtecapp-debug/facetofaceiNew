@@ -393,9 +393,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       return;
     }
 
-    const unsubscribe = subscribeToRoom(gameState.roomCode, (newRoomData: any) => {
-      if (gameState.gameMode !== "ONLINE" || !newRoomData) return;
-      console.log("[FTF REALTIME] Update received:", newRoomData);
+    let isMounted = true;
+    const handleRoomData = (newRoomData: any) => {
+      if (!isMounted || gameState.gameMode !== "ONLINE" || !newRoomData) return;
       
       const state = newRoomData.state || {};
       const statusLower = (newRoomData.status || '').toLowerCase();
@@ -403,16 +403,9 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const matchWinnerId = state.matchWinnerId || newRoomData.match_winner_id;
 
       if (statusLower === "finished" || winnerId) {
-        console.log("[FTF REALTIME] Game over detected.", {
-          winnerId,
-          myId: gameState.guestId,
-          status: newRoomData['status']
-        });
-
         if (winnerId) {
           setGameState(prev => {
             const newWinner = winnerId === gameState.guestId ? "WINNER" : "LOSER";
-            console.log("[FTF REALTIME] Setting winner state to:", newWinner);
             return {
               ...prev,
               isGameOver: true,
@@ -436,7 +429,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
         }));
       }
 
-      const isHost = newRoomData.host_id === gameState.guestId;
+      const isHost = playerColor === "AZUL";
       const mySecretId = isHost ? state.hostSecretId : state.guestSecretId;
       const oppSecretId = (statusLower === 'finished' || winnerId) ? (isHost ? state.guestSecretId : state.hostSecretId) : null;
       const myCard = CHARACTERS.find(c => c.id === mySecretId);
@@ -457,8 +450,6 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       if (statusLower === "playing") {
         setGameState(prev => {
           if (!prev.isGameOver && prev.rematchStatus !== 'accepted' && prev.playerSecret?.id === mySecretId) return prev;
-          
-          console.log("[FTF REALTIME] Syncing game for playing round", { mySecretId });
           return {
             ...prev,
             playerSecret: myCard || prev.playerSecret,
@@ -482,7 +473,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
 
       const turnPlayerId = newRoomData.turn || state.currentTurnPlayerId;
       if (turnPlayerId && gameState.gameMode === "ONLINE") {
-        const isMyTurn = turnPlayerId === gameState.guestId;
+        const isMyTurn = isHost ? (turnPlayerId === newRoomData.host_id) : (turnPlayerId === newRoomData.guest_id);
         setGameState(prev => {
           if (prev.isGameOver) return prev;
           let newPhase = prev.phase;
@@ -508,7 +499,7 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       const qId = state.currentQuestionId || newRoomData.current_question_id;
       if (qId) {
         const askerId = state.questionAskedBy || newRoomData.question_asked_by;
-        const isFromOpponent = askerId && askerId !== gameState.guestId;
+        const isFromOpponent = isHost ? (askerId === newRoomData.guest_id) : (askerId === newRoomData.host_id);
         const question = QUESTIONS.find(q => q.id === qId);
         
         if (question) {
@@ -542,13 +533,12 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
       if (lastAns && !qId) {
         const answer = lastAns as "SIM" | "NÃO";
         const askerId = state.questionAskedBy || newRoomData.question_asked_by;
-        const isMyQuestion = askerId && askerId === gameState.guestId;
+        const isMyQuestion = isHost ? (askerId === newRoomData.host_id) : (askerId === newRoomData.guest_id);
 
         if (isMyQuestion) {
           setGameState(prev => {
             if (prev.pendingQuestion && prev.pendingQuestion.type === "PLAYER" && !prev.pendingQuestion.revealedAnswer) {
               const newMyAskedQuestions = new Set(prev.myAskedQuestions).add(prev.pendingQuestion.question.id);
-              console.log("[FTF DEBUG] Online answer received. New count:", newMyAskedQuestions.size);
               return {
                 ...prev,
                 pendingQuestion: { ...prev.pendingQuestion, revealedAnswer: answer },
@@ -569,12 +559,25 @@ export const useGameState = (playerColor: "AZUL" | "VERMELHO", difficulty: Diffi
           return prev;
         });
       }
-    });
+    };
+
+    // 1. Realtime listener
+    const unsubscribe = subscribeToRoom(gameState.roomCode, handleRoomData);
+
+    // 2. High-speed REST polling fallback every 400ms
+    const interval = setInterval(async () => {
+      try {
+        const latest = await getRoom(gameState.roomCode);
+        if (latest) handleRoomData(latest);
+      } catch (e) {}
+    }, 400);
 
     return () => {
+      isMounted = false;
       unsubscribe();
+      clearInterval(interval);
     };
-  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId]);
+  }, [gameState.gameMode, gameState.roomCode, gameState.roomId, gameState.guestId, playerColor]);
 
   useEffect(() => {
     if (gameState.gameMode === "ONLINE" && gameState.roomCode) {
