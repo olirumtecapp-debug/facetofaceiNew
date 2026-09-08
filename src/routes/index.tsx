@@ -1,7 +1,7 @@
 import { HowToPlayModal } from "@/components/HowToPlayModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { sounds } from "@/lib/sound";
-import React, { useState, useEffect as useRealtimeEffect, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import homeAsset from "@/assets/home-interface.png.asset.json";
 import { CARD_IMAGES } from "@/assets/chars";
@@ -178,27 +178,21 @@ function Index() {
   const toggleReadyFn = toggleReady;
   const startGameFn = startGame;
 
-  useRealtimeEffect(() => {
+  useEffect(() => {
     if (!roomData?.id) return;
 
-    const roomSub = supabase
-      .channel(`room_state_${roomData.id}_${Date.now()}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "rooms", filter: `id=eq.${roomData.id}` },
-        (payload) => {
-          const updated = payload.new as any;
-          setRoomData(updated);
-          if (updated.status?.toLowerCase() === "playing") {
-            setLaunchMode("ONLINE");
-            setScreen("GAME");
-          }
+    const unsubscribe = subscribeToRoom(roomData.id, (updated) => {
+      if (updated) {
+        setRoomData(updated);
+        if (updated.status?.toLowerCase() === "playing") {
+          setLaunchMode("ONLINE");
+          setScreen("GAME");
         }
-      )
-      .subscribe();
+      }
+    });
 
     return () => {
-      supabase.removeChannel(roomSub);
+      unsubscribe();
     };
   }, [roomData?.id]);
 
